@@ -1,0 +1,11 @@
+node_modules
+.DS_Store
+dmgs
+npm-debug.log
+build/background.tiff
+.dat
+tags
+yarn.lock
+yarn-error.log
+static/bundle.js
+.vscode
