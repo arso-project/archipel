@@ -5,7 +5,7 @@ const defaultState = {
   counter: 0
 }
 
-const ArchipelApp = (state = defaultState, action) => {
+const ArchipelReducer = (state = defaultState, action) => {
   switch (action.type) {
     case 'SET_TITLE':
       return {
@@ -22,4 +22,4 @@ const ArchipelApp = (state = defaultState, action) => {
   }
 }
 
-export default ArchipelApp
+export default ArchipelReducer

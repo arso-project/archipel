@@ -1,22 +1,23 @@
-const nodeExternals = require('webpack-node-externals')
+// const nodeExternals = require('webpack-node-externals')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 const path = require('path')
 
-const shared = (_, argv) => ({
-  entry: path.normalize(`${__dirname}/app/index.js`),
+const shared = (argv) => ({
+  entry: path.normalize(`${__dirname}/index.js`),
   devtool: argv.mode === 'development' ? 'inline-source-map' : false,
   mode: argv.mode,
   module: {
     rules: [
       {
         test: /\.js$/,
-        include: path.normalize(`${__dirname}/app`),
+        exclude: /(node_modules)/,
         loader: 'babel-loader',
         query: {
-          presets: ['react'],
+          presets: ['env', 'react'],
           plugins: [
-            'transform-object-rest-spread'
+            'transform-object-rest-spread',
+            'transform-es2015-modules-commonjs'
           ]
         }
       }
@@ -26,11 +27,11 @@ const shared = (_, argv) => ({
   ]
 })
 
-const electronConfig = (_, argv) => {
-  const ret = shared(_, argv)
-  return Object.assign({}, ret, {
+const electronConfig = (argv) => {
+  return Object.assign({}, shared(argv), {
     target: 'electron-main',
-    externals: [nodeExternals()],
+    // externals: [nodeExternals(), {'./rpc.web.js': 'function() {}'}],
+    externals: [{'./rpc.web.js': 'function() {}'}],
     node: {
       __dirname: true
     },
@@ -42,9 +43,8 @@ const electronConfig = (_, argv) => {
   })
 }
 
-const webConfig = (_, argv) => {
-  const ret = shared(_, argv)
-  return Object.assign({}, ret, {
+const webConfig = (argv) => {
+  return Object.assign({}, shared(argv), {
     target: 'web',
     externals: {'./rpc.electron.js': 'function() {}'},
     output: {
@@ -60,7 +60,9 @@ const webConfig = (_, argv) => {
   })
 }
 
-module.exports = [
-  electronConfig,
-  webConfig
-]
+module.exports = function (_, argv) {
+  return [
+    webConfig(argv),
+    electronConfig(argv)
+  ]
+}

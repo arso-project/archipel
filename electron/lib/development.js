@@ -4,7 +4,7 @@ let watchProcess
 let win
 
 function initDev (app, mainWin) {
-  console.warn('Developer mode init.')
+  console.log('Developer mode enabled.')
   win = mainWin
   loadDevtools()
   watchAndReload()
@@ -32,7 +32,7 @@ function loadDevtools () {
 }
 
 function watchAndReload () {
-  const cwd = path.join(__dirname, '../..')
+  const cwd = path.join(__dirname, '../../')
   const watchList = [
     `electron/preload.js`,
     `dist/electron/**`

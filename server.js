@@ -4,11 +4,16 @@ var path = require('path')
 var fs = require('fs')
 
 var websocket = require('websocket-stream')
-var archipelApi = require('./backend/index.js')
+var archipelApi = require('./src/api.js')
 var dnode = require('dnode')
 
 var port = 8080
-var distPath = path.join(__dirname, 'dist/web')
+var distPath = path.join(__dirname, 'app/dist/web')
+
+function csp (host) {
+  var connectSrcs = ['ws://', 'wss://'].map((h) => h + host).join(' ')
+  return `default-src 'self'; style-src 'unsafe-inline'; connect-src 'self' ${connectSrcs}`
+}
 
 var server = http.createServer((req, res) => {
   var reqUrl = url.parse(req.url)
@@ -21,6 +26,7 @@ var server = http.createServer((req, res) => {
     fs.readFile(reqPath, (err, data) => {
       if (err) error(500, err.message)
       console.log('   200 OK.')
+      // res.setHeader('Content-Security-Policy', csp(req.headers.host))
       res.writeHead(200)
       res.end(data)
     })
@@ -45,3 +51,7 @@ function handle (stream, req) {
 }
 
 server.listen(port, () => console.log('Server listening on port ' + port))
+
+if (process.env.NODE_ENV === 'development') {
+  require('opn')('http://localhost:' + port)
+}

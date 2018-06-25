@@ -2,7 +2,7 @@
 
 import React, { Component } from 'react'
 
-import { Box, Flex, Heading, Button, BrightButton, Input } from './base'
+import { Button, Box, Flex, Heading, Input } from './base'
 import Style from './style'
 import Item from './item'
 
@@ -20,8 +20,8 @@ export default class App extends Component {
       <Box px={4} py={5} color='white' bg='navy'>
         <Heading>{title}</Heading>
         <Input onChange={(ev) => this.setState({input: ev.target.value})} value={this.state.input} />
-        <BrightButton onClick={apiTestClick}>Do Streaming Test</BrightButton>
-        <BrightButton onClick={() => doFooTest(this.state.input)}>Do Foo Test</BrightButton>
+        <Button onClick={apiTestClick}>Do Streaming Test</Button>
+        <Button onClick={() => doFooTest(this.state.input)}>Do Foo Test</Button>
       </Box>
       <Flex px={4} py={5}>
         <Box>Count: {counter}</Box>

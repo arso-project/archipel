@@ -8,8 +8,12 @@
  * See: https://electronjs.org/docs/tutorial/security
  *    & https://eslint.org/docs/rules/no-implied-eval
  */
-// eslint-disable-next-line no-eval
 const isDev = process.env.NODE_ENV === 'development'
+const path = require('path')
+// todo: DRY in index.js
+const pathPrefix = process.env.ARCHIPEL_APP_PATH || isDev ? path.join(__dirname, '../app') : __dirname
+
+// eslint-disable-next-line no-eval
 window.eval = global.eval = function () {
   throw new Error('Sorry, this app does not support window.eval().')
 }
@@ -28,7 +32,7 @@ window.setInterval = global.setInterval = function (fn, ms) {
   return setInterval(fn, ms)
 }
 process.once('loaded', () => {
-  document.addEventListener('DOMContentLoaded', () => require('./../dist/electron/bundle.electron'))
+  document.addEventListener('DOMContentLoaded', () => require(pathPrefix + '/dist/electron/bundle.electron.js'))
 })
 
 if (isDev) {
