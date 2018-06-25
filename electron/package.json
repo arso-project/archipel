@@ -1,0 +1,66 @@
+{
+  "name": "archipel-app",
+  "productName": "Archipel",
+  "version": "2.0.1",
+  "license": "MIT",
+  "description": "Archipel Desktop App",
+  "author": "Archipel:Somoco Team",
+  "devDependencies": {
+    "devtron": "^1.4.0",
+    "electron": "^2.0.2",
+    "electron-builder": "^20.15.1",
+    "electron-default-menu": "^1.0.1",
+    "electron-devtools-installer": "^2.2.4"
+  },
+  "scripts": {
+    "start": "NODE_ENV=development electron .",
+    "build": "cd .. && npm run build:prod && cd electron",
+    "pack": "npm run build && npm run pack:all",
+    "pack:os": "build --dir",
+    "pack:all": "npm run pack:os -- --linux --mac --win",
+    "dist": "npm run build && npm run dist:os",
+    "dist:os": "build",
+    "dist:all": "npm run dist:os -- --linux --mac --win"
+  },
+  "build": {
+    "appId": "io.archipel.app",
+    "mac": {
+      "category": "public.app-category.utilities"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 220,
+          "y": 200
+        },
+        {
+          "x": 448,
+          "y": 200,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "linux": {
+      "category": "Utility",
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    },
+    "win": {
+      "target": "NSIS"
+    },
+    "protocols": [
+      {
+        "name": "Dat Link",
+        "schemes": [
+          "dat"
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-ipc-stream": "^0.2.0"
+  }
+}

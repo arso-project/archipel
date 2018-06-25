@@ -28,7 +28,7 @@ window.setInterval = global.setInterval = function (fn, ms) {
   return setInterval(fn, ms)
 }
 process.once('loaded', () => {
-  document.addEventListener('DOMContentLoaded', () => require('./static/bundle'))
+  document.addEventListener('DOMContentLoaded', () => require('./../dist/electron/bundle.electron'))
 })
 
 if (isDev) {

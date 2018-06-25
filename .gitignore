@@ -1,4 +1,5 @@
 node_modules
+*/node_modules
 .DS_Store
 dmgs
 npm-debug.log
@@ -7,5 +8,5 @@ build/background.tiff
 tags
 yarn.lock
 yarn-error.log
-static/bundle.js
 .vscode
+dist

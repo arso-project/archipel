@@ -1,7 +1,7 @@
 'use strict'
 
 const defaultState = {
-  title: 'Hello',
+  title: 'Hello foo',
   counter: 0
 }
 

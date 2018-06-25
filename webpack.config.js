@@ -1,19 +1,12 @@
-const { DefinePlugin } = require('webpack')
 const nodeExternals = require('webpack-node-externals')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+
 const path = require('path')
-module.exports = (_, argv) => ({
+
+const shared = (_, argv) => ({
   entry: path.normalize(`${__dirname}/app/index.js`),
-  target: 'electron-main',
-  externals: [nodeExternals()],
-  output: {
-    path: path.normalize(`${__dirname}/static`),
-    filename: 'bundle.js',
-    libraryTarget: 'commonjs2'
-  },
-  devtool: 'inline-source-map',
-  node: {
-    __dirname: true
-  },
+  devtool: argv.mode === 'development' ? 'inline-source-map' : false,
+  mode: argv.mode,
   module: {
     rules: [
       {
@@ -30,8 +23,44 @@ module.exports = (_, argv) => ({
     ]
   },
   plugins: [
-    new DefinePlugin({
-      'process.env.NODE_ENV': argv.mode
-    })
   ]
 })
+
+const electronConfig = (_, argv) => {
+  const ret = shared(_, argv)
+  return Object.assign({}, ret, {
+    target: 'electron-main',
+    externals: [nodeExternals()],
+    node: {
+      __dirname: true
+    },
+    output: {
+      path: path.normalize(`${__dirname}/dist/electron`),
+      filename: 'bundle.electron.js',
+      libraryTarget: 'commonjs2'
+    }
+  })
+}
+
+const webConfig = (_, argv) => {
+  const ret = shared(_, argv)
+  return Object.assign({}, ret, {
+    target: 'web',
+    externals: {'./rpc.electron.js': 'function() {}'},
+    output: {
+      path: path.normalize(`${__dirname}/dist/web`),
+      filename: 'bundle.web.js',
+      publicPath: '/'
+    },
+    plugins: [
+      new HtmlWebpackPlugin({
+        template: 'assets/index.html'
+      })
+    ]
+  })
+}
+
+module.exports = [
+  electronConfig,
+  webConfig
+]
