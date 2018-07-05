@@ -10,10 +10,10 @@ var dnode = require('dnode')
 var port = 8080
 var distPath = path.join(__dirname, 'app/dist/web')
 
-function csp (host) {
-  var connectSrcs = ['ws://', 'wss://'].map((h) => h + host).join(' ')
-  return `default-src 'self'; style-src 'unsafe-inline'; connect-src 'self' ${connectSrcs}`
-}
+// function csp (host) {
+//   var connectSrcs = ['ws://', 'wss://'].map((h) => h + host).join(' ')
+//   return `default-src 'self'; style-src 'unsafe-inline'; connect-src 'self' ${connectSrcs}`
+// }
 
 var server = http.createServer((req, res) => {
   var reqUrl = url.parse(req.url)
@@ -43,11 +43,28 @@ var server = http.createServer((req, res) => {
 var ws = websocket.createServer({
   server: server,
   perMessageDeflate: false
+// }, handle)
 }, handle)
 
+ws.on('error', (err) => console.log('WS error', err))
+
+var rpcMulti = require('rpc-multistream')
 function handle (stream, req) {
-  var d = dnode(archipelApi)
-  d.pipe(stream).pipe(d)
+  if (req.url === '/1') {
+    var d = dnode(archipelApi)
+    d.on('remote', (remote) => {
+      // console.log('GOT REMOTE!!!!')
+      // remote.doFoo('woohooo this comes from backend')
+    })
+    d.pipe(stream).pipe(d)
+  }
+  if (req.url === '/2') {
+    var rpc = rpcMulti(archipelApi)
+    rpc.on('methods', (methods) => {
+      console.log('got remote!')
+    })
+    rpc.pipe(stream).pipe(rpc)
+  }
 }
 
 server.listen(port, () => console.log('Server listening on port ' + port))

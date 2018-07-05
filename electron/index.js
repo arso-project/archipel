@@ -47,7 +47,7 @@ app.on('ready', () => {
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(menu))
 
-  rpc(api)
+  rpc(api, win)
 
   if (isDev) {
     win.webContents.openDevTools()

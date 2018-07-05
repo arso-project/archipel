@@ -7,7 +7,7 @@ import ArchipelApp from './src/index.js'
 // Inject required global styles.
 injectGlobal`
   * { box-sizing: border-box; }
-  body { margin: 0; }
+  body { margin: 0; width: 100vw; overflow-x: hidden; }
 `
 
 render(

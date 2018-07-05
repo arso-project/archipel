@@ -80,6 +80,8 @@
     ]
   },
   "dependencies": {
+    "electron-ipc-stream": "^0.2.0",
+    "electron-ipc-webview-stream": "^0.5.1",
     "weak": "^1.0.1"
   }
 }

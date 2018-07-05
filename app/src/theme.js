@@ -1,5 +1,6 @@
 import palx from 'palx'
 import chroma from 'chroma-js'
+import theme from 'rebass'
 
 // const palette = palx('#fa0')
 let primary = '#fd0'
@@ -29,7 +30,9 @@ export const colors = Object.assign({}, flattened, {
   primary2: chroma(primary).darken().hex()
 
 })
+
 export default {
+  ...theme,
   colors,
   palette
 }

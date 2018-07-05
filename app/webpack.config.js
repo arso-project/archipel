@@ -31,7 +31,10 @@ const electronConfig = (argv) => {
   return Object.assign({}, shared(argv), {
     target: 'electron-main',
     // externals: [nodeExternals(), {'./rpc.web.js': 'function() {}'}],
-    externals: [{'./rpc.web.js': 'function() {}'}],
+    externals: [
+      {'./rpc.web.js': 'function() {}'}
+      // {'electron-ipc-webview-stream': "require('electron-ipc-webview-stream')"}
+    ],
     node: {
       __dirname: true
     },
@@ -46,7 +49,11 @@ const electronConfig = (argv) => {
 const webConfig = (argv) => {
   return Object.assign({}, shared(argv), {
     target: 'web',
-    externals: {'./rpc.electron.js': 'function() {}'},
+    externals: [
+      {'./rpc.electron.js': 'function() {}'},
+      {'./stream.electron.js': 'function() {}'},
+      {'electron-ipc-webview-stream': 'require("electron-ipc-webview-stream")'}
+    ],
     output: {
       path: path.normalize(`${__dirname}/dist/web`),
       filename: 'bundle.web.js',

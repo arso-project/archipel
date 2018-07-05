@@ -2,9 +2,8 @@ import { ipcRenderer } from 'electron'
 import dnode from 'dnode/browser.js'
 import thunky from 'thunky'
 
-const d = dnode()
-
-export default function rpc (opts) {
+export default function rpc () {
+  const d = dnode()
   return thunky((cb) => {
     ipcRenderer.send('init')
     ipcRenderer.on('init', () => {

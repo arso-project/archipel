@@ -7,7 +7,7 @@ function initDev (app, mainWin) {
   console.log('Developer mode enabled.')
   win = mainWin
   loadDevtools()
-  watchAndReload()
+  // watchAndReload()
 
   app.on('window-all-closed', () => {
     if (watchProcess) {

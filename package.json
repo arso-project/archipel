@@ -23,7 +23,11 @@
   },
   "dependencies": {
     "dnode": "^1.2.2",
+    "electron-ipc-webview-stream": "^0.5.1",
     "hyper-graph-db": "^0.3.4",
+    "multihyperdb": "0.0.2",
+    "rpc-multistream": "^0.9.7",
+    "through2": "^2.0.3",
     "websocket-stream": "^5.1.2"
   }
 }
