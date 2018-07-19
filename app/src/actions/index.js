@@ -1,7 +1,4 @@
-'use strict'
-import { createRs, fillRs } from '../util.js'
 import rpc from './../api/rpc'
-import rpc2 from './../api/rpc2'
 
 // Simple actions.
 
@@ -10,75 +7,86 @@ export const uiTree = (path, props) => ({ type: 'SET_UI_TREE', path, props })
 
 // Thunky actions.
 
-var run = 0
-export const streamingAction = (str) => (dispatch, getState) => {
-  run++
-  var t0 = performance.now()
-  var buffer = []
-  var rs = createRs()
-  rpc((api) => api.streaming('yeah', fillRs(rs)))
-  console.log('go sr1')
-  var i = 0
-  rs.on('data', (data) => {
-    i++
-    if (i % 1000 === 0) { console.log(i) }
-    buffer.push(data)
+let idx = 0
+export const perftest = (type, id) => (dispatch, getState) => {
+  idx++
+  let run = idx
+  rpc((api) => {
+    console.log(`perftest ${type}-${id} run ${run}: start`)
+    var t0 = performance.now()
+    var i = 0
+    var rs
+    var buffer
+    if (type === 'obj') {
+      rs = api.perftest(id)
+      buffer = []
+    }
+    if (type === 'bin') {
+      rs = api.perftestBin(id)
+      buffer = []
+    }
+    var buflen = 0
+    rs.on('data', (data) => {
+      i++
+      if (type === 'obj') buffer.push(data)
+      if (type === 'bin') {
+        buffer.push(data)
+        buflen = buflen + data.length
+      }
+      // if (i % 1000 === 0) console.log(`perftest ${type}-${id} run ${run}: recv ${i}`)
+    })
+    rs.on('end', () => {
+      var t1 = performance.now()
+      var t = (t1 - t0) / 1000
+      var len
+      if (type === 'obj') len = JSON.stringify(buffer).length
+      if (type === 'bin') {
+        len = buflen
+      }
+      console.log(`perftest ${type}-${id} run ${run}: done, time ${r(t, 2)}s, len ${r(len / 1024 / 1024, 2)}M`)
+      console.log(`${r(i / t, 2)} req/s, ${r((len / t) / 1024, 2)} KB/s`)
+      // console.log(buffer)
+    })
   })
-  rs.on('end', () => {
-    var t1 = performance.now()
-    dispatch({ type: 'SET_TITLE', title: 'rpc1 finished! with ' + buffer.length })
-    console.log('done sr1 ' + run, (t1 - t0) / 1000)
+
+  function r (x, d) {
+    var f = 10 ^ d
+    return Math.round(x * f) / f
+  }
+}
+
+export const perftestBin = () => (dispatch) => {
+  rpc((api) => {
+    var t0 = perfomance.now()
+
   })
 }
 
-var run2 = 0
-export const streamingAction2 = (str) => (dispatch, getState) => {
-  run2++
-  var t0 = performance.now()
-  var buffer = []
-  var rs = createRs()
-  rpc2((api) => api.streaming('yeah', fillRs(rs)))
-  console.log('go sr2')
-  rs.on('data', (data) => buffer.push(data))
-  rs.on('end', () => {
-    var t1 = performance.now()
-    dispatch({ type: 'SET_TITLE', title: 'rpc2 finished! with ' + buffer.length })
-    console.log('done sr2 ' + run2, (t1 - t0) / 1000)
-  })
-}
-
-export const fooAction = (str) => (dispatch) => {
+export const foo = (str) => (dispatch) => {
   rpc((api) => api.foo(str, (err, data) => {
     if (!err) dispatch(setTitle(data))
   }))
 }
 
-export const queryAction = (key, query) => (dispatch) => {
+export const query = (key, query) => (dispatch) => {
   const triples = []
-  const rs = createRs()
-  rpc((api) => api.query(key, query, fillRs(rs)))
-  rs.on('data', (triple) => triples.push(triple))
-  rs.on('end', () => dispatch({ type: 'TRIPLES_LOAD', triples: triples }))
+  rpc((api) => api.query(key, query, (err, rs) => {
+    console.log('got res', err, rs)
+    if (err) return
+    rs.on('data', (data) => console.log('got data', data))
+    rs.on('data', (triple) => triples.push(triple))
+    rs.on('end', () => dispatch({ type: 'TRIPLES_LOAD', triples: triples }))
+  }))
 }
 
-// function Thing (id) {
-//   if (!(this instanceof Thing)) return new Thing(id)
-//   this.id = id
-// }
-
-// Thing.prototype.add = function (triple) {
-//   if (Array.isArray(triple)) return triple.map((t) => this.addProps(t))
-//   if (triple.subject !== this.id) return
-//   this[triple.predicate] = this[triple.predicate] || []
-//   this[triple.predicate].push(triple.object)
-// }
-
-// function add (thing, triple) {
-//   if (Array.isArray(triple)) return triple.map((t) => add(thing, t))
-//   const { subject, predicate, object } = triple
-//   if (subject !== thing.id) return
-//   if (predicate === 'rdf:type') thing.type = fromRdfValue(object)
-//   else {
-//     thing[predicate] = [...(thing[predicate] || []), object]
-//   }
-// }
+export const loadArchives = (x) => (dispatch) => {
+  console.log('load archives')
+  rpc((api) => {
+    console.log('got api')
+    api.archives((err, archives) => {
+      if (err) return
+      console.log('got archives', archives)
+      dispatch({ type: 'ARCHIVES_LOAD', archives: archives })
+    })
+  })
+}

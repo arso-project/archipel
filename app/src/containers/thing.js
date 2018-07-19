@@ -2,6 +2,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { uiTree } from '../actions'
+// import posed, { PoseGroup } from 'react-pose'
 
 import { isThing, isLiteral, fromRdfValue, getPropsFromTree } from '../util'
 import { Box, Flex } from 'rebass'
@@ -68,7 +69,7 @@ const RootThing = ({ things, byType }) => {
   )
 }
 
-const Thing = ({ things, thing, level, predicate, path, tree, setUiTree }) => {
+const Thing = ({ things, thing, level, predicate, path, tree, setUiTree, hostRef, style }) => {
   const click = (e) => {
     e.stopPropagation()
     setUiTree(path, {_show: !isVisible()})
@@ -76,8 +77,7 @@ const Thing = ({ things, thing, level, predicate, path, tree, setUiTree }) => {
 
   const isVisible = () => {
     let props = getPropsFromTree(tree, path)
-    if (props && props._show) return true
-    else return false
+    return props && props._show
   }
 
   const visible = isVisible()
@@ -85,8 +85,8 @@ const Thing = ({ things, thing, level, predicate, path, tree, setUiTree }) => {
   if (!thing || !(typeof thing === 'object')) return '<div>CANNOT SHOW!</div>'
   let props = Object.keys(thing)
   const Head = <Flex>{predicate ? <Pred>{predicate}</Pred> : ''}<Type>{thing.type}</Type><Id>{thing.id}</Id></Flex>
-  let Lits = ''
-  let Rels = ''
+  let Lits = null
+  let Rels = null
 
   if (visible) {
     props = props.filter((p) => ['id', 'type'].indexOf(p) === -1)
@@ -98,17 +98,19 @@ const Thing = ({ things, thing, level, predicate, path, tree, setUiTree }) => {
     // let filterRels = 'po:contains'
     // rels = rels.filter((key) => !key.startsWith(filterRels))
 
-    Lits = literals.map((key, idx) => <Flex ml={2} key={idx}><Prop>{key}</Prop>{thing[key].map((x) => <Val value={x} />)}</Flex>)
+    Lits = literals.map((key, idx) => (
+      <Flex ml={2} key={idx}>
+        <Prop>{key}</Prop>
+        { thing[key].map((x, i) => <Val value={x} key={i} />) }
+      </Flex>
+    ))
 
-    Rels = rels.map((pred, idx1) => {
-      // let head = <Pred>{pred}</Pred>
-      let items = thing[pred].map((id, idx2) => {
-        const newPath = [...path, id]
-        return <ThingC key={idx2} thing={things[id]} level={level + 1} path={newPath} predicate={pred} />
+    Rels = rels.reduce((items, pred) => {
+      let add = thing[pred].map((id, idx2) => {
+        return <ThingC key={pred + '/' + id} thing={things[id]} level={level + 1} path={[...path, id]} predicate={pred} />
       })
-      // return <li key={idx1}>{head}<Ul>{items}</Ul></li>
-      return <Ul key={idx1}>{items}</Ul>
-    })
+      return items.concat(add)
+    }, [])
   }
 
   const c = chroma.scale(['pink', 'grey'])
@@ -120,13 +122,21 @@ const Thing = ({ things, thing, level, predicate, path, tree, setUiTree }) => {
     cursor: pointer;
   `
   return (
-    <Wrap p={1} ml={2} my={1} onClick={click}>
-      {Head}
-      {Lits}
-      {Rels}
-    </Wrap>
+    <div ref={hostRef} style={style}>
+      <Wrap p={1} ml={2} my={1} onClick={click} ref={hostRef}>
+        {Head}
+        {Lits}
+        {Rels}
+      </Wrap>
+    </div>
   )
 }
+
+// const posedOpts = {
+//   enter: { delayChildren: 500, height: 'auto', flip: true },
+//   exit: { delay: 500, height: 0 }
+// }
+// const PosedThing = posed(Thing)(posedOpts)
 
 const RootThingC = connect(mapStateToProps, mapDispatchToProps)(RootThing)
 const ThingC = connect(mapStateToProps, mapDispatchToProps)(Thing)

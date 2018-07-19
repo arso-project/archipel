@@ -17,7 +17,8 @@ const shared = (argv) => ({
           presets: ['env', 'react'],
           plugins: [
             'transform-object-rest-spread',
-            'transform-es2015-modules-commonjs'
+            'transform-es2015-modules-commonjs',
+            'syntax-dynamic-import'
           ]
         }
       }
@@ -32,8 +33,6 @@ const electronConfig = (argv) => {
     target: 'electron-main',
     // externals: [nodeExternals(), {'./rpc.web.js': 'function() {}'}],
     externals: [
-      {'./rpc.web.js': 'function() {}'}
-      // {'electron-ipc-webview-stream': "require('electron-ipc-webview-stream')"}
     ],
     node: {
       __dirname: true
@@ -50,9 +49,7 @@ const webConfig = (argv) => {
   return Object.assign({}, shared(argv), {
     target: 'web',
     externals: [
-      {'./rpc.electron.js': 'function() {}'},
-      {'./stream.electron.js': 'function() {}'},
-      {'electron-ipc-webview-stream': 'require("electron-ipc-webview-stream")'}
+      {'electron': 'function() {}'}
     ],
     output: {
       path: path.normalize(`${__dirname}/dist/web`),

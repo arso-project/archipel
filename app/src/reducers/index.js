@@ -8,6 +8,7 @@ const defaultState = {
     all: {},
     byType: {}
   },
+  archives: [],
   ui: {
     tree: []
   }
@@ -15,11 +16,13 @@ const defaultState = {
 
 const ArchipelReducer = (state = defaultState, action) => {
   switch (action.type) {
+
     case 'SET_TITLE':
       return {
         ...state,
         title: action.title
       }
+
     case 'TRIPLES_LOAD':
       const newOrChangedThings = triplesToThings(state.things.all, action.triples)
       if (!newOrChangedThings) return state
@@ -32,12 +35,20 @@ const ArchipelReducer = (state = defaultState, action) => {
           byType: { ...state.things.byType, ...byType }
         }
       }
+
+    case 'ARCHIVES_LOAD':
+      return {
+        ...state,
+        archives: action.archives
+      }
+
     case 'SET_UI_TREE':
       const newTree = mapPathPropOnTree(state.ui.tree, action.path, action.props)
       return {
         ...state,
         ui: { ...state.ui, tree: { ...state.ui.tree, ...newTree } }
       }
+
     default:
       return state
   }

@@ -1,123 +1,96 @@
-// exports apis
-var stream = require('stream')
-var through = require('through2').obj
+var rpc = require('rpc-multistream')
 var store = require('./hyperstore')
+var stream = require('stream')
+var path = require('path')
+var fs = require('fs')
+
+// Helpers.
+var rs = rpc.syncReadStream
+var ws = require('rpc-multistream').syncWriteStream
+var ds = require('rpc-multistream').syncStream
+var rso = (fn, opts) => {
+  opts = opts || {}
+  opts.objectMode = true
+  return rs(fn, opts)
+}
 
 var Store = store()
 
-// var through = (fn) => through2.obj(function (chunk, enc, next) {
-//   var push = (newChunk) => {
-//     this.push(newChunk)
-//     next()
-//   }
-//   fn(chunk, push)
-// })
-
-var archiveList = (cb) => {
-  var archives = [{
-    drive: '',
-    graph: '',
-    title: ''
-  }]
-  cb(archives)
-}
-
-var archiveAdd = (drive, graph, cb) => {
-}
-
-var archiveCreate = (title, cb) => {
-  var archive = null
-  cb(null, archive)
-}
-
-var fileRead = (key, path, cb) => {
-
-}
-
-var fileWrite = (key, path, data, cb) => {
-
-}
-
-var tripleQuery = (key, query, cb) => {
-  // if (key === '*')
-  // else
-  cb()
-}
-
-var tripleWrite = (key, triples, cb) => {
-
-}
-
-var api = {}
-
-api.query = (key, q, cb) => {
-  Store.query(key, q).pipe(streamInto(cb))
-}
-
-api.foo = (str, cb) => {
+function foo (str, cb) {
   str = str.toUpperCase()
   cb(null, str)
 }
 
-var val = {}
-for (var k = 0; k < 50; k++) {
-  val['x' + k] = 'abc'.repeat(k)
+function perftestBin () {
+  return fs.createReadStream(path.join(__dirname, '..', '100M.bin'))
 }
-api.streaming = (q, cb) => {
-  var ws = streamInto(cb)
-  for (var i = 0; i <= 10000; i++) {
-    ws.write({i: val})
-  }
-  ws.end()
-  // stream delayed file
-  // var ws = streamInto(cb)
-  // var first = true
-  // require('fs').createReadStream('./test').pipe(through(function (chunk, enc, next) {
-  //   chunk.toString().split('\n').filter((l) => l).map((l) => this.push(q + ' ' + l))
-  //   next()
-  // })).pipe(through(function (chunk, enc, next) {
-  //   var push = (chunk) => this.push(chunk) && next()
-  //   if (first) {
-  //     first = false
-  //     push(chunk)
-  //   } else {
-  //     setTimeout(() => push(chunk), 1000)
-  //   }
-  // })).pipe(ws)
 
-  // let i = 0
-  // let interval = setInterval(() => {
-  //   if (i === 10) {
-  //     ws.end()
-  //     clearInterval(interval)
-  //   } else {
-  //     i++
-  //     ws.write(q + ' / ' + i)
-  //   }
-  // }, 1000)
+function perftest (id) {
+  console.log(`perftest ${id}: start`)
+  var s = new stream.Readable({objectMode: true, read () {}})
+  _fillFeed(id, s)
+  return s
+
+  function _fillFeed (id, s) {
+    var val = {}
+    for (var k = 0; k < 10; k++) {
+      val['x' + k] = 'abc'.repeat(k)
+    }
+    var i = 0
+    var max
+    if (id === 1) max = 1000
+    if (id === 2) max = 100
+    if (id === 3) max = 100000
+
+    worker()
+
+    function worker () {
+      if (i === max) {
+        s.emit('end')
+        console.log(`perftest ${id}: end`)
+      } else {
+        i++
+        var testval
+        if (id === 1) {
+          testval = []
+          for (var j = 0; j < 10; j++) {
+            testval[j] = val
+          }
+          s.push(testval)
+        } else if (id === 2) {
+          testval = []
+          for (var k = 0; k < 100; k++) {
+            testval[k] = val
+          }
+          s.push(testval)
+        } else if (id === 3) {
+          s.push(i)
+        }
+        setImmediate(worker)
+        // if (i % 1000 === 0) console.log(`perftest ${id}: push ${i}`)
+      }
+    }
+  }
+}
+
+var api = {
+
+  // query: string, string -> obj read stream
+  // query: rso(Store.query.bind(Store)),
+  query: (key, q, cb) => cb(null, Store.query(key, q)),
+
+  // archives: callback -> array
+  archives: (cb) => cb(Store.archives()),
+
+  // foo: string, callback -> string
+  foo: (str, cb) => cb(foo(str)),
+
+  // perftest: id -> obj read stream
+  perftest: rso(perftest),
+
+  // perftestBin: -> bin read stream
+  perftestBin: rs(perftestBin)
+
 }
 
 module.exports = api
-
-// module.exports = {
-//   // archiveList,
-//   // archiveAdd,
-//   // archiveCreate,
-//   // fileRead,
-//   // fileWrite,
-//   // tripleQuery,
-//   // tripleWrite,
-//   foo,
-//   streaming
-// }
-
-function streamInto (cb) {
-  var ws = new stream.Writable({objectMode: true})
-  ws._write = function (chunk, enc, next) {
-    cb(null, chunk)
-    next()
-  }
-  ws.on('finish', () => cb(null, null))
-  ws.on('error', (err) => cb(err))
-  return ws
-}

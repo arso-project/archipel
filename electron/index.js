@@ -5,7 +5,6 @@ const path = require('path')
 const defaultMenu = require('electron-default-menu')
 
 const rpc = require('./lib/rpc.js')
-const api = require('./../src/api.js')
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -47,7 +46,7 @@ app.on('ready', () => {
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(menu))
 
-  rpc(api, win)
+  rpc(win)
 
   if (isDev) {
     win.webContents.openDevTools()
