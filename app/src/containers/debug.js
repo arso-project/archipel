@@ -1,7 +1,8 @@
 'use strict'
 
 import { connect } from 'react-redux'
-import { setTitle, query, foo, perftest } from '../actions'
+import { foo, perftest } from '../actions/debug.js'
+import { setTitle, query } from '../actions/index.js'
 import App from '../components/debug'
 
 const mapStateToProps = (state, props) => {

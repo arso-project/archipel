@@ -11,16 +11,45 @@ const shared = (argv) => ({
     rules: [
       {
         test: /\.js$/,
-        exclude: /(node_modules)/,
-        loader: 'babel-loader',
-        query: {
-          presets: ['env', 'react'],
-          plugins: [
-            'transform-object-rest-spread',
-            'transform-es2015-modules-commonjs',
-            'syntax-dynamic-import'
-          ]
+        // exclude: /(node_modules)/,
+        include: [
+          path.resolve(__dirname, 'src'),
+          path.resolve(__dirname, 'index.js'),
+          /node_modules\/archipel-ui/
+        ],
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env', '@babel/preset-react'],
+            plugins: [
+              '@babel/plugin-proposal-object-rest-spread',
+              '@babel/plugin-transform-modules-commonjs',
+              '@babel/plugin-syntax-dynamic-import'
+            ],
+            babelrc: true
+          }
         }
+      },
+      {
+        test: /\.pcss$/,
+        include: [
+          path.resolve(__dirname, 'src'),
+          /node_modules\/archipel-ui/
+        ],
+        use: [
+          {
+            loader: 'style-loader'
+          },
+          {
+            loader: 'css-loader',
+            options: {
+              importLoaders: 1
+            }
+          },
+          {
+            loader: 'postcss-loader'
+          }
+        ]
       }
     ]
   },

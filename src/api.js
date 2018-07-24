@@ -1,18 +1,7 @@
-var rpc = require('rpc-multistream')
 var store = require('./hyperstore')
 var stream = require('stream')
 var path = require('path')
 var fs = require('fs')
-
-// Helpers.
-var rs = rpc.syncReadStream
-var ws = require('rpc-multistream').syncWriteStream
-var ds = require('rpc-multistream').syncStream
-var rso = (fn, opts) => {
-  opts = opts || {}
-  opts.objectMode = true
-  return rs(fn, opts)
-}
 
 var Store = store()
 
@@ -86,10 +75,13 @@ var api = {
   foo: (str, cb) => cb(foo(str)),
 
   // perftest: id -> obj read stream
-  perftest: rso(perftest),
+  perftest: (id, cb) => {
+    console.log(arguments)
+    cb(perftest(id))
+  },
 
   // perftestBin: -> bin read stream
-  perftestBin: rs(perftestBin)
+  perftestBin: (cb) => cb(perftestBin())
 
 }
 

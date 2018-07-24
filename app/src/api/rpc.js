@@ -1,4 +1,4 @@
-import rpc from 'rpc-multistream'
+import hype from 'hyperpc'
 import thunky from 'thunky'
 import isElectron from 'is-electron-renderer'
 import websocket from 'websocket-stream'
@@ -12,11 +12,8 @@ const archipelRpc = thunky((cb) => {
   var host
   if (isElectron) {
     import('electron').then(({ipcRenderer}) => {
-      console.log('this is electron!')
       ipcRenderer.send('rpc')
       ipcRenderer.on('rpc', (ev, port) => {
-        console.log('got ws port: ' + port)
-        console.log(port)
         create('ws://localhost:' + port + '/rpc', cb)
       })
     })
@@ -26,10 +23,10 @@ const archipelRpc = thunky((cb) => {
 })
 
 function create (url, cb) {
-  const rpcStream = rpc(clientApi, {debug: false})
+  const rpc = hype(clientApi, {debug: false})
   const ws = websocket(url)
-  rpcStream.pipe(ws).pipe(rpcStream)
-  rpcStream.on('methods', (remote) => {
+  rpc.pipe(ws).pipe(rpc)
+  rpc.on('remote', (remote) => {
     console.log('renderer: got remote')
     cb(remote)
   })

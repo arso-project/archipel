@@ -10,13 +10,13 @@ const defaultState = {
   },
   archives: [],
   ui: {
-    tree: []
+    tree: [],
+    screen: 'main'
   }
 }
 
 const ArchipelReducer = (state = defaultState, action) => {
   switch (action.type) {
-
     case 'SET_TITLE':
       return {
         ...state,
@@ -47,6 +47,12 @@ const ArchipelReducer = (state = defaultState, action) => {
       return {
         ...state,
         ui: { ...state.ui, tree: { ...state.ui.tree, ...newTree } }
+      }
+
+    case 'SET_UI_SCREEN':
+      return {
+        ...state,
+        ui: { ...state.ui, screen: action.screen }
       }
 
     default:

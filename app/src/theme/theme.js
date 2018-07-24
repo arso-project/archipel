@@ -1,10 +1,11 @@
 import palx from 'palx'
 import chroma from 'chroma-js'
-import theme from 'rebass'
+import { theme } from 'rebass'
+
+console.log(theme)
 
 // const palette = palx('#fa0')
-let primary = '#fd0'
-primary = '#2c1357'
+const primary = '#1d6f6a'
 const palette = palx(primary)
 
 const flattened = Object.keys(palette)
@@ -27,12 +28,20 @@ export const colors = Object.assign({}, flattened, {
   black: '#000',
   white: '#fff',
   primary: primary,
-  primary2: chroma(primary).darken().hex()
+  primary_dark: chroma(primary).darken().hex()
 
 })
+
+export const fonts = {
+  ...theme.fonts,
+  sans: '"Inter UI", sans-serif'
+}
+
+fonts[0] = fonts.sans
 
 export default {
   ...theme,
   colors,
-  palette
+  palette,
+  fonts
 }

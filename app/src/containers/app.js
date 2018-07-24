@@ -8,7 +8,8 @@ const mapStateToProps = (state, props) => {
   return {
     title: state.title,
     archives: state.archives,
-    theme: props.theme
+    theme: props.theme,
+    screen: state.ui.screen
   }
 }
 

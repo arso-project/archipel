@@ -1,5 +1,7 @@
 import React from 'react'
-import { Button, Box, Heading, Input } from '../base'
+import { SquareButton, Box, Heading, Input } from '../base'
+
+import { Card } from 'archipel-ui'
 
 class Main extends React.Component {
   render () {
@@ -9,8 +11,13 @@ class Main extends React.Component {
         <Heading>Archipel: Somoco</Heading>
         <Heading py={3} fontSize={4}>Select Archive</Heading>
         <ul>
-          { archives.map((a, i) => <li key={i}><a href={'/' + a.key}>{a.title}</a></li>)}
+          { archives && archives.map((a, i) => <li key={i}><a href={'/' + a.key}>{a.title}</a></li>)}
         </ul>
+        <SquareButton>Create Archive</SquareButton>
+        <p>
+          Test
+          <Card Title={'Hello!'}>Foobar</Card>
+        </p>
       </Box>
     )
   }

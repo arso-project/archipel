@@ -1,4 +1,4 @@
-var rpc = require('rpc-multistream')
+var rpc = require('hyperpc')
 var ws = require('websocket-stream')
 var inherits = require('inherits')
 var events = require('events')
@@ -31,7 +31,7 @@ function ArchipelRpc (opts) {
 
   function handle (stream) {
     var rpcStream = rpc(api, {debug: true})
-    rpcStream.on('methods', (methods) => {
+    rpcStream.on('remote', (methods) => {
       self.remote = methods
       self.emit('remote')
     })

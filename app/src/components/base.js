@@ -19,6 +19,26 @@ export const CustomButton = styled(R.Button)`
   border: 3px solid red;
 `
 
+export const SquareButton = styled(R.Button)`
+  width: 100px;
+  height: 100px;
+  color: white;
+  background-color: black;
+  border-radius: 0;
+  cursor: pointer;
+  border: 4px solid black;
+  &:hover {
+    color: #f66;
+    border: 4px solid #900;
+  }
+  &:focus {
+    outline: 0;
+    color: red;
+    box-shadow: none;
+    border: 4px solid red;
+  }
+`
+
 // Rebass default re-exports.
 // List created with:
 // console.log(Object.keys(R).sort().map((k) => `export const ${k} = R.${k}`).join('\n'))

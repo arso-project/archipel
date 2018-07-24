@@ -12,10 +12,12 @@ import { Provider as ThemeProvider } from 'rebass'
 
 import ArchipelReducer from './reducers'
 import AppContainer from './containers/app'
-import theme from './theme'
+import theme from './theme/theme.js'
 
 let composeFunc = compose
 let middleware = [thunk]
+
+console.log(theme)
 
 if (process.env.NODE_ENV === 'development') {
   middleware = [...middleware, logger]
