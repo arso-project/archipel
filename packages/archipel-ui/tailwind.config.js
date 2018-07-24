@@ -47,18 +47,25 @@ let colors = {
   'transparent': 'transparent',
 
   'black': '#22292f',
-  'grey-darkest': '#3d4852',
-  'grey-darker': '#606f7b',
-  'grey-dark': '#8795a1',
-  'grey': '#b8c2cc',
-  'grey-light': '#dae1e7',
-  'grey-lighter': '#f1f5f8',
-  'grey-lightest': '#f8fafc',
-  'white': '#ffffff',
 
-  'red-darkest': '#3b0d0c',
-  'red-darker': '#621b18',
-  'red-dark': '#cc1f1a',
+  // 'grey-darkest': '#3d4852',
+  // 'grey-darker': '#606f7b',
+  // 'grey-dark': '#8795a1',
+  // 'grey': '#b8c2cc',
+  // 'grey-light': '#dae1e7',
+  // 'grey-lighter': '#f1f5f8',
+  // 'grey-lightest': '#f8fafc',
+
+  'grey-darkest': '#333',
+  'grey-darker': '#555',
+  'grey-dark': '#777',
+  'grey': '#999',
+  'grey-light': '#ccc',
+  'grey-lighter': '#eee',
+  'grey-lightest': '#f0f0f0',
+
+  'white': '#fff',
+
   'red': '#e3342f',
   'red-light': '#ef5753',
   'red-lighter': '#f9acaa',
@@ -948,5 +955,9 @@ module.exports = {
     important: false,
     separator: ':',
   },
+
+  experiments: {
+    shadowLookup: true
+  }
 
 }
