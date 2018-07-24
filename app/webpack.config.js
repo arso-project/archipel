@@ -1,11 +1,12 @@
 // const nodeExternals = require('webpack-node-externals')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 const path = require('path')
 
 const shared = (argv) => ({
   entry: path.normalize(`${__dirname}/index.js`),
-  devtool: argv.mode === 'development' ? 'inline-source-map' : false,
+  devtool: argv.mode === 'development' ? 'source-map' : false,
   mode: argv.mode,
   module: {
     rules: [
@@ -37,18 +38,11 @@ const shared = (argv) => ({
           /node_modules\/archipel-ui/
         ],
         use: [
-          {
-            loader: 'style-loader'
+          { loader: 'style-loader' },
+          { loader: 'css-loader',
+            options: { importLoaders: 1 }
           },
-          {
-            loader: 'css-loader',
-            options: {
-              importLoaders: 1
-            }
-          },
-          {
-            loader: 'postcss-loader'
-          }
+          { loader: 'postcss-loader' }
         ]
       }
     ]
@@ -88,7 +82,13 @@ const webConfig = (argv) => {
     plugins: [
       new HtmlWebpackPlugin({
         template: 'assets/index.html'
-      })
+      }),
+      new CopyWebpackPlugin([
+        {
+          from: 'assets/fonts',
+          to: 'fonts'
+        }
+      ])
     ]
   })
 }

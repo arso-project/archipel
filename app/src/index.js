@@ -8,16 +8,11 @@ import { Provider as StoreProvider } from 'react-redux'
 import thunk from 'redux-thunk'
 import logger from 'redux-logger'
 
-import { Provider as ThemeProvider } from 'rebass'
-
 import ArchipelReducer from './reducers'
 import AppContainer from './containers/app'
-import theme from './theme/theme.js'
 
 let composeFunc = compose
 let middleware = [thunk]
-
-console.log(theme)
 
 if (process.env.NODE_ENV === 'development') {
   middleware = [...middleware, logger]
@@ -31,9 +26,7 @@ const store = createStore(
 
 const ArchipelApp = () => (
   <StoreProvider store={store}>
-    <ThemeProvider theme={theme}>
-      <AppContainer theme={theme} />
-    </ThemeProvider>
+    <AppContainer />
   </StoreProvider>
 )
 
