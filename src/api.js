@@ -66,10 +66,10 @@ var api = {
 
   // query: string, string -> obj read stream
   // query: rso(Store.query.bind(Store)),
-  query: (key, q, cb) => cb(null, Store.query(key, q)),
+  query: (key, q, cb) => Store.query(key, q, cb),
 
   // archives: callback -> array
-  archives: (cb) => cb(Store.archives()),
+  archives: (cb) => Store.archives(cb),
 
   // foo: string, callback -> string
   foo: (str, cb) => cb(foo(str)),

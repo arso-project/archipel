@@ -3,11 +3,11 @@ import React from 'react'
 import MainContent from './ui/main'
 
 const Header = ({children}) => (
-  <div className='p-2 bg-dark text-bright text-sm w-full h-8'>{children}</div>
+  <div className='p-2 bg-dark text-bright text-xs w-full h-8 flex justify-between'>{children}</div>
 )
 
 const Footer = ({children}) => (
-  <div className='p-2 bg-dark text-bright text-sm w-full h-8'>{children}</div>
+  <div className='p-2 bg-dark text-bright text-xs w-full h-8'>{children}</div>
 )
 
 class App extends React.Component {
@@ -15,10 +15,15 @@ class App extends React.Component {
     this.props.loadArchives()
   }
   render () {
+    const { archives } = this.props
     return <div className='h-screen flex flex-col font-sans'>
-      <Header>Header</Header>
+      <Header>
+        <div className=''>Header</div>
+        <div className='text-orange font-bold'>Archipel: Somoco</div>
+        <div className=''>Choose Workspace</div>
+      </Header>
       <div className='flex-1'>
-        <MainContent />
+        <MainContent archives={archives} />
       </div>
       <Footer>Footer</Footer>
     </div>

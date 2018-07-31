@@ -33,9 +33,10 @@ Hyperstore.prototype._ready = function (cb) {
   })
 }
 
-Hyperstore.prototype.query = function (key, q) {
+Hyperstore.prototype.query = function (key, q, cb) {
   if (!key) key = Object.keys(this.dbs)[0]
-  return this.dbs[key].graph.getStream(q)
+  if (!this.dbs[key]) cb(new Error(`DB ${key} not found.`))
+  cb(null, this.dbs[key].graph.getStream(q))
 }
 
 Hyperstore.prototype.archives = function (cb) {
@@ -45,8 +46,7 @@ Hyperstore.prototype.archives = function (cb) {
       ret.push({ key: key, title: self.dbs[key].title })
       return ret
     }, [])
-    console.log('load archives', archives)
-    if (cb) cb(null, archives)
+    cb(null, archives)
   })
 }
 

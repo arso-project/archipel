@@ -1,8 +1,9 @@
 'use strict'
 
-const { app, session, shell, BrowserWindow, Menu } = require('electron')
+// const { app, session, shell, BrowserWindow, Menu } = require('electron')
+const { app, BrowserWindow, Menu } = require('electron')
 const path = require('path')
-const defaultMenu = require('electron-default-menu')
+// const defaultMenu = require('electron-default-menu')
 
 const rpc = require('./lib/rpc.js')
 
@@ -10,7 +11,7 @@ const isDev = process.env.NODE_ENV === 'development'
 
 const pathPrefix = process.env.ARCHIPEL_APP_PATH || isDev ? path.join(__dirname, '../app') : __dirname
 
-const menu = defaultMenu(app, shell)
+// const menu = defaultMenu(app, shell)
 // menu[menu.length - 1].submenu.push({
 //   label: 'Doctor',
 //   click: () => {
@@ -44,7 +45,8 @@ app.on('ready', () => {
   }
   win.loadURL(`file://${pathPrefix}/assets/index.html`)
 
-  Menu.setApplicationMenu(Menu.buildFromTemplate(menu))
+  // Menu.setApplicationMenu(Menu.buildFromTemplate(menu))
+  Menu.setApplicationMenu(null)
 
   rpc(win)
 

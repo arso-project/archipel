@@ -20,7 +20,11 @@ function ArchipelRpc (opts) {
       server: opts.server ? opts.server : null
     }
     this.ws = ws.createServer(wsOpts, handleWs)
-    this.ws.on('error', (err) => console.log('ws error', err))
+    this.ws.on('error', (err) => console.log('ws server: error', err))
+    this.ws.on('connection', function (socket) {
+      socket.on('close', (err) => console.log('ws socket: client closed connection', err))
+      socket.on('error', (err) => console.log('ws socket: error', err))
+    })
   }
 
   function handleWs (stream, req) {
@@ -30,6 +34,7 @@ function ArchipelRpc (opts) {
   }
 
   function handle (stream) {
+    stream.on('error', (err) => console.log('ws stream: error', err))
     var rpcStream = rpc(api, {debug: true})
     rpcStream.on('remote', (methods) => {
       self.remote = methods

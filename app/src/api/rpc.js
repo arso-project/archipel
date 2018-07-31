@@ -7,9 +7,7 @@ const clientApi = {
   foo: (bar, cb) => cb(null, bar.toUpper() + ' from client!!')
 }
 
-const archipelRpc = thunky((cb) => {
-  var getStream
-  var host
+const rpc = thunky((cb) => {
   if (isElectron) {
     import('electron').then(({ipcRenderer}) => {
       ipcRenderer.send('rpc')
@@ -23,13 +21,14 @@ const archipelRpc = thunky((cb) => {
 })
 
 function create (url, cb) {
-  const rpc = hype(clientApi, {debug: false})
   const ws = websocket(url)
+  const rpc = hype(clientApi, {debug: false})
+
+  ws.on('error', (err) => console.log('ws error', err))
+  window.addEventListener('beforeunload', () => ws.close())
+
   rpc.pipe(ws).pipe(rpc)
-  rpc.on('remote', (remote) => {
-    console.log('renderer: got remote')
-    cb(remote)
-  })
+  rpc.on('remote', (remote) => cb(remote))
 }
 
-export default archipelRpc
+export default rpc

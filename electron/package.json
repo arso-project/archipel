@@ -6,14 +6,6 @@
   "description": "Archipel Desktop App",
   "author": "Archipel:Somoco Team",
   "main": "index.js",
-  "devDependencies": {
-    "devtron": "^1.4.0",
-    "electron": "^2.0.2",
-    "electron-builder": "^20.15.1",
-    "electron-default-menu": "^1.0.1",
-    "electron-devtools-installer": "^2.2.4",
-    "gaze": "^1.1.3"
-  },
   "scripts": {
     "start": "NODE_ENV=development electron .",
     "build": "npm run build:app && npm run build:main",
@@ -25,6 +17,20 @@
     "dist": "npm run build && npm run dist:all",
     "dist:os": "electron-builder",
     "dist:all": "electron-builder --linux --mac --win"
+  },
+  "dependencies": {
+    "electron-ipc-stream": "^0.2.0",
+    "electron-ipc-webview-stream": "^0.5.1",
+    "find-free-port": "^2.0.0",
+    "weak": "^1.0.1"
+  },
+  "devDependencies": {
+    "devtron": "^1.4.0",
+    "electron": "^2.0.2",
+    "electron-builder": "^20.15.1",
+    "electron-default-menu": "^1.0.1",
+    "electron-devtools-installer": "^2.2.4",
+    "gaze": "^1.1.3"
   },
   "build": {
     "files": [
@@ -78,11 +84,5 @@
         ]
       }
     ]
-  },
-  "dependencies": {
-    "electron-ipc-stream": "^0.2.0",
-    "electron-ipc-webview-stream": "^0.5.1",
-    "find-free-port": "^2.0.0",
-    "weak": "^1.0.1"
   }
 }
