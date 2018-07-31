@@ -2,6 +2,7 @@ var hypergraph = require('hyper-graph-db')
 var thunky = require('thunky')
 var events = require('events')
 var inherits = require('inherits')
+var path = require('path')
 
 // var multi = require('multihyperdb')
 // var opts = {
@@ -10,7 +11,7 @@ var inherits = require('inherits')
 // }
 // var Multi = multi(opts)
 
-var dbPath = '/home/gaunab/hyper-readings/testlist1.db'
+var dbPath = path.join(__dirname, 'db/testlist1.db')
 
 function Hyperstore (opts) {
   if (!(this instanceof Hyperstore)) return new Hyperstore(opts)
