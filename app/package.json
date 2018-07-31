@@ -11,7 +11,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "archipel-ui": "gitlab:archipel-somoco/archipel-ui#master",
+    "archipel-ui": "gitlab:archipel-somoco/archipel-ui#c640d86faebaf76371e95f6bc85beafe5a039a4b",
     "hyperpc": "^1.0.1",
     "is-electron-renderer": "^2.0.1",
     "react": "^16.4.0",
