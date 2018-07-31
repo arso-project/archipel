@@ -6,11 +6,11 @@
   "description": "Archipel Desktop App",
   "author": "Archipel:Somoco Team",
   "scripts": {
-    "setup": "npm install && cd app && npm install && cd ../electron && npm install",
-    "start": "NODE_ENV=development node server.js",
+    "setup": "npm install && cd app; npm install && cd ../electron; npm install && cd ../server; npm install",
+    "server": "cd server; ARCHIPEL_STATIC_PATH=../app/dist/web npm run start",
     "electron": "cd electron; NODE_ENV=development npm run start",
-    "dev": "npm-run-all -p watch start electron",
     "watch": "cd app; npm run watch",
+    "dev": "NODE_ENV=development npm-run-all -p watch server electron",
     "lint": "standard"
   },
   "standard": {
@@ -21,15 +21,5 @@
     "opn": "^5.3.0",
     "standard": "^11.0.1",
     "tape": "^4.9.1"
-  },
-  "dependencies": {
-    "duplexify": "^3.6.0",
-    "hyper-graph-db": "^0.3.4",
-    "hyperpc": "^1.0.1",
-    "is-stream": "^1.1.0",
-    "multihyperdb": "0.0.2",
-    "pumpify": "^1.5.1",
-    "through2": "^2.0.3",
-    "websocket-stream": "^5.1.2"
   }
 }

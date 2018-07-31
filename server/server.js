@@ -2,10 +2,16 @@ var http = require('http')
 var url = require('url')
 var path = require('path')
 var fs = require('fs')
-var rpc = require('./src/rpc.js')
+
+var rpc = require('./rpc')
 
 var port = 8080
-var distPath = path.join(__dirname, 'app/dist/web')
+var distPath = process.env.ARCHIPEL_STATIC_PATH
+
+if (!distPath || !fs.existsSync(distPath)) {
+  console.error('ARCHIPEL_STATIC_PATH enviornment variable not set.')
+  process.exit(1)
+}
 
 // function csp (host) {
 //   var connectSrcs = ['ws://', 'wss://'].map((h) => h + host).join(' ')

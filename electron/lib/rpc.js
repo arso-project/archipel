@@ -1,6 +1,7 @@
-var rpc = require('../../src/rpc.js')
 var fp = require('find-free-port')
 var ipcMain = require('electron').ipcMain
+
+var rpc = require('../../server').rpc
 
 module.exports = function (win) {
   fp(5000, (err, port) => {
