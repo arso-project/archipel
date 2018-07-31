@@ -19,7 +19,6 @@ export function proplist (props, classes, exclude) {
     if (exclude.indexOf(prop) !== -1) list[prop] = props[prop]
     return list
   }, {})
-  console.log(props, list)
   list.className = className
   return list
 }

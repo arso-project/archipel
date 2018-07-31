@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 
-import { Div, Button, Heading, Card } from '../src/index.js'
+import { Button, Heading, Card } from '../src/index.js'
 
 import '../tailwind.pcss'
 
@@ -14,7 +14,7 @@ const App = () => (
     <Heading>Styleguide</Heading>
     <Button>Hello, world!</Button>
     <Hr />
-    <Div s='flex flex-wrap'>
+    <div className='flex flex-wrap'>
       <Card s='max-w-sm m-2' Title='An example goes here'>{lorem}</Card>
       <Card s='max-w-sm m-2' Title='An example goes here'>{lorem}</Card>
       <Card s='max-w-sm m-2' Title='An example goes here'>{lorem}</Card>
@@ -24,7 +24,7 @@ const App = () => (
       >
         {lorem}
       </Card>
-    </Div>
+    </div>
   </div>
 )
 

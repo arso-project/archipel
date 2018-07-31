@@ -1,7 +1,12 @@
 .btn {
-  @apply border-4 border-black px-3 py-2 text-center bg-black text-white;
+  @apply border-2 border-black px-3 py-2 text-center bg-black text-white;
 }
 
 .btn:hover {
-  @apply bg-grey-darker;
+  /* @apply text-red bg-grey-lighter; */
+  @apply text-red-light;
+}
+
+.btn:focus {
+  @apply outline-none border-red;
 }

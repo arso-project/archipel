@@ -4,8 +4,6 @@ import commonjs from 'rollup-plugin-commonjs'
 import replace from 'rollup-plugin-replace'
 import sourcemaps from 'rollup-plugin-sourcemaps'
 import postcss from 'rollup-plugin-postcss'
-import postcssImport from 'postcss-import'
-import tailwindcss from 'tailwindcss'
 import serve from 'rollup-plugin-serve'
 import livereload from 'rollup-plugin-livereload'
 
@@ -17,7 +15,6 @@ export default {
     sourcemap: true
   },
   watch: {
-    chokidar: true
   },
   plugins: [
     postcss({
