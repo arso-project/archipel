@@ -1,12 +1,15 @@
 import React from 'react'
-import { classname } from '../util.js'
+import { cls, proplist } from '../util.js'
 
 import './Button.pcss'
 
-const Button = (props) => (
-  <button {...classname(props, 'btn')}>
-    {props.children}
-  </button>
-)
+const Button = (props) => {
+  console.log('button props!', props)
+  return (
+    <button {...props} className={cls(props, 'btn')}>
+      {props.children}
+    </button>
+  )
+}
 
 export default Button

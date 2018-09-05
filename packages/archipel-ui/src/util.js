@@ -14,12 +14,11 @@ export function cls (props, ...classes) {
 export function proplist (props, classes, exclude) {
   exclude = exclude || []
   exclude.push('children', 'className')
-  const className = cls(props, classes)
   const list = Object.keys(props).reduce((list, prop) => {
-    if (exclude.indexOf(prop) !== -1) list[prop] = props[prop]
+    if (exclude.indexOf(prop) < 0) list[prop] = props[prop]
     return list
   }, {})
-  list.className = className
+  list.className = cls(props, classes)
   return list
 }
 

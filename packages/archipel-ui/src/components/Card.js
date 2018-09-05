@@ -1,5 +1,5 @@
 import React from 'react'
-import { proplist } from '../util'
+import { classname } from '../util'
 import Heading from './Heading'
 
 const Footer = ({children}) => (
@@ -10,7 +10,7 @@ const Footer = ({children}) => (
 
 const Card = (props) => {
   return (
-    <div {...proplist(props, 'p-4 border-2 border-black')}>
+    <div {...classname(props, 'p-4 border-2 border-black')}>
       { props.Title && <Heading className='mt-0'>{props.Title}</Heading> }
       { props.children }
       { props.Footer && <Footer>{props.Footer}</Footer> }
