@@ -27,7 +27,7 @@ class SelectArchive extends React.Component {
             <label>Title:</label>
             <input onChange={(e) => this.setState({title: e.target.value})} />
           </div>
-          <button onClick={(e) => this.state.title && createArchive(this.state.title)}>Create Archive</button>
+          <Button onClick={(e) => this.state.title && createArchive(this.state.title)}>Create Archive</Button>
         </div>
       </div>
     )
@@ -36,7 +36,6 @@ class SelectArchive extends React.Component {
 
 const mapDispatchToProps = dispatch => ({
   createArchive: (title) => {
-    console.log('clicked createarchive')
     dispatch(createArchive(title))
   },
   uiSelectArchive: (key) => dispatch(uiSelectArchive(key))
