@@ -31,4 +31,6 @@ function create (url, cb) {
   rpc.on('remote', (remote) => cb(remote))
 }
 
+window.rpc = rpc
+
 export default rpc

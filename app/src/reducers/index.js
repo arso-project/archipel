@@ -9,9 +9,11 @@ const defaultState = {
     byType: {}
   },
   archives: [],
+  workspaces: {},
+  workspace: null,
   ui: {
     tree: [],
-    screen: 'main'
+    screen: 'welcome'
   }
 }
 
@@ -36,10 +38,37 @@ const ArchipelReducer = (state = defaultState, action) => {
         }
       }
 
-    case 'ARCHIVES_LOAD':
+    case 'WORKSPACES_LOAD':
+      var workspace = state.workspace || Object.keys(action.workspaces)[0]
       return {
         ...state,
-        archives: action.archives
+        workspaces: action.workspaces,
+        workspace: workspace
+      }
+
+    case 'SET_WORKSPACE':
+      return {
+        ...state,
+        workspace: action.workspace
+      }
+
+    case 'ARCHIVES_LOAD':
+      var archives = action.archives.reduce((ret, el) => {
+        ret[el.key] = el
+        return ret
+      }, {})
+      return {
+        ...state,
+        archives: archives
+      }
+
+    case 'ARCHIVE_CREATED':
+      return {
+        ...state,
+        archives: [
+          ...state.archives,
+          action.archive
+        ]
       }
 
     case 'SET_UI_TREE':
@@ -53,6 +82,12 @@ const ArchipelReducer = (state = defaultState, action) => {
       return {
         ...state,
         ui: { ...state.ui, screen: action.screen }
+      }
+
+    case 'UI_SELECT_ARCHIVE':
+      return {
+        ...state,
+        ui: { ...state.ui, screen: 'show', archive: action.key }
       }
 
     default:

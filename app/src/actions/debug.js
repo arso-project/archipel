@@ -1,5 +1,8 @@
+import rpc from './../api/rpc'
+
 let idx = 0
 export const perftest = (type, id) => (dispatch, getState) => {
+  console.log('do perfest', type, id)
   idx++
   let run = idx
   rpc((api) => {

@@ -1,88 +1,88 @@
-var store = require('./hyperstore')
-var stream = require('stream')
 var path = require('path')
-var fs = require('fs')
+var debug = require('./api-debug.js')
+var WorkspaceManager = require('./workspace').WorkspaceManager
 
-var Store = store()
+var rootPath = process.env.ARCHIPEL_ROOT_PATH || path.join(__dirname, '..', 'db')
+var Workspaces = WorkspaceManager(rootPath)
 
-function foo (str, cb) {
-  str = str.toUpperCase()
-  cb(null, str)
-}
+var api = {
+  debug: {
+    ...debug
+  },
 
-function perftestBin () {
-  return fs.createReadStream(path.join(__dirname, '..', '100M.bin'))
-}
+  getWorkspaces: (cb) => Workspaces.getWorkspaces(cb),
+  openWorkspace: (key, cb) => Workspaces.openWorkspaceToRemote(key, cb),
+  createWorkspace: (title, cb) => Workspaces.createWorkspace(title, cb),
 
-function perftest (id) {
-  console.log(`perftest ${id}: start`)
-  var s = new stream.Readable({objectMode: true, read () {}})
-  _fillFeed(id, s)
-  return s
+  workspace: {
+    getArchives: (wsk, cb) => {
+      getWorkspace(wsk, (err, ws) => err ? cb(err) : ws.getArchives(cb))
+    },
+    createArchive: (wsk, title, cb) => {
+      getWorkspace(wsk, (err, ws) => err ? cb(err) : ws.createArchive(title, cb))
+    },
+    addArchive: (wsk, key, cb) => {
+      getWorkspace(wsk, (err, ws) => err ? cb(err) : ws.addArchive(key, cb))
+    },
+    setTitle: (wsk, title, cb) => {
+      getWorkspace(wsk, (err, ws) => err ? cb(err) : ws.setTitle(title, cb))
+    },
 
-  function _fillFeed (id, s) {
-    var val = {}
-    for (var k = 0; k < 10; k++) {
-      val['x' + k] = 'abc'.repeat(k)
-    }
-    var i = 0
-    var max
-    if (id === 1) max = 1000
-    if (id === 2) max = 100
-    if (id === 3) max = 100000
+    drive: {
+      readdir: (wsk, key, path, cb) => {
+        getDrive(wsk, key, (err, drive) => err ? cb(err) : drive.readdir(path, cb))
+      },
+      stat: (wsk, key, path, cb) => {
+        getDrive(wsk, key, (err, drive) => err ? cb(err) : drive.stat(path, cb))
+      },
+      mkdir: (wsk, key, path, opts, cb) => {
+        getDrive(wsk, key, (err, drive) => err ? cb(err) : drive.mkdir(path, opts, cb))
+      },
+      readFile: (wsk, key, path, cb) => {
+        getDrive(wsk, key, (err, drive) => err ? cb(err) : drive.readFile(path, cb))
+      },
+      writeFile: (wsk, key, path, buf, opts, cb) => {
+        getDrive(wsk, key, (err, drive) => err ? cb(err) : drive.writeFile(path, buf, opts, cb))
+      }
+    },
 
-    worker()
-
-    function worker () {
-      if (i === max) {
-        s.emit('end')
-        console.log(`perftest ${id}: end`)
-      } else {
-        i++
-        var testval
-        if (id === 1) {
-          testval = []
-          for (var j = 0; j < 10; j++) {
-            testval[j] = val
-          }
-          s.push(testval)
-        } else if (id === 2) {
-          testval = []
-          for (var k = 0; k < 100; k++) {
-            testval[k] = val
-          }
-          s.push(testval)
-        } else if (id === 3) {
-          s.push(i)
-        }
-        setImmediate(worker)
-        // if (i % 1000 === 0) console.log(`perftest ${id}: push ${i}`)
+    graph: {
+      query: (wsk, key, q, cb) => {
+        getGraph(wsk, key, (err, graph) => err ? cb(err) : graph.query(q, cb))
+      },
+      get: (wsk, key, triple, opts, cb) => {
+        getGraph(wsk, key, (err, graph) => err ? cb(err) : graph.get(triple, opts, cb))
+      },
+      getStream: (wsk, key, triple, opts, cb) => {
+        getGraph(wsk, key, (err, graph) => err ? cb(err) : cb(null, graph.getStream(triple, opts)))
+      },
+      put: (wsk, key, triple, cb) => {
+        getGraph(wsk, key, (err, graph) => err ? cb(err) : graph.put(triple, cb))
       }
     }
   }
 }
 
-var api = {
+function getDrive (wsk, key, cb) {
+  var ws = Workspaces.openWorkspace(wsk)
+  if (!ws) return cb(new Error('No workspace with key %s.', wsk))
+  var drive = ws.getDrive(key, cb)
+  if (!drive) return cb(new Error('No drive with key %s.', key))
+  cb(null, drive)
+}
 
-  // query: string, string -> obj read stream
-  // query: rso(Store.query.bind(Store)),
-  query: (key, q, cb) => Store.query(key, q, cb),
+function getGraph (wsk, key, cb) {
+  var ws = Workspaces.openWorkspace(wsk)
+  if (!ws) return cb(new Error('No workspace with key %s.', wsk))
+  var drive = ws.getGraph(key, cb)
+  if (!drive) return cb(new Error('No drive with key %s.', key))
+  cb(null, drive)
+}
 
-  // archives: callback -> array
-  archives: (cb) => Store.archives(cb),
-
-  // foo: string, callback -> string
-  foo: (str, cb) => cb(foo(str)),
-
-  // perftest: id -> obj read stream
-  perftest: (id, cb) => {
-    console.log(arguments)
-    cb(perftest(id))
-  },
-
-  // perftestBin: -> bin read stream
-  perftestBin: (cb) => cb(perftestBin())
-
+function getWorkspace (wsk, cb) {
+  var ws = Workspaces.openWorkspace(wsk)
+  if (!ws) return cb(new Error('No workspace with key %s.', wsk))
+  cb(null, ws)
 }
 
 module.exports = api

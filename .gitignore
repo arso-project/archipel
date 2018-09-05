@@ -11,3 +11,5 @@ yarn-error.log
 dist
 db
 package-lock.json
+_old
+*.bin

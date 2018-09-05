@@ -1,13 +1,12 @@
 'use strict'
 import React from 'react'
 import { connect } from 'react-redux'
-import { uiTree } from '../actions'
+import { uiTree } from '../../actions'
 // import posed, { PoseGroup } from 'react-pose'
 
-import { isThing, isLiteral, fromRdfValue, getPropsFromTree } from '../util'
-import { Box, Flex } from 'rebass'
-import styled from 'styled-components'
-import chroma from 'chroma-js'
+import { isThing, isLiteral, fromRdfValue, getPropsFromTree } from '../../util'
+// import styled from 'styled-components'
+// import chroma from 'chroma-js'
 
 const mapStateToProps = (state, props) => {
   return {
@@ -21,34 +20,14 @@ const mapDispatchToProps = dispatch => ({
   setUiTree: (path, props) => dispatch(uiTree(path, props))
 })
 
-const Ul = styled.ul`margin: 0; padding: 0; li { list-style-type: none; } `
-const Token = styled.span`
-  color: #906;
-  font-size: .9em;
-  font-weight: bold;
-  font-style: normal;
-  margin-right: .5em;
-`
-const Pred = styled(Token)`
-`
-const Prop = styled(Pred)`color: #845;`
-const Id = styled(Token)`
-  color: #758;
-//  max-width: 10em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`
-
-const Type = styled(Token)`
-  color: #609;
-`
+const Token = ({children}) => <span className='text-red text-sm font-bold mr-1'>{children}</span>
+const Prop = ({children}) => <span className='text-blue text-sm font-bold mr-1'>{children}</span>
+const Id = ({children}) => <span className='text-grey text-sm mr-1'>{children}</span>
+const Type = ({children}) => <span className='text-orange text-sm mr-1'>{children}</span>
+const Value = ({children}) => <span className='text-grey-darker text-sm mr-1'>{children}</span>
 
 const Val = ({value}) => {
-  const V = styled(Token)`
-    color: #220;
-  `
-  return <V>{fromRdfValue(value)}</V>
+  return <Value>{fromRdfValue(value)}</Value>
 }
 
 const RootThing = ({ things, byType }) => {
@@ -84,7 +63,7 @@ const Thing = ({ things, thing, level, predicate, path, tree, setUiTree, hostRef
 
   if (!thing || !(typeof thing === 'object')) return '<div>CANNOT SHOW!</div>'
   let props = Object.keys(thing)
-  const Head = <Flex>{predicate ? <Pred>{predicate}</Pred> : ''}<Type>{thing.type}</Type><Id>{thing.id}</Id></Flex>
+  const Head = <div className='flex'>{predicate ? <Pred>{predicate}</Pred> : ''}<Type>{thing.type}</Type><Id>{thing.id}</Id></div>
   let Lits = null
   let Rels = null
 
@@ -99,10 +78,10 @@ const Thing = ({ things, thing, level, predicate, path, tree, setUiTree, hostRef
     // rels = rels.filter((key) => !key.startsWith(filterRels))
 
     Lits = literals.map((key, idx) => (
-      <Flex ml={2} key={idx}>
+      <div className='ml-2 flex' key={idx}>
         <Prop>{key}</Prop>
         { thing[key].map((x, i) => <Val value={x} key={i} />) }
-      </Flex>
+      </div>
     ))
 
     Rels = rels.reduce((items, pred) => {
@@ -113,21 +92,17 @@ const Thing = ({ things, thing, level, predicate, path, tree, setUiTree, hostRef
     }, [])
   }
 
-  const c = chroma.scale(['pink', 'grey'])
+  // const c = chroma.scale(['pink', 'grey'])
   // const bg = visible ? c(1 - 1 / (level * 0.7)) : 'transparent'
-  const bg = c(1 - 1 / (level * 0.7)).brighten(level * 0.2)
-  const Wrap = styled(Box)`
-    background: ${bg};
-    padding: 5px;
-    cursor: pointer;
-  `
+  // const bg = c(1 - 1 / (level * 0.7)).brighten(level * 0.2)
+  const bg = '#fff'
   return (
     <div ref={hostRef} style={style}>
-      <Wrap p={1} ml={2} my={1} onClick={click} ref={hostRef}>
+      <div className='p-1 ml-2 my-1' style={{background: bg}} onClick={click} ref={hostRef}>
         {Head}
         {Lits}
         {Rels}
-      </Wrap>
+      </div>
     </div>
   )
 }

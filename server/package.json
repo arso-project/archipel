@@ -10,8 +10,10 @@
   "author": "Franz Heinzmann",
   "license": "MIT",
   "dependencies": {
+    "debug": "^3.1.0",
     "duplexify": "^3.6.0",
     "hyper-graph-db": "^0.3.4",
+    "hyperdrive": "github:mafintosh/hyperdrive#hyperdb-backend",
     "hyperpc": "^1.0.1",
     "is-stream": "^1.1.0",
     "multihyperdb": "0.0.2",
