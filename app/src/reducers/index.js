@@ -8,7 +8,7 @@ const defaultState = {
     all: {},
     byType: {}
   },
-  archives: [],
+  archives: {},
   workspaces: {},
   workspace: null,
   ui: {
@@ -53,7 +53,7 @@ const ArchipelReducer = (state = defaultState, action) => {
       }
 
     case 'ARCHIVES_LOAD':
-      var archives = action.archives.reduce((ret, el) => {
+      const archives = action.archives.reduce((ret, el) => {
         ret[el.key] = el
         return ret
       }, {})
@@ -63,12 +63,15 @@ const ArchipelReducer = (state = defaultState, action) => {
       }
 
     case 'ARCHIVE_CREATED':
+      const newArchive = {}
+      newArchive[action.archive.key] = action.archive
+      newArchive[action.archive.key].key = action.archive.drive.key
       return {
         ...state,
-        archives: [
+        archives: {
           ...state.archives,
-          action.archive
-        ]
+          ...newArchive
+        }
       }
 
     case 'SET_UI_TREE':

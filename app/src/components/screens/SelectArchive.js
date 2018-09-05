@@ -4,9 +4,12 @@ import { createArchive, uiSelectArchive } from '../../actions/index.js'
 import { Heading, Button, Card } from 'archipel-ui'
 
 class SelectArchive extends React.Component {
+  constructor () {
+    super()
+    this.state = { title: '' }
+  }
   render () {
     const { archives, createArchive, uiSelectArchive } = this.props
-    console.log('render select archive', archives)
     return (
       <div className='p-4'>
         <Heading>Select Archive:</Heading>
@@ -24,7 +27,7 @@ class SelectArchive extends React.Component {
             <label>Title:</label>
             <input onChange={(e) => this.setState({title: e.target.value})} />
           </div>
-          <Button onClick={(e) => createArchive(this.state.title)}>Create Archive</Button>
+          <button onClick={(e) => this.state.title && createArchive(this.state.title)}>Create Archive</button>
         </div>
       </div>
     )
@@ -32,7 +35,10 @@ class SelectArchive extends React.Component {
 }
 
 const mapDispatchToProps = dispatch => ({
-  createArchive: (title) => dispatch(createArchive(title)),
+  createArchive: (title) => {
+    console.log('clicked createarchive')
+    dispatch(createArchive(title))
+  },
   uiSelectArchive: (key) => dispatch(uiSelectArchive(key))
 })
 
