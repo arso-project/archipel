@@ -40,7 +40,7 @@ WorkspaceManager.prototype._init = function (cb) {
 
 WorkspaceManager.prototype.loadWorkspaces = function (cb) {
   var self = this
-  if (!cb) cb = noop()
+  if (!cb) cb = noop
   var rs = this.rootDb.createReadStream('/spaces')
   rs.on('data', (nodes) => {
     var value = nodes[0].value
@@ -83,11 +83,12 @@ WorkspaceManager.prototype.workspacePath = function (key) {
 WorkspaceManager.prototype.createWorkspace = function (title, cb) {
   var [key, opts] = keypairAndOpts()
   var space = Workspace(this.workspacePath(key), key, opts)
-  this.rootDb.put('/spaces/' + hex(key), {key: hex(key), title})
+  var value = {key: hex(key), title}
+  this.rootDb.put('/spaces/' + hex(key), value)
   space.setTitle(title)
-  space.ready(cb)
   debug('created workspace ' + title + ' / ' + key)
-  this.loadWorkspaces()
+  this.info[value.key] = value
+  cb(null, null)
 }
 
 // Workspace
