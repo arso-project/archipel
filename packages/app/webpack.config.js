@@ -4,6 +4,8 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 const path = require('path')
 
+const archipelUiPath = path.dirname((require.resolve('@archipel/ui/package.json')))
+
 const shared = (argv) => ({
   entry: path.normalize(`${__dirname}/index.js`),
   devtool: argv.mode === 'development' ? 'source-map' : false,
@@ -16,7 +18,7 @@ const shared = (argv) => ({
         include: [
           path.resolve(__dirname, 'src'),
           path.resolve(__dirname, 'index.js'),
-          /node_modules\/archipel-ui/
+          archipelUiPath
         ],
         use: {
           loader: 'babel-loader',
@@ -35,7 +37,7 @@ const shared = (argv) => ({
         test: /\.pcss$/,
         include: [
           path.resolve(__dirname, 'src'),
-          /node_modules\/archipel-ui/
+          archipelUiPath
         ],
         use: [
           { loader: 'style-loader' },

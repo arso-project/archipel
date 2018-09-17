@@ -1,0 +1,8 @@
+{
+  "hoist": true,
+  "packages": [
+    "repos/*",
+    "packages/*"
+  ],
+  "version": "1.0.0"
+}

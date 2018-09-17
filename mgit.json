@@ -1,0 +1,8 @@
+{
+  "packages": "repos",
+  "resolverUrlTemplate": "git@gitlab.com:${ path }.git",
+  "dependencies": {
+    "@archipel/ui": "archipel-somoco/archipel-ui",
+    "@archipel/core": "archipel-somoco/archipel-core"
+  }
+}

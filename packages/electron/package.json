@@ -1,5 +1,5 @@
 {
-  "name": "archipel-app",
+  "name": "@archipel/electron",
   "productName": "Archipel",
   "version": "2.0.1",
   "license": "MIT",
@@ -19,8 +19,6 @@
     "dist:all": "electron-builder --linux --mac --win"
   },
   "dependencies": {
-    "electron-ipc-stream": "^0.2.0",
-    "electron-ipc-webview-stream": "^0.5.1",
     "find-free-port": "^2.0.0",
     "weak": "^1.0.1"
   },

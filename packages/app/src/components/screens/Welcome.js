@@ -1,5 +1,5 @@
 import React from 'react'
-import { Heading, Card } from 'archipel-ui'
+import { Heading, Card } from '@archipel/ui'
 
 class Main extends React.Component {
   render () {

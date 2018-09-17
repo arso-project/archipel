@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import { foo, perftest } from '../../actions/debug.js'
 import { setTitle, query } from '../../actions/index.js'
 import React, { Component } from 'react'
-import { Button, Heading } from 'archipel-ui'
+import { Button, Heading } from '@archipel/ui'
 import RootThing from '../debug/thing'
 
 class Debug extends Component {

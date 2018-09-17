@@ -1,4 +1,4 @@
-var tailwindConfig = require('archipel-ui/tailwind.config.js')
+var tailwindConfig = require('@archipel/ui/tailwind.config.js')
 
 module.exports = {
   plugins: [

@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { createArchive, uiSelectArchive } from '../../actions/index.js'
-import { Heading, Button, Card } from 'archipel-ui'
+import { Heading, Button, Card } from '@archipel/ui'
 
 class SelectArchive extends React.Component {
   constructor () {
