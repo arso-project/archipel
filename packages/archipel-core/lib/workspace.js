@@ -1,34 +1,48 @@
 const crypto = require('hypercore-crypto')
-const Archive = require('./archive')
-const path = require('path')
 const hyperdb = require('hyperdb')
 const events = require('events')
 const datenc = require('dat-encoding')
 const thunky = require('thunky')
+const inherits = require('inherits')
 
-const { hex, discoveryKey, ready } = require('./util')
+const Archive = require('./archive')
+
+const { hex, chainStorage, keyToFolder } = require('./util')
+
+module.exports = Workspace
 
 function Workspace (storage, key, opts) {
   if (!(this instanceof Workspace)) return new Workspace(storage, key, opts)
   events.EventEmitter.call(this)
+  const self = this
+
+  this.key = key || null
 
   this.archives = []
   this._byKey = {}
 
+  this.info = {}
+  this.opts = opts
+
   opts.reduce = (a, b) => a
   opts.valueEncoding = 'json'
 
-  this._storage = typeof storage === 'string' ? this._defaultStorage(storage) : storage
+  this._storage = chainStorage(storage)
 
   this.db = hyperdb(this._storage('workspace'), key, opts)
 
-  this.ready = ready(thunky(this._ready))
+  this.ready = thunky((done) => self._ready(done))
+
+  if (opts.info) this.updateInfo(opts.info)
 }
 
-Workspace.prototype._ready = async function (done) {
+inherits(Workspace, events.EventEmitter)
+
+Workspace.prototype._ready = function (done) {
+  const self = this
   const rs = this.db.createReadStream('/archives')
 
-  let ready = 0
+  let ready = -1 // not 0 to account for the this.db.get('info)
   let end = false
 
   rs.on('data', (node) => {
@@ -37,8 +51,18 @@ Workspace.prototype._ready = async function (done) {
   })
   rs.on('end', () => { end = true })
 
+  if (this.opts.new && this.opts.info) {
+    this.updateInfo(this.opts.info, () => finish())
+  } else {
+    this.db.get('info', (err, node) => {
+      if (err) return
+      this.info = node.value
+      finish()
+    })
+  }
+
   function finish () {
-    if (end && ++ready === this.archives.length) done()
+    if (end && ++ready === self.archives.length) done()
   }
 }
 
@@ -51,30 +75,54 @@ Workspace.prototype.archive = async function (key, cb) {
   return archive
 }
 
-Workspace.prototype.mount = function (archive, opts) {
-  this.archives.push(archive)
+Workspace.prototype.updateInfo = function (info, cb) {
+  this.info = Object.assign({}, this.info, info)
+  this.db.put('info', this.info, () => {
+    this.emit('info.update', this.info)
+    if (cb) cb(null, this.info)
+  })
 }
 
-Workspace.prototype.createArchive = async function (info) {
-  const { key, secretKey } = crypto.keypair
+// Workspace.prototype.mount = function (archive, opts) {
+//   this.archives.push(archive)
+// }
+
+Workspace.prototype.createArchive = function (info) {
+  const keyPair = crypto.keyPair()
+  const key = keyPair.publicKey
   const opts = {
-    secretKey: secretKey,
+    secretKey: keyPair.secretKey,
     info: info
   }
 
-  this._loadArchive(key, opts)
+  const archive = this._loadArchive(key, opts)
 
   this.db.put('archive/' + datenc.toStr(key), {
-    created: Date.now() / 1000,
-    key: datenc.toStr(datenc.toStr(key)),
-    authorized: true
+    added: Date.now() / 1000,
+    key: datenc.toStr(key),
+    source: true
   })
+
+  return archive
+}
+
+Workspace.prototype.addArchive = function (key, opts) {
+  if (this._byKey[key]) return
+
+  const archive = this._loadArchive(key, opts)
+
+  this.db.put('archive/' + datenc.toStr(key), {
+    added: Date.now() / 1000,
+    key: datenc.toStr(datenc.toStr(key)),
+    source: false
+  })
+
+  return archive
 }
 
 Workspace.prototype._loadArchive = function (key, opts) {
   key = datenc.toBuf(key)
-  const discovery = discoveryKey(key)
-  const name = 'archive/' + discovery
+  const name = 'archive/' + keyToFolder(key)
   const archive = Archive(this._storage(name), key, opts)
   archive.ready(() => this._pushArchive(archive))
   return archive
@@ -83,11 +131,12 @@ Workspace.prototype._loadArchive = function (key, opts) {
 Workspace.prototype._pushArchive = function (archive) {
   const idx = this.archives.push(archive)
   this._byKey[hex(archive.key)] = idx - 1
+  this.emit('archive', archive)
 }
 
-Workspace.prototype._defaultStorage = function (dir) {
-  const discovery = discoveryKey(this.key)
-  return function (name) {
-    return path.join(dir, discovery, name)
-  }
-}
+// Workspace.prototype.__hyperpc = function () {
+//   const self = this
+//   return {
+//     archive: (key, cb) => self.archive(key) ? rpcify(self.archive(key)) :
+//   }
+// }

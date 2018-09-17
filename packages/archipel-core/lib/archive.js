@@ -1,19 +1,20 @@
 const pify = require('pify')
-const encode = require('dat-encoding')
+const datenc = require('dat-encoding')
 const hypergraph = require('hyper-graph-db')
 const hyperdrive = require('hyperdrive')
 const crypto = require('hypercore-crypto')
-const path = require('path')
 const inherits = require('inherits')
 const events = require('events')
 const thunky = require('thunky')
-// const cbmaybe = require('call-me-maybe')
 
-const { hex, ready, promise } = require('./util')
+const { hex, chainStorage } = require('./util')
+
+module.exports = Archive
 
 function Archive (storage, key, opts) {
   if (!(this instanceof Archive)) return new Archive(storage, key, opts)
   events.EventEmitter.call(this)
+  const self = this
 
   this.key = key
   this.secretKey = opts.secretKey || null
@@ -26,20 +27,16 @@ function Archive (storage, key, opts) {
   this.graph = null
 
   this._opts = opts
-  this._storage = typeof storage === 'string' ? this._defaultStorage(storage) : storage
+  // this._storage = typeof storage === 'string' ? this._defaultStorage(storage) : storage
+  this._storage = chainStorage(storage)
 
-  this.ready = ready(thunky(this._ready))
-
-  // // todo: try to get rid of all this syntax...
-  // const ready = thunky(this._init)
-  // this.ready = async (cb) => cbmaybe(cb, promise((reject, resolve) => {
-  //   ready(err => err ? reject(err) : resolve())
-  // }))
+  this.ready = thunky((done) => self._ready().then(done))
 }
 
 inherits(Archive, events.EventEmitter)
 
 Archive.prototype.mount = function (name, db, instance, opts) {
+  opts = opts || {}
   let idx = this.mounts.push({
     key: db.key,
     db: db,
@@ -53,7 +50,7 @@ Archive.prototype.mount = function (name, db, instance, opts) {
 }
 
 Archive.prototype.byName = function (name) {
-  if (!this._byName[name]) return null
+  if (!this._byName.hasOwnProperty(name)) return null
   return this.mounts[this._byName[name]]
 }
 
@@ -69,17 +66,18 @@ Archive.prototype.replicate = function (opts) {
   })
 }
 
-Archive.prototype._init = async function () {
-  let save = false
-  save = await this._ensureFs()
-  save = await this._ensureInfo(save)
-  save = await this._ensureGraph(save)
-  if (save) await this.saveInfo()
+Archive.prototype._ready = async function () {
+  try {
+    let save = false
+    save = await this._ensureFs()
+    save = await this._ensureInfo(save)
+    save = await this._ensureGraph(save)
+    if (save) await this.saveInfo()
 
-  this.fs = this.byName('fs')
-  this.graph = this.byName('graph')
-
-  this.emit('ready')
+    this.emit('ready')
+  } catch (e) {
+    console.log(e)
+  }
 }
 
 Archive.prototype._ensureFs = async function () {
@@ -96,7 +94,9 @@ Archive.prototype._ensureFs = async function () {
     persist: true
   })
 
-  await ready(this.fs.ready)
+  this.fs = fs
+
+  await pify(this.fs.ready)
 }
 
 Archive.prototype._ensureInfo = async function (doSave) {
@@ -117,14 +117,21 @@ Archive.prototype._ensureGraph = async function (doSave) {
   // todo: inject secretKey?
   const graph = hypergraph(this._storage('graph'), key)
 
-  this.mount('graph', this.graph.db, {
+  this.mount('graph', graph.db, {
     is: 'hypergraph',
     instance: graph,
     persist: true
   })
 
-  await ready(this.graph.ready)
+  this.graph = graph
+
+  await pify(this.graph.ready)
   return doSave
+}
+
+Archive.prototype.updateInfo = function (info, cb) {
+  this.info = Object.assign({}, this.info, info)
+  this.saveInfo(cb)
 }
 
 Archive.prototype.saveInfo = async function (cb) {
@@ -134,13 +141,15 @@ Archive.prototype.saveInfo = async function (cb) {
     if (mount.persist && mount.key !== this.key) ret.push(mount)
   }, [])
 
-  const str = JSON.stringify(info, null, 2)
-  return pify(this.fs.writeFile('dat.json', str))
+  const buf = Buffer.from(JSON.stringify(info, null, 2))
+  await pify(this.fs.writeFile.bind(this.fs))('dat.json', buf)
+  this.emit('info.update', this.info)
+  if (cb) cb(null, this.info)
 }
 
 Archive.prototype._defaultInfo = function () {
   const info = {
-    url: encode(this.fs.key),
+    url: 'dat://' + datenc.toStr(this.fs.key),
     archipel: {
       type: 'archipel-archive-v1',
       primary: true,
@@ -150,8 +159,14 @@ Archive.prototype._defaultInfo = function () {
   return Object.assign({}, info, this._opts.info)
 }
 
-Archive.prototype._defaultStorage = function (dir) {
-  return function (name) {
-    return path.join(dir, hex(this.discoveryKey), name)
-  }
-}
+// Archive.prototype._defaultStorage = function (dir) {
+//   return function (name) {
+//     return path.join(dir, hex(this.discoveryKey), name)
+//   }
+// }
+
+// Workspace.prototype._appendStorage = function (prefix) {
+//   return function (name) {
+//     return prefix + '/' + name
+//   }
+// }
