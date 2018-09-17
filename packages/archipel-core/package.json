@@ -1,5 +1,5 @@
 {
-  "name": "archipel-core",
+  "name": "@archipel/core",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
