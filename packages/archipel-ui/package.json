@@ -1,5 +1,5 @@
 {
-  "name": "archipel-ui",
+  "name": "@archipel/ui",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
     "dev": "rollup -c rollup.config.dev.js -w"
   },
   "author": "Franz Heinzmann",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "dependencies": {
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
