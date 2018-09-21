@@ -22,7 +22,7 @@ const rpc = thunky((cb) => {
 
 function create (url, cb) {
   const ws = websocket(url)
-  const rpc = hype(clientApi, {debug: false})
+  const rpc = hype(clientApi, {promise: true, debug: true})
 
   ws.on('error', (err) => console.log('ws error', err))
   window.addEventListener('beforeunload', () => ws.close())

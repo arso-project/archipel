@@ -12,7 +12,8 @@
   "license": "MIT",
   "dependencies": {
     "@archipel/ui": "^1.0",
-    "hyperpc": "^1.1",
+    "@babel/runtime": "^7.0.0",
+    "hyperpc": "^1.2",
     "is-electron-renderer": "^2.0.1",
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
@@ -34,6 +35,7 @@
     "babel-loader": "^8",
     "copy-webpack-plugin": "^4.5.2",
     "css-loader": "^1.0.0",
+    "fast-async": "^7.0.6",
     "html-webpack-plugin": "^3.2.0",
     "postcss-loader": "^2.1.6",
     "style-loader": "^0.21.0",

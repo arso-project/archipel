@@ -5,12 +5,14 @@ import WelcomeScreen from './screens/Welcome'
 import DebugScreen from './screens/Debug'
 import SelectArchive from './screens/SelectArchive'
 import ShowArchive from './screens/ShowArchive'
+import NewShow from './screens/NewShow'
 
 const Screens = {
   welcome: WelcomeScreen,
   select: SelectArchive,
   show: ShowArchive,
-  debug: DebugScreen
+  debug: DebugScreen,
+  newshow: NewShow
 }
 
 const Screen = (props) => {

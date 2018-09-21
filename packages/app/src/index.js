@@ -9,6 +9,9 @@ import thunk from 'redux-thunk'
 import logger from 'redux-logger'
 
 import ArchipelReducer from './reducers'
+
+import { ArchipelStoreProvider } from './api/store'
+
 import App from './components/app'
 
 let composeFunc = compose
@@ -26,7 +29,9 @@ const store = createStore(
 
 const ArchipelApp = () => (
   <StoreProvider store={store}>
-    <App />
+    <ArchipelStoreProvider>
+      <App />
+    </ArchipelStoreProvider>
   </StoreProvider>
 )
 

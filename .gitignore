@@ -1,14 +1,13 @@
 repos
 node_modules
 package-lock.json
-.DS_Store
-dmgs
 npm-debug.log
-.dat
+lerna-debug.log
 yarn.lock
 yarn-error.log
+.db
+.DS_Store
+.dat
 .vscode
-./db
 /_old/
-./*.bin
 

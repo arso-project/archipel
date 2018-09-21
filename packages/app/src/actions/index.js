@@ -32,16 +32,27 @@ export const setWorkspace = (key) => (dispatch) => {
 }
 
 export const init = () => (dispatch, getState) => {
-  getWorkspaces((err, spaces) => {
-    if (err) return
-    dispatch({type: 'WORKSPACES_LOAD', workspaces: spaces})
-    var Workspace = openWorkspace(getState().workspace)
-    Workspace.getArchives((err, archives) => {
-      if (err) return
-      dispatch({type: 'ARCHIVES_LOAD', archives: archives})
-    })
+  rpc(api => {
+    // console.log('go!')
+    // api.action({
+    //   name: 'GET_WORKSPACES',
+    //   args: {}
+    // }, (err, result) => {
+    //   console.log(err, result)
+    // })
   })
 }
+// export const init = () => (dispatch, getState) => {
+//   getWorkspaces((err, spaces) => {
+//     if (err) return
+//     dispatch({type: 'WORKSPACES_LOAD', workspaces: spaces})
+//     var Workspace = openWorkspace(getState().workspace)
+//     Workspace.getArchives((err, archives) => {
+//       if (err) return
+//       dispatch({type: 'ARCHIVES_LOAD', archives: archives})
+//     })
+//   })
+// }
 
 export const loadArchives = () => (dispatch, getState) => {
   var state = getState()

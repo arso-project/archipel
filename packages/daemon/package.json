@@ -1,5 +1,5 @@
 {
-  "name": "@archipel/server",
+  "name": "@archipel/daemon",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,19 +10,13 @@
   "author": "Franz Heinzmann",
   "license": "MIT",
   "dependencies": {
-    "debug": "^3.1.0",
-    "duplexify": "^3.6.0",
-    "hyper-graph-db": "^0.3.6",
-    "hyperdrive": "github:mafintosh/hyperdrive#hyperdb-backend",
+    "inherits": "^2.0.3",
     "hyperpc": "^1.2",
-    "is-stream": "^1.1.0",
-    "multihyperdb": "0.0.2",
-    "pumpify": "^1.5.1",
-    "through2": "^2.0.3",
-    "websocket-stream": "^5.1.2"
+    "pump": "^3.0.0",
+    "@archipel/core": "^1.0.0",
+    "debug": "^3.1.0"
   },
   "devDependencies": {
-    "opn": "^5.3.0",
     "standard": "^11.0.1",
     "tape": "^4.9.1"
   }
