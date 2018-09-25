@@ -4,6 +4,7 @@ const debug = require('debug')('session')
 const hyperpc = require('hyperpc')
 const pump = require('pump')
 const rpcify = hyperpc.rpcify
+const pify = require('pify')
 const { Rootspace } = require('@archipel/core')
 
 module.exports = Session
@@ -36,22 +37,78 @@ Session.prototype.init = function () {
 }
 
 Session.prototype.onAction = async function (action, cb) {
-  if (!action.args) action.args = {}
-  debug('action: %o', action)
-  let workspace
-  switch (action.name) {
-    case 'GET_WORKSPACES':
-      return this.Root.getWorkspaces(cb)
-    case 'CREATE_WORKSPACE':
-      workspace = await this.Root.createWorkspace(action.args)
-      this.workspace = workspace
-      return cb(null, this.workspace.info)
-    case 'OPEN_WORKSPACE':
-      workspace = await this.Root.getWorkspace(action.args.key)
-      if (workspace) {
-        this.workspace = workspace
-        cb(null, this.workspace.info)
-      } else cb(new Error('Not found.'), null)
+  debug('RECEIVE %O', action)
+  try {
+    switch (action.type) {
+      case 'WORKSPACE_LIST':
+        // todo: permission checking.
+        this.Root.getWorkspaces()
+          .then(res => result(res))
+          .catch(err => error(err))
+        break
+
+      case 'WORKSPACE_OPEN':
+        const workspace = await this.Root.getWorkspace(action.payload)
+        if (workspace) {
+          this.workspace = workspace
+          await this.workspace.ready()
+          result(this.workspace.info)
+        } else error('Not found.')
+        break
+
+      case 'ARCHIVES_LOAD':
+        if (!this.workspace) return error('No workspace.')
+        this.workspace.getArchives()
+          .then(res => result(res))
+          .catch(err => error(err))
+        break
+
+      case 'DIRLIST_LOAD':
+        if (!this.workspace) return error('No workspace.')
+        const { id, dir } = action.meta
+        const archive = await this.workspace.archive(id)
+        if (!archive) return error('Archive not found.')
+        await archive.ready()
+        const fs = archive.fs
+        let readdir = await fs.readdir(dir)
+        const stats = readdir.map(async name => {
+          const stat = await fs.stat(dir)
+          return {
+            path: dir,
+            name,
+            isDirectory: stat.isDirectory()
+          }
+        })
+        Promise.all(stats).then(completed => {
+          result(completed)
+        })
+    }
+  } catch (e) {
+    console.log(e)
+    throw e
+  }
+
+  function result (res) {
+    send({
+      ...action,
+      error: false,
+      payload: res,
+      meta: { ...action.meta, pending: false }
+    })
+  }
+
+  function error (err) {
+    send({
+      ...action,
+      error: true,
+      payload: err,
+      meta: { ...action.meta, pending: false }
+    })
+  }
+
+  function send (action) {
+    debug('SEND %O', action)
+    cb(action)
   }
 }
 
