@@ -8,7 +8,7 @@
   "scripts": {
     "bootstrap": "mgit bootstrap && lerna bootstrap --hoist",
     "update": "mgit update && lerna bootstrap --hoist",
-    "server": "cd packages/server; ARCHIPEL_STATIC_PATH=../app/dist/web npm run start",
+    "server": "cd packages/daemon; ARCHIPEL_STATIC_PATH=../app/dist/web npm run start",
     "electron": "cd packages/electron; NODE_ENV=development npm run start",
     "watch": "cd packages/app; npm run watch",
     "dev": "NODE_ENV=development npm-run-all -p watch server electron",

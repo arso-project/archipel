@@ -32,5 +32,18 @@ function create (url, cb) {
 }
 
 window.rpc = rpc
+window.archipelApi = getApi
+
+export function getApi () {
+  return new Promise((resolve, reject) => {
+    rpc(api => resolve(api))
+  })
+}
+
+export function apiAction (action) {
+  return new Promise ((resolve, reject) => {
+    rpc(api => api.action(action, (action) => resolve(action)))
+  })
+}
 
 export default rpc
