@@ -28,7 +28,7 @@ function Daemon (opts) {
 
   this.ws = websocket(Object.assign({}, opts, { server }), this.onConnection.bind(this))
   if (this.server) {
-    this.server.listen(this.config.port, () => debug('Server listening on port %s', this.config.port))
+    this.server.listen(this.config.port, () => console.log('Server listening on port %s', this.config.port))
     this.server.on('error', (e) => this.emit('error', e))
   }
   this.emit('ready')

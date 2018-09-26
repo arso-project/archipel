@@ -5,6 +5,7 @@ const hyperpc = require('hyperpc')
 const pump = require('pump')
 const rpcify = hyperpc.rpcify
 const pify = require('pify')
+const p = require('path')
 const { Rootspace } = require('@archipel/core')
 
 module.exports = Session
@@ -37,6 +38,7 @@ Session.prototype.init = function () {
 }
 
 Session.prototype.onAction = async function (action, cb) {
+  const self = this
   debug('RECEIVE %O', action)
   try {
     switch (action.type) {
@@ -56,6 +58,10 @@ Session.prototype.onAction = async function (action, cb) {
         } else error('Not found.')
         break
 
+      case 'WORKSPACE_CREATE':
+        createWorkspace(action)
+        break
+
       case 'ARCHIVES_LOAD':
         if (!this.workspace) return error('No workspace.')
         this.workspace.getArchives()
@@ -63,16 +69,32 @@ Session.prototype.onAction = async function (action, cb) {
           .catch(err => error(err))
         break
 
+      case 'ARCHIVE_CREATE':
+        if (!this.workspace) return error('No workspace.')
+        try {
+          const archive = await this.workspace.createArchive(action.payload)
+          await archive.ready()
+          const info = archive.info
+          result([info])
+        } catch (e) {
+          console.log(e)
+          throw e
+          // todo: maybe put some error back to fronednd.
+        }
+        break
+
       case 'DIRLIST_LOAD':
         if (!this.workspace) return error('No workspace.')
-        const { id, dir } = action.meta
-        const archive = await this.workspace.archive(id)
+        const { key, dir } = action.meta
+        const archive = await this.workspace.archive(key)
         if (!archive) return error('Archive not found.')
         await archive.ready()
         const fs = archive.fs
         let readdir = await fs.readdir(dir)
         const stats = readdir.map(async name => {
-          const stat = await fs.stat(dir)
+          const stat = await fs.stat(p.join(dir, name))
+          console.log(stat)
+          console.log('ISDIR', stat.isDirectory())
           return {
             path: dir,
             name,
@@ -82,10 +104,54 @@ Session.prototype.onAction = async function (action, cb) {
         Promise.all(stats).then(completed => {
           result(completed)
         })
+        break
+
+      case 'DIR_CREATE':
+        createDir(action)
+        break
+
+      case 'FILE_LOAD':
+        fileLoad(action)
+        break
     }
   } catch (e) {
     console.log(e)
     throw e
+  }
+
+  async function createDir (action) {
+    if (!self.workspace) return error('No workspace.')
+    const { id, dir, name } = action.payload
+    const archive = await self.workspace.archive(id)
+    if (!archive) return error('Archive not found.')
+    const path = p.join(dir, name)
+    const res = await archive.fs.mkdir(path)
+    result(res)
+  }
+
+  async function fileLoad (action) {
+    if (!self.workspace) return error('No workspace.')
+    const { key, file } = action.meta
+    const archive = await self.workspace.archive(key)
+    if (!archive) return error('Archive not found.')
+    const res = await archive.fs.readFile(file)
+    const str = res.toString()
+    result(str)
+  }
+
+  async function createWorkspace (action) {
+    try {
+      const info = action.payload
+      const workspace = await self.Root.createWorkspace(info)
+      if (workspace) {
+        self.workspace = workspace
+        await self.workspace.ready()
+        result(self.workspace.info)
+      } else error('Not found.')
+    } catch (e) {
+      console.log(e)
+    }
+    // const { title } = action.payload
   }
 
   function result (res) {

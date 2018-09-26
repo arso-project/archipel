@@ -5,8 +5,8 @@ function getConfig () {
   return {
     dbPath: p.resolve(p.join(__dirname, '../../..', '.db')),
     port: 8080,
-    staticPath: process.env.ARCHIPEL_STATIC_PATH
-    // staticPath: p.resolve(p.join(__dirname, '../../..', 'packages/app/dist/web'))
+    // staticPath: process.env.ARCHIPEL_STATIC_PATH
+    staticPath: p.resolve(p.join(__dirname, '../../..', 'packages/app/dist/web'))
   }
 }
 

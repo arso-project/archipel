@@ -5,9 +5,9 @@ import { loadArchives } from './duck'
 import Maybe from '../util/Maybe'
 
 const Key = ({string}) => (
-  <em className='text-red'>
-    {string.substring(0, 6)}…
-  </em>
+  <strong className=''>
+    {string.substring(0, 8)}…
+  </strong>
 )
 
 const ListItem = ({archive}) => {
@@ -37,8 +37,8 @@ class ListArchives extends React.Component {
   }
 }
 
-const mapState = (state, props) => ({
+const mapStateToProps = (state, props) => ({
   archives: state.archives
 })
 
-export default connect(mapState)(ListArchives)
+export default connect(mapStateToProps)(ListArchives)

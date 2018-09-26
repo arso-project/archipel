@@ -42,6 +42,7 @@ export function getApi () {
 
 export function apiAction (action) {
   return new Promise ((resolve, reject) => {
+    console.log('ACTION', action)
     rpc(api => api.action(action, (action) => resolve(action)))
   })
 }

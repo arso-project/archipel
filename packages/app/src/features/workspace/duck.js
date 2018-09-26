@@ -20,16 +20,27 @@ export const openWorkspace = key => (dispatch, getState) => {
     })
 }
 
-export const createWorkspace = title => dispatch => {
-  apiAction({ type: WORKSPACE_CREATE, payload: { title } })
-    .then(res => dispatch(res))
+export const createWorkspace = title => async (dispatch, getState) => {
+  const res = await apiAction({ type: WORKSPACE_CREATE, payload: { title } })
+  dispatch(res)
+  dispatch(loadWorkspaces())
+  // const state = getState()
+  // if (!state.workspace) {
+  //   dispatch(loadWorkspaces())
+  // }
 }
 
-export const loadWorkspaces = () => (dispatch, getState) => {
-  const state = getState()
+export const loadWorkspaces = () => async (dispatch, getState) => {
+  let state = getState()
   if (hasStarted(state.workspaces)) return
-  apiAction({ type: WORKSPACES_LOAD })
-    .then(res => dispatch(res))
+  const res = await apiAction({ type: WORKSPACES_LOAD })
+  dispatch(res)
+  state = getState()
+  if (!state.workspace && res.payload.length) {
+    dispatch(openWorkspace(res.payload[0].key))
+  } else if (!res.payload.length) {
+    dispatch(createWorkspace('Default workspace'))
+  }
 }
 
 const reducer = (state, action) => {
@@ -45,6 +56,9 @@ const reducer = (state, action) => {
       return { ...state, workspace: action.payload, archives: null }
     case WORKSPACES_LOAD:
       return { ...state, workspaces: reduceAsyncAction(state.workspaces, action) }
+    // case WORKSPACE_CREATE:
+    //   const workspaces = reduceAsyncAction(state.workspaces, action)
+    //   return { ...state, workspaces: reduceAsyncAction(state.workspaces, action) }
   }
   return state
 }

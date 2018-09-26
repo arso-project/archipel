@@ -1,9 +1,20 @@
+export const combineReducers = (ducks) => {
+  const reducers = ducks.map(duck => duck.reducer).filter(reducer => reducer)
+  return function (state, action) {
+    if (!state) state = {}
+    state = reducers.reduce((state, reducer) => {
+      state = reducer(state, action)
+      return state
+    }, state)
+    return state
+  }
+}
 
 // Redux update helpers
-export function updateOrAdd (array, id, newItem) {
+export function updateOrAdd (array, isSame, newItem) {
   let updated = false
   const newArray = array.map(item => {
-    if (item.id !== newItem.id) return item
+    if (!isSame(item)) return item
     else {
       updated = true
       return { ...item, ...newItem }
