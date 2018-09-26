@@ -24,6 +24,7 @@
     "hyperdb": "^3.5.0",
     "hyperdrive": "github:mafintosh/hyperdrive#hyperdb-backend",
     "inherits": "^2.0.3",
+    "lodash.pickby": "^4.6.0",
     "pify": "^4.0.0",
     "thunky": "^1.0.2"
   },

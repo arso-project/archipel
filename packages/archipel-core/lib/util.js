@@ -12,7 +12,45 @@ module.exports = {
   omit,
   discoveryKey,
   pifi,
-  keyToFolder
+  keyToFolder,
+  asyncThunk,
+  pifyObj
+}
+
+function asyncThunk (fn) {
+  let result
+  let run = false
+  return function (cb) {
+    if (!run) {
+      run = true
+      result = fn()
+    }
+    if (cb) result.then(res => cb(null, res)).catch(e => cb(e, null))
+    else return result
+  }
+}
+
+function pifyObj (obj, opts) {
+  opts = opts || {}
+  const ret = {}
+  for (key in obj) {
+    if (opts.include && opts.include.indexOf(key) === -1) continue
+    if (typeof obj[key] === 'function') {
+      ret[key] = function () {
+        const args = Array.from(arguments)
+        return new Promise((resolve, reject) => {
+          const cb = (err, res) => {
+            console.log('res', key, err, res)
+            if (err) reject(err)
+            else resolve(res)
+          }
+          args.push(cb)
+          obj[key].apply(obj[key], args)
+        })
+      }
+    }
+  }
+  return ret
 }
 
 function promise (fn) {

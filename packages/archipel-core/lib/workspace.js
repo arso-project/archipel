@@ -4,10 +4,12 @@ const events = require('events')
 const datenc = require('dat-encoding')
 const thunky = require('thunky')
 const inherits = require('inherits')
+const rpcify = require('hyperpc').rpcify
+const pify = require('pify')
 
 const Archive = require('./archive')
 
-const { hex, chainStorage, keyToFolder } = require('./util')
+const { hex, chainStorage, keyToFolder, asyncThunk } = require('./util')
 
 module.exports = Workspace
 
@@ -21,7 +23,9 @@ function Workspace (storage, key, opts) {
   this.archives = []
   this._byKey = {}
 
-  this.info = {}
+  this.info = {
+    key: key.toString('hex')
+  }
   this.opts = opts
 
   opts.reduce = (a, b) => a
@@ -31,48 +35,56 @@ function Workspace (storage, key, opts) {
 
   this.db = hyperdb(this._storage('workspace'), key, opts)
 
-  this.ready = thunky((done) => self._ready(done))
+  // this.ready = thunky((done) => self._ready(done))
+  this.ready = asyncThunk(this._ready.bind(this))
 
-  if (opts.info) this.updateInfo(opts.info)
+  // if (opts.info) this.updateInfo(opts.info)
 }
 
 inherits(Workspace, events.EventEmitter)
 
+let idx = 0
 Workspace.prototype._ready = function (done) {
+  console.log('WS: %s, READY %s', this.key.toString('hex').substring(0, 4), idx++)
   const self = this
-  const rs = this.db.createReadStream('/archives')
-
-  let ready = -1 // not 0 to account for the this.db.get('info)
-  let end = false
+  const rs = this.db.createReadStream('archive')
 
   rs.on('data', (node) => {
     const archive = this._loadArchive(node.key)
     archive.on('ready', finish)
   })
-  rs.on('end', () => { end = true })
+  rs.on('end', () => finish())
 
   if (this.opts.new && this.opts.info) {
     this.updateInfo(this.opts.info, () => finish())
   } else {
     this.db.get('info', (err, node) => {
       if (err) return
-      this.info = node.value
+      this.info = Object.assign({}, this.info, node.value)
       finish()
     })
   }
 
+  var end = 0
   function finish () {
-    if (end && ++ready === self.archives.length) done()
+    if (end === 2) done()
   }
 }
 
-Workspace.prototype.archive = async function (key, cb) {
+Workspace.prototype.archive = async function (key) {
   await this.ready()
   key = datenc.toStr(key)
-  let archive = null
-  if (this._byKey[key]) archive = this.archives[this._byKey[key]]
-  cb(null, archive)
+  if (this._byKey[key] === undefined) return null
+  const archive = this.archives[this._byKey[key]]
+  await archive.ready()
   return archive
+}
+
+Workspace.prototype.getArchives = async function (cb) {
+  await this.ready()
+  await Promise.all(this.archives.map(a => a.ready()))
+  const info = this.archives.map(a => a.info)
+  return info
 }
 
 Workspace.prototype.updateInfo = function (info, cb) {
@@ -81,6 +93,11 @@ Workspace.prototype.updateInfo = function (info, cb) {
     this.emit('info.update', this.info)
     if (cb) cb(null, this.info)
   })
+}
+
+Workspace.prototype.getInfo = async function () {
+  await this.ready()
+  return this.info
 }
 
 // Workspace.prototype.mount = function (archive, opts) {
@@ -124,19 +141,30 @@ Workspace.prototype._loadArchive = function (key, opts) {
   key = datenc.toBuf(key)
   const name = 'archive/' + keyToFolder(key)
   const archive = Archive(this._storage(name), key, opts)
-  archive.ready(() => this._pushArchive(archive))
+  this._pushArchive(archive)
+  // archive.ready(() => this._pushArchive(archive))
   return archive
 }
 
 Workspace.prototype._pushArchive = function (archive) {
   const idx = this.archives.push(archive)
+  // console.log('push archive', archive.key.toString('hex').substring(0, 8))
   this._byKey[hex(archive.key)] = idx - 1
   this.emit('archive', archive)
 }
 
-// Workspace.prototype.__hyperpc = function () {
-//   const self = this
-//   return {
-//     archive: (key, cb) => self.archive(key) ? rpcify(self.archive(key)) :
+
+// Workspace.prototype.__hyperpc = {
+//   override: {
+//     archive: async function (key) { return rpcify(await this.archive(key)) },
+//     // getArchives: async function () {
+//     //   let archives = await this.getArchives()
+//     //   console.log('ARCHIVES', archives)
+//     //   return archives.map(a => rpcify(a))
+//     // },
+//     createArchive: async function (info) {
+//       console.log('CREATE OVERRIDEN', info)
+//       return rpcify(await this.createArchive(info))
+//     }
 //   }
 // }
