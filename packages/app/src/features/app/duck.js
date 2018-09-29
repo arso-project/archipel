@@ -7,7 +7,7 @@ export const setScreen = screen => ({
 
 const defaultState = {
   ui: {
-    screen: 'listArchives'
+    screen: 'archives'
   }
 }
 

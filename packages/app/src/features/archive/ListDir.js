@@ -1,37 +1,30 @@
 import React from 'react'
 import { List } from '@archipel/ui'
-import { connect } from 'react-redux'
+import ReduxQuery from '../util/ReduxQuery'
+import PropTypes from 'proptypes'
 
 import { loadDirlist, selectDir } from './duck'
 
-import Maybe from '../util/Maybe'
-
 const ListDirItem = (props) => {
-  const { path, name, isDirectory } = props.item
+  const { name, isDirectory } = props.item // also: path
   const color = isDirectory ? 'text-blue' : 'text-red'
   return <span className={color}>{name}</span>
 }
 
-class ListDir extends React.Component {
-  componentDidMount () {
-    this.props.dispatch(loadDirlist(this.props.archive, this.props.dir))
-  }
-
-  componentDidUpdate (prevProps) {
-    if (prevProps.archive !== this.props.archive || prevProps.dir !== this.props.dir) {
-      this.props.dispatch(loadDirlist(this.props.archive, this.props.dir))
-    }
-  }
-
-  render () {
-    return <Maybe {...this.props.dirlist}>
-      {(dirs) => <List items={dirs} onSelect={this.props.onSelect} renderItem={item => <ListDirItem item={item} />} />}
-    </Maybe>
-  }
+const ListDir = (props) => {
+  return (
+    <ReduxQuery select={selectDir} fetch={loadDirlist} {...props}>
+      {(dirs) => {
+        return <List items={dirs} onSelect={props.onSelect} renderItem={item => <ListDirItem item={item} />} />}
+      }
+    </ReduxQuery>
+  )
 }
 
-const mapStateToProps = (state, props) => ({
-  dirlist: selectDir(state, props.archive, props.dir)
-})
+ListDir.propTypes = {
+  archive: PropTypes.string,
+  dir: PropTypes.string,
+  onSelect: PropTypes.func
+}
 
-export default connect(mapStateToProps)(ListDir)
+export default ListDir

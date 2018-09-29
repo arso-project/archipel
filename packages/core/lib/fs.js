@@ -11,9 +11,13 @@ function Fs (storage, key, opts) {
   this.hyperdrive = hyperdrive(storage, key, opts)
 
   // Copy functions from hyperdrive.
-  const funcs = ['ready', 'readFile', 'writeFile', 'readdir', 'mkdir', 'stat']
-  funcs.forEach(func => {
+  const asyncFuncs = ['ready', 'readFile', 'writeFile', 'readdir', 'mkdir', 'stat']
+  asyncFuncs.forEach(func => {
     self[func] = pify(self.hyperdrive[func].bind(self.hyperdrive))
+  })
+  const syncFuncs = ['createWriteStream', 'createReadStream']
+  syncFuncs.forEach(func => {
+    self[func] = self.hyperdrive[func].bind(self.hyperdrive)
   })
 
   // Copy event bus.
@@ -21,8 +25,8 @@ function Fs (storage, key, opts) {
   this.on = (ev, cb) => this.hyperdrive.on(ev, cb)
 
   // Copy static props.
-  const copy = ['key', 'discoveryKey', 'db']
-  copy.forEach(key => {
+  const props = ['key', 'discoveryKey', 'db']
+  props.forEach(key => {
     self[key] = self.hyperdrive[key]
   })
 }

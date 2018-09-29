@@ -28,7 +28,8 @@ Session.prototype.init = function () {
   const self = this
   debug('init. req url: %s', this.opts.req.url)
   const api = {
-    action: (action, cb) => self.onAction(action, cb),
+    action: (action, cb) => self.onAction(action, null, cb),
+    actionStream: (action, stream, cb) => self.onAction(action, stream, cb),
     rootspace: rpcify(Rootspace, { factory: () => self.Root })
     // workspace: async (key) => rpcify(this.workspace)
   }
@@ -37,7 +38,7 @@ Session.prototype.init = function () {
   this.rpc.on('remote', this.onRemote.bind(this))
 }
 
-Session.prototype.onAction = async function (action, cb) {
+Session.prototype.onAction = async function (action, stream, cb) {
   const self = this
   debug('RECEIVE %O', action)
   try {
@@ -93,8 +94,6 @@ Session.prototype.onAction = async function (action, cb) {
         let readdir = await fs.readdir(dir)
         const stats = readdir.map(async name => {
           const stat = await fs.stat(p.join(dir, name))
-          console.log(stat)
-          console.log('ISDIR', stat.isDirectory())
           return {
             path: dir,
             name,
@@ -112,6 +111,10 @@ Session.prototype.onAction = async function (action, cb) {
 
       case 'FILE_LOAD':
         fileLoad(action)
+        break
+
+      case 'FILE_WRITE':
+        fileWrite(action, stream)
         break
     }
   } catch (e) {
@@ -139,6 +142,22 @@ Session.prototype.onAction = async function (action, cb) {
     result(str)
   }
 
+  async function fileWrite (action, stream) {
+    try {
+      if (!self.workspace) return error('No workspace.')
+      const { key, file } = action.meta
+      const archive = await self.workspace.archive(key)
+      if (!archive) return error('Archive not found.')
+      console.log(stream)
+      const ws = archive.fs.createWriteStream(file)
+      pump(stream, ws)
+      ws.on('finish', () => result(true))
+      ws.on('error', (err) => error(err))
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
   async function createWorkspace (action) {
     try {
       const info = action.payload
@@ -159,7 +178,7 @@ Session.prototype.onAction = async function (action, cb) {
       ...action,
       error: false,
       payload: res,
-      meta: { ...action.meta, pending: false }
+      pending: false
     })
   }
 
@@ -168,7 +187,7 @@ Session.prototype.onAction = async function (action, cb) {
       ...action,
       error: true,
       payload: err,
-      meta: { ...action.meta, pending: false }
+      pending: false
     })
   }
 

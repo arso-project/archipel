@@ -1,17 +1,18 @@
 import React from 'react'
+import PropTypes from 'prop-types'
+// import { connect } from 'react-redux'
 import { Heading } from '@archipel/ui'
-import { connect } from 'react-redux'
 import { apiAction } from '../../lib/rpc'
 import { defaultAsyncState } from  '../../redux-utils'
+import Query from '../util/Query'
 
-import { loadFile, selectFile, FILE_LOAD } from './duck'
+// import { loadFile, selectFile, FILE_LOAD } from './duck'
 
 import Maybe from '../util/Maybe'
 
 const FileContent = ({content}) => {
   return (
     <div className='p-4 border-2 bg-grey-lighter'>
-      {/* <Heading>{filename}</Heading> */}
       <pre>
         {content}
       </pre>
@@ -62,7 +63,35 @@ class ViewFile extends React.Component {
   }
 }
 
-export default ViewFile
+// export default ViewFile
+
+const loadFileContent = async (props) => {
+  const { archive, file } = props
+  const meta = { key: archive, file: file }
+  return apiAction({ type: 'FILE_LOAD', meta })
+  // const fileContent = await apiAction({ type: 'FILE_LOAD', meta })
+  // if (fileContent.error) throw new Error(fileContent.error)
+  // return fileContent.payload
+}
+
+const View = (props) => {
+  const { archive, file } = props
+  return (
+    <div>
+      <Heading>{file}</Heading>
+      <Query {...props} fetch={loadFileContent}>
+        {(fileContent) => <FileContent content={fileContent} />}
+      </Query>
+    </div>
+  )
+}
+
+View.propTypes = {
+  archive: PropTypes.string,
+  file: PropTypes.string
+}
+
+export default View
 
 // const mapDispatchToProps = dispatch => {
 //   return {

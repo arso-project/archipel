@@ -1,8 +1,9 @@
 import React from 'react'
 import { List } from '@archipel/ui'
-import { connect } from 'react-redux'
+import ReduxQuery from '../util/ReduxQuery'
+import PropTypes from 'proptypes'
+
 import { loadArchives } from './duck'
-import Maybe from '../util/Maybe'
 
 const Key = ({string}) => (
   <strong className=''>
@@ -10,35 +11,23 @@ const Key = ({string}) => (
   </strong>
 )
 
-const ListItem = ({archive}) => {
+const Archive = ({item}) => {
   return (
     <span>
-      <strong>{archive.title}</strong> <Key string={archive.key} />
+      <strong>{item.title}</strong> <Key string={item.key} />
     </span>
   )
 }
-
-class ListArchives extends React.Component {
-  componentDidMount () {
-    this.props.dispatch(loadArchives())
-  }
-
-  render () {
-    const onSelect = this.props.onSelect || null
-    return <Maybe {...this.props.archives}>
-      {archives => {
-        return <List
-          items={archives}
-          onSelect={onSelect}
-          renderItem={item => <ListItem archive={item} />}
-        />
-      }}
-    </Maybe>
-  }
+const ListArchives = (props) => {
+  return (
+    <ReduxQuery select={state => state.archives} fetch={loadArchives} {...props} shouldRefetch={() => false}>
+      {(archives) => <List items={archives} onSelect={props.onSelect} renderItem={item => <Archive item={item} />} />}
+    </ReduxQuery>
+  )
 }
 
-const mapStateToProps = (state, props) => ({
-  archives: state.archives
-})
+ListArchives.propTypes = {
+  onSelect: PropTypes.func
+}
 
-export default connect(mapStateToProps)(ListArchives)
+export default ListArchives

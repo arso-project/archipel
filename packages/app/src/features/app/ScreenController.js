@@ -1,10 +1,10 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
-import ListArchivesScreen from '../archive/Screen.js'
+import ArchiveScreen from '../archive/ArchiveScreen.js'
 
 const Screens = {
-  listArchives: ListArchivesScreen
+  archives: ArchiveScreen
 }
 
 const Screen = (props) => {

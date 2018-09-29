@@ -25,9 +25,9 @@ export function updateOrAdd (array, isSame, newItem) {
 }
 
 export function reduceAsyncAction (state, action) {
-  const { meta, payload, error } = action
-  console.log('reduce async', action, meta, meta.pending)
-  if (meta && meta.pending) return { ...state, pending: true }
+  const { pending, payload, error } = action
+  // console.log('reduce async', action, meta, meta.pending)
+  if (pending) return { ...state, pending: true }
   if (error) return { ...state, pending: false, error: error }
   else return { ...state, pending: false, error: false, data: payload }
 }

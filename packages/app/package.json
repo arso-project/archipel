@@ -13,8 +13,12 @@
   "dependencies": {
     "@archipel/ui": "^1.0",
     "@babel/runtime": "^7.0.0",
+    "deep-object-diff": "^1.1.0",
+    "filereader-stream": "^2.0.0",
     "hyperpc": "^1.2",
     "is-electron-renderer": "^2.0.1",
+    "pretty-bytes": "^5.1.0",
+    "proptypes": "^1.1.0",
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "react-redux": "^5.0.7",
@@ -22,6 +26,8 @@
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.2.0",
     "reselect": "^3.0.1",
+    "speedometer": "^1.1.0",
+    "through2": "^2.0.3",
     "thunky": "^1.0.2",
     "websocket-stream": "^5.1.2"
   },

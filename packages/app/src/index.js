@@ -23,7 +23,7 @@ const ducks = [AppDuck, WorkspaceDuck, ArchiveDuck]
 const reducer = combineReducers(ducks)
 
 if (process.env.NODE_ENV === 'development') {
-  middleware = [...middleware, logger]
+  // middleware = [...middleware, logger]
   composeFunc = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || composeFunc
 }
 
