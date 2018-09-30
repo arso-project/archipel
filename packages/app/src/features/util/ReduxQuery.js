@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { defaultShouldRefetch } from './Query'
+import { defaultShouldRefetch } from './BackendQuery'
 import Maybe from './Maybe'
 
 let cleanProps = props => {

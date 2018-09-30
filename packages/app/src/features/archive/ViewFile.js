@@ -3,8 +3,8 @@ import PropTypes from 'prop-types'
 // import { connect } from 'react-redux'
 import { Heading } from '@archipel/ui'
 import { apiAction } from '../../lib/rpc'
-import { defaultAsyncState } from  '../../redux-utils'
-import Query from '../util/Query'
+import { defaultAsyncState } from '../../redux-utils'
+import BackendQuery from '../util/BackendQuery'
 
 // import { loadFile, selectFile, FILE_LOAD } from './duck'
 
@@ -79,9 +79,9 @@ const View = (props) => {
   return (
     <div>
       <Heading>{file}</Heading>
-      <Query {...props} fetch={loadFileContent}>
+      <BackendQuery {...props} fetch={loadFileContent}>
         {(fileContent) => <FileContent content={fileContent} />}
-      </Query>
+      </BackendQuery>
     </div>
   )
 }
