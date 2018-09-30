@@ -148,7 +148,6 @@ Session.prototype.onAction = async function (action, stream, cb) {
       const { key, file } = action.meta
       const archive = await self.workspace.archive(key)
       if (!archive) return error('Archive not found.')
-      console.log(stream)
       const ws = archive.fs.createWriteStream(file)
       pump(stream, ws)
       ws.on('finish', () => result(true))

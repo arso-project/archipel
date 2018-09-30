@@ -26,15 +26,16 @@ class ReduxQuery extends React.PureComponent {
   }
 
   componentDidUpdate (prevProps, prevState) {
-    if (this.shouldRefetch(cleanProps(prevProps), cleanProps(this.props))) {
-      this.cnt++
-      if (this.cnt > 4) return
-      this.doFetch()
+    // todo: clean this up
+    if (!this.props.asyncState || (!this.props.asyncState.started || this.props.asyncState.pending)) {
+      if (this.shouldRefetch(cleanProps(prevProps), cleanProps(this.props))) {
+        this.doFetch()
+      }
     }
   }
 
   async doFetch () {
-    if (!this.props.asyncState || !this.props.asyncState.started) {
+    if (!this.props.asyncState || (!this.props.asyncState.started || this.props.asyncState.pending)) {
       this.props.fetch(cleanProps(this.props))
     }
   }

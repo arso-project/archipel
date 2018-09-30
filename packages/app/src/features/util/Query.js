@@ -9,7 +9,7 @@ export const defaultAsyncState = {
 }
 
 export const defaultShouldRefetch = (prevProps, props) => {
-  console.log('shouldRefetch?', prevProps, props)
+  // console.log('shouldRefetch?', prevProps, props)
   const keys = Object.keys(props)
   for (let i = 0; i < keys.length; i++) {
     if (props[keys[i]] !== prevProps[keys[i]]) return true

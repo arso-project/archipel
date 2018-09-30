@@ -115,7 +115,7 @@ class UploadFile extends React.Component {
     const res = await apiActionStream({
       type: 'FILE_WRITE',
       meta
-    }, passthrough)
+    }, reader)
     // todo: handle error.
     clearInterval(debounce)
     this.setState({ files: updateAt(this.state.files, i, { pending: false, done: true, written, speed }) })
