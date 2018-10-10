@@ -48,7 +48,7 @@ async function onAction (action, stream, session, send) {
   // const [domain, type] = action.type
   // if (domain !== 'fs') return
   const type = action.type
-  if (!session.workspace) error('No workspace')
+  if (!session.workspace) error(action, 'No workspace')
   const workspace = session.workspace
 
   switch (type) {
@@ -62,7 +62,7 @@ async function onAction (action, stream, session, send) {
 async function dirlistLoad (workspace, action) {
   const { key, dir } = action.meta
   const archive = await workspace.archive(key)
-  if (!archive) return error('Archive not found.')
+  if (!archive) return error(action, 'Archive not found.')
   await archive.ready()
   const fs = archive.fs
   let readdir = await fs.readdir(dir)
@@ -81,7 +81,7 @@ async function dirlistLoad (workspace, action) {
 async function fileLoad (workspace, action) {
   const { key, file } = action.meta
   const archive = await workspace.archive(key)
-  if (!archive) return error('Archive not found.')
+  if (!archive) return error(action, 'Archive not found.')
   const res = await archive.fs.readFile(file)
   const str = res.toString()
   return result(action, str)
@@ -92,7 +92,7 @@ function fileWrite (workspace, action, stream) {
     try {
       const { key, file } = action.meta
       const archive = await workspace.archive(key)
-      if (!archive) return error('Archive not found.')
+      if (!archive) return error(action, 'Archive not found.')
       const ws = archive.fs.createWriteStream(file)
       pump(stream, ws)
       ws.on('finish', () => resolve(result(action, true)))
@@ -106,7 +106,7 @@ function fileWrite (workspace, action, stream) {
 async function createDir (workspace, action) {
   const { id, dir, name } = action.payload
   const archive = await workspace.archive(id)
-  if (!archive) return error('Archive not found.')
+  if (!archive) return error(action, 'Archive not found.')
   const path = [dir, name].join('/')
   const res = await archive.fs.mkdir(path)
   return result(action, res)

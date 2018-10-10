@@ -80,11 +80,8 @@ Workspace.prototype.archive = async function (key) {
 }
 
 Workspace.prototype.getArchives = async function (cb) {
-  console.log('y0')
   await this.ready()
-  console.log('y1')
   await Promise.all(this.archives.map(a => a.ready()))
-  console.log('y2')
   const info = this.archives.map(a => a.info)
   return info
 }

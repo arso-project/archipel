@@ -18,11 +18,9 @@ const Archive = ({item, selected}) => {
     </span>
   )
 }
-const ListArchives = (props) => {
+const ListArchives = ({archives, onSelect}) => {
   return (
-    <ReduxQuery select={select.sortedByName} fetch={actions.loadArchives} {...props} shouldRefetch={() => false}>
-      {(archives) => <List items={archives} onSelect={props.onSelect} renderItem={item => <Archive item={item} />} />}
-    </ReduxQuery>
+    <List items={archives} onSelect={onSelect} renderItem={item => <Archive item={item} />} />
   )
 }
 

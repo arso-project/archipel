@@ -31,6 +31,7 @@ class FsScreen extends React.PureComponent {
   }
 
   componentDidUpdate (prevProps) {
+    console.log('didUpdate', prevProps, this.props)
     if (prevProps.archive !== this.props.archive) this.setState({ dirs: ['/'], file: null })
   }
 

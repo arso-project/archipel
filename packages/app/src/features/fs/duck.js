@@ -28,6 +28,7 @@ const reduceDirlistLoad = (state, action) => {
 const reducer = (state = {}, action) => {
   switch (action.type) {
     case DIRLIST_LOAD: return reduceDirlistLoad(state, action)
+    case 'RESET': return {}
   }
   return state
 }
@@ -46,6 +47,7 @@ export const createDir = ({ archive, dir, name }) => async dispatch => {
 
 export const loadDirlist = ({ archive, dir }) => async dispatch => {
   // todo: fix ids/paths. archive to key is not good.
+  if (!archive) return
   const meta = { key: archive, dir }
   const action = {
     type: DIRLIST_LOAD,

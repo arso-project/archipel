@@ -11,7 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "inherits": "^2.0.3",
-    "hyperpc": "^1.2",
+    "hyperpc": "^2.1",
     "pump": "^3.0.0",
     "@archipel/core": "^1.0.0",
     "debug": "^3.1.0"

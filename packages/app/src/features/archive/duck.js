@@ -23,6 +23,7 @@ const reducer = (state = initialState, action) => {
   switch (action.type) {
     case ARCHIVES_LOAD: return reduceAsyncAction(state, action)
     case ARCHIVE_CREATE: return reduceAsyncAction(state, action, updateOrAdd)
+    case 'RESET': return initialState
   }
   return state
 }

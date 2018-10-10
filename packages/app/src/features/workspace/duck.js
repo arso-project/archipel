@@ -24,8 +24,9 @@ export const selectWorkspace = (state) => {
 // Actions
 export const openWorkspace = key => (dispatch, getState) => {
   const state = getState()
-  if (state.workspace && state.workspace.key === key) return
-  // rpc(api => api.action({ type: WORKSPACE_OPEN, payload: key }, res => dispatch(res)))
+  const current = selectWorkspace(state)
+  if (current && current.key === key) return
+  if (current) dispatch({ type: 'RESET' })
   apiAction({ type: WORKSPACE_OPEN, payload: key })
     .then(res => {
       dispatch(res)

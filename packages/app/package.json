@@ -15,7 +15,7 @@
     "@babel/runtime": "^7.0.0",
     "deep-object-diff": "^1.1.0",
     "filereader-stream": "^2.0.0",
-    "hyperpc": "^1.2",
+    "hyperpc": "^2.1",
     "is-electron-renderer": "^2.0.1",
     "pretty-bytes": "^5.1.0",
     "proptypes": "^1.1.0",
