@@ -1,7 +1,10 @@
 export function cls (props, ...classes) {
   const className = []
   if (props.s) className.push(props.s)
-  if (props.className) className.push(props.className)
+  if (props.className) {
+    // if (Array.isArray(props.className)) classNames.pus
+    className.push(props.className)
+  }
   className.push(classes)
   return flatten(className)
 
