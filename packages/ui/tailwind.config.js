@@ -135,12 +135,11 @@ let colors = {
   'pink-lighter': '#ffbbca',
   'pink-lightest': '#ffebef',
 
-
-
-
   primary: '#1d6f6a',
   dark: '#222',
-  bright: '#b3e9e0'
+  bright: '#b3e9e0',
+
+  smoke: 'rgba(0,0,0,0.8)'
 }
 
 module.exports = {
