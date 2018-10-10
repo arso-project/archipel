@@ -3,10 +3,7 @@ const inherits = require('inherits')
 const debug = require('debug')('session')
 const hyperpc = require('hyperpc')
 const pump = require('pump')
-const rpcify = hyperpc.rpcify
-const pify = require('pify')
-const p = require('path')
-const { Rootspace } = require('@archipel/core')
+const { features } = require('@archipel/core')
 
 module.exports = Session
 
@@ -19,6 +16,9 @@ function Session (Root, stream, opts) {
 
   this.workspace = null
 
+  this.actionHandlers = features.filter(feature => feature.onAction).map(feature => feature.onAction)
+  this.actionHandlers.push(onWorkspaceAction)
+
   this.init()
 }
 
@@ -30,8 +30,6 @@ Session.prototype.init = function () {
   const api = {
     action: (action, cb) => self.onAction(action, null, cb),
     actionStream: (action, stream, cb) => self.onAction(action, stream, cb),
-    rootspace: rpcify(Rootspace, { factory: () => self.Root })
-    // workspace: async (key) => rpcify(this.workspace)
   }
   this.rpc = hyperpc(api, {promise: true, debug: true})
   pump(this.rpc, this.stream, this.rpc)
@@ -39,156 +37,7 @@ Session.prototype.init = function () {
 }
 
 Session.prototype.onAction = async function (action, stream, cb) {
-  const self = this
-  debug('RECEIVE %O', action)
-  try {
-    switch (action.type) {
-      case 'WORKSPACE_LIST':
-        // todo: permission checking.
-        this.Root.getWorkspaces()
-          .then(res => result(res))
-          .catch(err => error(err))
-        break
-
-      case 'WORKSPACE_OPEN':
-        const workspace = await this.Root.getWorkspace(action.payload)
-        if (workspace) {
-          this.workspace = workspace
-          await this.workspace.ready()
-          result(this.workspace.info)
-        } else error('Not found.')
-        break
-
-      case 'WORKSPACE_CREATE':
-        createWorkspace(action)
-        break
-
-      case 'ARCHIVES_LOAD':
-        if (!this.workspace) return error('No workspace.')
-        this.workspace.getArchives()
-          .then(res => result(res))
-          .catch(err => error(err))
-        break
-
-      case 'ARCHIVE_CREATE':
-        if (!this.workspace) return error('No workspace.')
-        try {
-          const archive = await this.workspace.createArchive(action.payload)
-          await archive.ready()
-          const info = archive.info
-          result([info])
-        } catch (e) {
-          console.log(e)
-          throw e
-          // todo: maybe put some error back to fronednd.
-        }
-        break
-
-      case 'DIRLIST_LOAD':
-        if (!this.workspace) return error('No workspace.')
-        const { key, dir } = action.meta
-        const archive = await this.workspace.archive(key)
-        if (!archive) return error('Archive not found.')
-        await archive.ready()
-        const fs = archive.fs
-        let readdir = await fs.readdir(dir)
-        const stats = readdir.map(async name => {
-          const stat = await fs.stat(p.join(dir, name))
-          return {
-            path: dir,
-            name,
-            isDirectory: stat.isDirectory()
-          }
-        })
-        Promise.all(stats).then(completed => {
-          result(completed)
-        })
-        break
-
-      case 'DIR_CREATE':
-        createDir(action)
-        break
-
-      case 'FILE_LOAD':
-        fileLoad(action)
-        break
-
-      case 'FILE_WRITE':
-        fileWrite(action, stream)
-        break
-    }
-  } catch (e) {
-    console.log(e)
-    throw e
-  }
-
-  async function createDir (action) {
-    if (!self.workspace) return error('No workspace.')
-    const { id, dir, name } = action.payload
-    const archive = await self.workspace.archive(id)
-    if (!archive) return error('Archive not found.')
-    const path = p.join(dir, name)
-    const res = await archive.fs.mkdir(path)
-    result(res)
-  }
-
-  async function fileLoad (action) {
-    if (!self.workspace) return error('No workspace.')
-    const { key, file } = action.meta
-    const archive = await self.workspace.archive(key)
-    if (!archive) return error('Archive not found.')
-    const res = await archive.fs.readFile(file)
-    const str = res.toString()
-    result(str)
-  }
-
-  async function fileWrite (action, stream) {
-    try {
-      if (!self.workspace) return error('No workspace.')
-      const { key, file } = action.meta
-      const archive = await self.workspace.archive(key)
-      if (!archive) return error('Archive not found.')
-      const ws = archive.fs.createWriteStream(file)
-      pump(stream, ws)
-      ws.on('finish', () => result(true))
-      ws.on('error', (err) => error(err))
-    } catch (e) {
-      console.log(e)
-    }
-  }
-
-  async function createWorkspace (action) {
-    try {
-      const info = action.payload
-      const workspace = await self.Root.createWorkspace(info)
-      if (workspace) {
-        self.workspace = workspace
-        await self.workspace.ready()
-        result(self.workspace.info)
-      } else error('Not found.')
-    } catch (e) {
-      console.log(e)
-    }
-    // const { title } = action.payload
-  }
-
-  function result (res) {
-    send({
-      ...action,
-      error: false,
-      payload: res,
-      pending: false
-    })
-  }
-
-  function error (err) {
-    send({
-      ...action,
-      error: true,
-      payload: err,
-      pending: false
-    })
-  }
+  this.actionHandlers.forEach(onAction => onAction(action, stream, this, send))
 
   function send (action) {
     debug('SEND %O', action)
@@ -199,4 +48,78 @@ Session.prototype.onAction = async function (action, stream, cb) {
 Session.prototype.onRemote = function (remote) {
   this.remote = remote
   debug('remote: %o', remote)
+}
+
+async function onWorkspaceAction (action, stream, session, send) {
+  switch (action.type) {
+    case 'WORKSPACE_LIST': return send(await listWorkspaces(session, action))
+    case 'WORKSPACE_OPEN': return send(await openWorkspace(session, action))
+    case 'WORKSPACE_CREATE': return send(await createWorkspace(session, action))
+    case 'ARCHIVES_LOAD': return send(await loadArchives(session, action))
+  }
+  return null
+}
+
+async function loadArchives (session, action) {
+  if (!session.workspace) return error(action, 'No workspace.')
+  const workspace = session.workspace
+  const archives = await workspace.getArchives()
+  return result(action, archives)
+}
+
+async function listWorkspaces (session, action) {
+  // todo: permission checking.
+  try {
+    const res = await session.Root.getWorkspaces()
+    return result(action, res)
+  } catch (err) {
+    console.log('listWorkspaces ERROR', err)
+    // return error(action, err)
+  }
+}
+
+async function openWorkspace (session, action) {
+  try {
+    const workspace = await session.Root.getWorkspace(action.payload)
+    if (workspace) {
+      session.workspace = workspace
+      await session.workspace.ready()
+      return result(action, session.workspace.info)
+    } else return error(action, 'Not found.')
+  } catch (e) {
+    console.log('openWorkspace ERROR', e)
+  }
+}
+
+async function createWorkspace (session, action) {
+  try {
+    const info = action.payload
+    const workspace = await session.Root.createWorkspace(info)
+    if (workspace) {
+      session.workspace = workspace
+      await session.workspace.ready()
+      return result(action, session.workspace.info)
+    } else error('Not found.')
+  } catch (e) {
+    console.log(e)
+  }
+  // const { title } = action.payload
+}
+
+function result (action, res) {
+  return {
+    ...action,
+    error: false,
+    payload: res,
+    pending: false
+  }
+}
+
+function error (action, err) {
+  return {
+    ...action,
+    error: true,
+    payload: err,
+    pending: false
+  }
 }

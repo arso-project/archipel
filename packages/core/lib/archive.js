@@ -1,24 +1,37 @@
 const pify = require('pify')
 const datenc = require('dat-encoding')
 const hypergraph = require('hyper-graph-db')
-const hyperdrive = require('hyperdrive')
 const crypto = require('hypercore-crypto')
 const inherits = require('inherits')
 const events = require('events')
-const thunky = require('thunky')
-const rpcify = require('hyperpc').rpcify
 const pickby = require('lodash.pickby')
 
-const Fs = require('./fs')
+// const Fs = require('./fs')
 
 const { hex, chainStorage, asyncThunk } = require('./util')
+
+function getMountTypes () {
+  const plugins = [
+    require('../features/fs')
+  ]
+
+  const mountPlugins = plugins.filter(plugin => plugin.mounts).map(plugin => plugin.mounts).reduce((ret, mounts) => {
+    return ret.concat(mounts)
+  }, [])
+  const mountsByType = mountPlugins.reduce((ret, plugin) => {
+    ret[plugin.name] = plugin
+    return ret
+  }, {})
+  return mountsByType
+}
+
+const mountTypes = getMountTypes()
 
 module.exports = Archive
 
 function Archive (storage, key, opts) {
   if (!(this instanceof Archive)) return new Archive(storage, key, opts)
   events.EventEmitter.call(this)
-  const self = this
   opts = opts || {}
 
   this.key = key
@@ -86,15 +99,20 @@ Archive.prototype._ready = async function () {
 
 Archive.prototype._ensureFs = async function () {
   if (this.fs) return
+
+  const MOUNT_TYPE = 'fs'
+
   let opts = {
     secretKey: this.secretKey || null,
     storeSecretKey: false
   }
 
+  const mountType = mountTypes[MOUNT_TYPE]
+
   // const fs = hyperdrive(this._storage('fs'), this.key, opts)
-  const fs = Fs(this._storage('fs'), this.key, opts)
-  this.mount('fs', fs.db, {
-    is: 'hyperdrive',
+  const fs = mountType.proxy(this._storage('fs'), this.key, opts)
+  this.mount(MOUNT_TYPE, fs.db, {
+    proxies: mountType.proxies,
     instance: fs,
     persist: true
   })
