@@ -7,23 +7,31 @@ import { combineReducers } from './redux-utils'
 import thunk from 'redux-thunk'
 import logger from 'redux-logger'
 
-// import ArchipelReducer from './reducers'
-import AppDuck from './features/app/duck'
-import ArchiveDuck from './features/archive/duck'
-import WorkspaceDuck from './features/workspace/duck'
-
-// import App from './components/app'
+import PluginManager from './lib/plugin-manager'
 import App from './features/app/App'
+
+import app from './features/app'
+import archive from './features/archive'
+import fs from './features/fs'
+import workspace from './features/workspace'
+
+const archipel = new PluginManager()
+archipel
+  .use(app)
+  .use(archive)
+  .use(fs)
+  .use(workspace)
+
+// todo: this should be passed via a react context.
+window.__archipelApp = archipel
 
 let composeFunc = compose
 let middleware = [thunk]
 
-const ducks = [AppDuck, WorkspaceDuck, ArchiveDuck]
-
-const reducer = combineReducers(ducks)
+const reducer = combineReducers(archipel.getAll('duck'))
 
 if (process.env.NODE_ENV === 'development') {
-  // middleware = [...middleware, logger]
+  middleware = [...middleware, logger]
   composeFunc = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || composeFunc
 }
 

@@ -3,7 +3,7 @@ import { List } from '@archipel/ui'
 import ReduxQuery from '../util/ReduxQuery'
 import PropTypes from 'proptypes'
 
-import { loadArchives } from './duck'
+import { actions, select } from './duck'
 
 const Key = ({string}) => (
   <strong className=''>
@@ -11,7 +11,7 @@ const Key = ({string}) => (
   </strong>
 )
 
-const Archive = ({item}) => {
+const Archive = ({item, selected}) => {
   return (
     <span>
       <strong>{item.title}</strong> <Key string={item.key} />
@@ -20,7 +20,7 @@ const Archive = ({item}) => {
 }
 const ListArchives = (props) => {
   return (
-    <ReduxQuery select={state => state.archives} fetch={loadArchives} {...props} shouldRefetch={() => false}>
+    <ReduxQuery select={select.sortedByName} fetch={actions.loadArchives} {...props} shouldRefetch={() => false}>
       {(archives) => <List items={archives} onSelect={props.onSelect} renderItem={item => <Archive item={item} />} />}
     </ReduxQuery>
   )

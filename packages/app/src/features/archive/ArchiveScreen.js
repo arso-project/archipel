@@ -1,32 +1,13 @@
 import React from 'react'
-import { Heading } from '@archipel/ui'
+import { Tabs } from '@archipel/ui'
 
 import ListArchives from './ListArchives'
-import ListDir from './ListDir'
 import CreateArchive from './CreateArchive'
-import CreateDir from './CreateDir'
-import UploadFile from './UploadFile'
-import ViewFile from './ViewFile'
 
 const Archives = ({onSelect}) => (
-  <div className='p-2 w-1/4'>
+  <div className='p-2 w-1/4 flex-no-shrink'>
     <CreateArchive />
     <ListArchives onSelect={onSelect} />
-  </div>
-)
-
-const Dir = ({archive, dir, depth, onSelect}) => (
-  <div className='p-2 w-1/4'>
-    <Heading>{dir}</Heading>
-    <CreateDir archive={archive} dir={dir} />
-    <UploadFile archive={archive} dir={dir} />
-    <ListDir archive={archive} dir={dir} onSelect={onSelect} />
-  </div>
-)
-
-const File = ({archive, file}) => (
-  <div className='p-2 w-1/4'>
-    <ViewFile archive={archive} file={file} />
   </div>
 )
 
@@ -35,7 +16,8 @@ class ArchiveScreen extends React.PureComponent {
     super()
     this.state = { archive: null, dirs: ['/'], file: null }
     this.selectArchive = this.selectArchive.bind(this)
-    this.selectFile = this.selectFile.bind(this)
+    // todo: rethink this app root thing of course.
+    this.archiveTabs = window.__archipelApp.getAll('archiveTabs')
   }
 
   selectArchive (archive) {
@@ -45,31 +27,15 @@ class ArchiveScreen extends React.PureComponent {
     }
   }
 
-  selectFile (depth) {
-    const self = this
-    return (file) => (e) => {
-      let { path, name, isDirectory } = file
-      if (path === '/') path = ''
-      const filepath = path + '/' + name
-      if (isDirectory) {
-        let newDirs
-        if (depth >= self.state.dirs) newDirs = [...self.state.dirs, filepath]
-        else newDirs = self.state.dirs.slice(0, depth + 1).concat([filepath])
-        self.setState({ file: null, dirs: [...newDirs] })
-      } else {
-        self.setState({ file: filepath })
-      }
-    }
-  }
-
   render () {
-    const { archive, dirs, file } = this.state
+    const { archive } = this.state
 
     return <div className='ma-4'>
       <div className='flex mb-4'>
-        <Archives onSelect={this.selectArchive} />
-        {archive && dirs.map((dir, i) => <Dir archive={archive} key={i} dir={dir} depth={i} onSelect={this.selectFile(i)} />)}
-        {(archive && file) && <File archive={archive} file={file} />}
+        <Archives onSelect={this.selectArchive} selected={archive} />
+        <div className='flex-1 w-3/4'>
+          { archive && <Tabs tabs={this.archiveTabs} archive={archive} /> }
+        </div>
       </div>
     </div>
   }

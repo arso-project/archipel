@@ -27,7 +27,7 @@ class ReduxQuery extends React.PureComponent {
 
   componentDidUpdate (prevProps, prevState) {
     // todo: clean this up
-    if (!this.props.asyncState || (!this.props.asyncState.started || this.props.asyncState.pending)) {
+    if (!this.props.asyncState || !this.props.asyncState.started) {
       if (this.shouldRefetch(cleanProps(prevProps), cleanProps(this.props))) {
         this.doFetch()
       }
@@ -35,15 +35,20 @@ class ReduxQuery extends React.PureComponent {
   }
 
   async doFetch () {
+    if (!this.props.fetch) return
     if (!this.props.asyncState || (!this.props.asyncState.started || this.props.asyncState.pending)) {
       this.props.fetch(cleanProps(this.props))
     }
   }
 
   render () {
-    let { render, children } = this.props
+    let { render, children, async } = this.props
+    render = render || children
+    if (typeof async !== 'undefined' && !async) {
+      return render(this.props.asyncState)
+    }
     return (
-      <Maybe {...this.props.asyncState} render={render || children} />
+      <Maybe {...this.props.asyncState} render={render} />
     )
   }
 }
@@ -53,7 +58,7 @@ const mapStateToProps = (state, ownProps) => ({
 })
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
-  fetch: () => dispatch(ownProps.fetch(ownProps))
+  fetch: () => ownProps.fetch ? dispatch(ownProps.fetch(ownProps)) : null
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(ReduxQuery)

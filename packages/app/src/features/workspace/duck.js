@@ -1,12 +1,22 @@
 // import rpc from '../../lib/rpc'
 import { apiAction } from '../../lib/rpc'
 import { defaultAsyncState, reduceAsyncAction, hasStarted } from '../../redux-utils'
-import { loadArchives } from '../archive/duck'
+import { actions } from '../archive/duck'
+
+const KEY = 'workspace'
 
 // Action names
 const WORKSPACE_OPEN = 'WORKSPACE_OPEN'
 const WORKSPACE_CREATE = 'WORKSPACE_CREATE'
 const WORKSPACES_LOAD = 'WORKSPACE_LIST'
+
+export const selectWorkspace = (state) => {
+  return state[KEY].selected
+}
+
+export const selectWorkspaces = (state) => {
+  return state[KEY]
+}
 
 // Actions
 export const openWorkspace = key => (dispatch, getState) => {
@@ -16,7 +26,7 @@ export const openWorkspace = key => (dispatch, getState) => {
   apiAction({ type: WORKSPACE_OPEN, payload: key })
     .then(res => {
       dispatch(res)
-      dispatch(loadArchives())
+      dispatch(actions.loadArchives())
     })
 }
 
@@ -32,30 +42,32 @@ export const createWorkspace = title => async (dispatch, getState) => {
 
 export const loadWorkspaces = () => async (dispatch, getState) => {
   let state = getState()
-  if (hasStarted(state.workspaces)) return
+  if (hasStarted(state[KEY])) return
   const res = await apiAction({ type: WORKSPACES_LOAD })
   dispatch(res)
-  state = getState()
-  if (!state.workspace && res.payload.length) {
+  if (!selectWorkspace(getState()) && res.payload.length) {
     dispatch(openWorkspace(res.payload[0].key))
   } else if (!res.payload.length) {
     dispatch(createWorkspace('Default workspace'))
   }
 }
 
-const reducer = (state, action) => {
-  if (!state.workspaces) {
-    state = { ...state,
-      workspace: null,
-      workspaces: defaultAsyncState([])
-    }
-  }
+// export const initialState = {
+//   workspace: null,
+//   workspaces: defaultAsyncState([])
+// }
+
+const initialState = defaultAsyncState([], {
+  selected: null
+})
+
+const reducer = (state = initialState, action) => {
   switch (action.type) {
     case WORKSPACE_OPEN:
       // Also clear archives. Todo: should this live somewhere else?
-      return { ...state, workspace: action.payload, archives: null }
+      return { ...state, selected: action.payload }
     case WORKSPACES_LOAD:
-      return { ...state, workspaces: reduceAsyncAction(state.workspaces, action) }
+      return { ...reduceAsyncAction(state, action) }
     // case WORKSPACE_CREATE:
     //   const workspaces = reduceAsyncAction(state.workspaces, action)
     //   return { ...state, workspaces: reduceAsyncAction(state.workspaces, action) }
@@ -64,5 +76,6 @@ const reducer = (state, action) => {
 }
 
 export default {
+  namespace: KEY,
   reducer
 }

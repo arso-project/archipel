@@ -17,7 +17,6 @@ function updateAt (arr, i, put) {
 }
 
 const FileListItem = (file) => {
-  console.log('render item', file)
   let { name, size, pending, done, written, speed } = file
   let status = 'Waiting'
   if (pending) status = 'Uploading'
@@ -118,7 +117,7 @@ class UploadFile extends React.Component {
     }, reader)
     // todo: handle error.
     clearInterval(debounce)
-    this.setState({ files: updateAt(this.state.files, i, { pending: false, done: true, written, speed }) })
+    this.setState({ files: updateAt(this.state.files, i, { pending: false, done: true, written, speed }), pending: false, done: true })
     this.props.afterFileUpload()
   }
 
@@ -135,6 +134,7 @@ class UploadFile extends React.Component {
         <div className='pt-1'>
           Status:
           { this.state.pending && <em>Uploading...</em> }
+          { this.state.done && <em>Done.</em> }
           { this.state.res && <strong>{ this.state.res }</strong>}
           <List items={this.state.files} renderItem={(file) => FileListItem(file)} />
         </div>

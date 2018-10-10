@@ -31,7 +31,7 @@ class ScreenSelect extends React.Component {
 }
 
 const mapStateToProps = (state, props) => ({
-  screen: state.ui.screen
+  screen: state.app.ui.screen
 })
 
 const mapDispatchToProps = (dispatch) => ({

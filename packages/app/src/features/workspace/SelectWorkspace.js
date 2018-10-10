@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { openWorkspace, loadWorkspaces } from './duck'
+import { openWorkspace, loadWorkspaces, selectWorkspace, selectWorkspaces } from './duck'
 import Maybe from '../util/Maybe'
 
 const SelectWorkspace = ({ workspaces, workspace, onSelect }) => {
@@ -15,8 +15,8 @@ const SelectWorkspace = ({ workspaces, workspace, onSelect }) => {
 
 const mapState = (state, props) => {
   return {
-    workspaces: state.workspaces,
-    workspace: state.workspace
+    workspaces: selectWorkspaces(state),
+    workspace: selectWorkspace(state)
   }
 }
 
