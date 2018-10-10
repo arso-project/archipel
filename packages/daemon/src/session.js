@@ -3,6 +3,7 @@ const inherits = require('inherits')
 const debug = require('debug')('session')
 const hyperpc = require('hyperpc')
 const pump = require('pump')
+const pify = require('pify')
 const { features } = require('@archipel/core')
 
 module.exports = Session
@@ -56,6 +57,7 @@ async function onWorkspaceAction (action, stream, session, send) {
     case 'WORKSPACE_OPEN': return send(await openWorkspace(session, action))
     case 'WORKSPACE_CREATE': return send(await createWorkspace(session, action))
     case 'ARCHIVES_LOAD': return send(await loadArchives(session, action))
+    case 'ARCHIVE_CREATE': return send(await createArchive(session, action))
   }
   return null
 }
@@ -65,6 +67,14 @@ async function loadArchives (session, action) {
   const workspace = session.workspace
   const archives = await workspace.getArchives()
   return result(action, archives)
+}
+
+async function createArchive (session, action) {
+  if (!session.workspace) return error(action, 'No workspace.')
+  const workspace = session.workspace
+  const archive = await workspace.createArchive(action.payload)
+  await archive.ready()
+  return result(action, [archive.info])
 }
 
 async function listWorkspaces (session, action) {

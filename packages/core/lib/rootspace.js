@@ -61,7 +61,6 @@ Rootspace.prototype.getWorkspace = async function (key) {
     return r
   }, {})
 
-
   if (authorizedByKey[key]) {
     return this._openWorkspace(key, authorizedByKey[key])
   } else throw new Error('Workspace not found or not authorized.')
@@ -102,8 +101,25 @@ Rootspace.prototype.createWorkspace = async function (info) {
   return workspace
 }
 
+Rootspace.prototype.deleteWorkspace = async function (key) {
+  const self = this
+  const dbKey = this._dbKey({ key })
+  try {
+    let node = await pify(this.db.get.bind(this.db))(dbKey)
+    if (node) {
+      self.closeWorkspace(key)
+      await pify(self.db.del.bind(this.db))(dbKey)
+      return true
+    }
+  } catch (e) {
+    console.log('ERROR', e)
+    return false
+  }
+}
+
 Rootspace.prototype._saveWorkspace = function (workspace, data) {
   this.db.get(this._dbKey(workspace), (err, node) => {
+    if (err) return // todo
     let value
     if (!node) value = {}
     else value = node.value
@@ -125,6 +141,13 @@ Rootspace.prototype._openWorkspace = async function (key, opts) {
   await workspace.ready()
   this._pushWorkspace(workspace)
   return workspace
+}
+
+Rootspace.prototype.closeWorkspace = async function (key) {
+  key = datenc.toStr(key)
+  let idx = this._workspaceKeys[key]
+  delete this.workspaces[idx]
+  delete this._worksapceKeys[idx]
 }
 
 Rootspace.prototype._pushWorkspace = function (workspace) {

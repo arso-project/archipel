@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { Button, Foldable } from '@archipel/ui'
 
-import { createArchive } from './duck'
+import { actions } from './duck'
 
 class CreateArchive extends React.Component {
   constructor () {
@@ -30,7 +30,7 @@ const mapState = (state, props) => ({
 })
 
 const mapDispatch = dispatch => ({
-  onCreateArchive: (title) => dispatch(createArchive(title))
+  onCreateArchive: (title) => dispatch(actions.createArchive(title))
 })
 
 export default connect(mapState, mapDispatch)(CreateArchive)

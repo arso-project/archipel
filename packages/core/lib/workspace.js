@@ -43,10 +43,9 @@ function Workspace (storage, key, opts) {
 
 inherits(Workspace, events.EventEmitter)
 
-let idx = 0
+// let idx = 0
 Workspace.prototype._ready = function (done) {
-  console.log('WS: %s, READY %s', this.key.toString('hex').substring(0, 4), idx++)
-  const self = this
+  // console.log('WS: %s, READY %s', this.key.toString('hex').substring(0, 4), idx++)
   const rs = this.db.createReadStream('archive')
 
   rs.on('data', (node) => {
@@ -81,8 +80,11 @@ Workspace.prototype.archive = async function (key) {
 }
 
 Workspace.prototype.getArchives = async function (cb) {
+  console.log('y0')
   await this.ready()
+  console.log('y1')
   await Promise.all(this.archives.map(a => a.ready()))
+  console.log('y2')
   const info = this.archives.map(a => a.info)
   return info
 }
@@ -104,7 +106,7 @@ Workspace.prototype.getInfo = async function () {
 //   this.archives.push(archive)
 // }
 
-Workspace.prototype.createArchive = function (info) {
+Workspace.prototype.createArchive = async function (info) {
   const keyPair = crypto.keyPair()
   const key = keyPair.publicKey
   const opts = {
@@ -114,11 +116,13 @@ Workspace.prototype.createArchive = function (info) {
 
   const archive = this._loadArchive(key, opts)
 
-  this.db.put('archive/' + datenc.toStr(key), {
-    added: Date.now() / 1000,
-    key: datenc.toStr(key),
-    source: true
-  })
+  try {
+    await pify(this.db.put.bind(this.db))('archive/' + datenc.toStr(key), {
+      added: Date.now() / 1000,
+      key: datenc.toStr(key),
+      source: true
+    })
+  } catch (e) { console.log('ERROR createArchive', e) }
 
   return archive
 }

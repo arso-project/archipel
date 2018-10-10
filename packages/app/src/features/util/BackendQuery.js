@@ -1,12 +1,6 @@
 import React from 'react'
 import Maybe from './Maybe'
-
-export const defaultAsyncState = {
-  pending: false,
-  data: null,
-  error: false,
-  started: false
-}
+import { defaultAsyncState } from '../../redux-utils'
 
 export const defaultShouldRefetch = (prevProps, props) => {
   // console.log('shouldRefetch?', prevProps, props)
@@ -21,7 +15,7 @@ export const defaultShouldRefetch = (prevProps, props) => {
 class BackendQuery extends React.PureComponent {
   constructor (props) {
     super()
-    this.state = defaultAsyncState
+    this.state = defaultAsyncState()
     this.shouldRefetch = props.shouldRefetch || defaultShouldRefetch
   }
 

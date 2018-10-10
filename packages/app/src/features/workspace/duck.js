@@ -10,12 +10,15 @@ const WORKSPACE_OPEN = 'WORKSPACE_OPEN'
 const WORKSPACE_CREATE = 'WORKSPACE_CREATE'
 const WORKSPACES_LOAD = 'WORKSPACE_LIST'
 
-export const selectWorkspace = (state) => {
-  return state[KEY].selected
-}
-
 export const selectWorkspaces = (state) => {
   return state[KEY]
+}
+
+export const selectWorkspace = (state) => {
+  const key = state[KEY].selected
+  const spaces = selectWorkspaces(state).data
+  if (!spaces) return null
+  return spaces.filter(ws => ws.key === key)[0]
 }
 
 // Actions
@@ -31,6 +34,7 @@ export const openWorkspace = key => (dispatch, getState) => {
 }
 
 export const createWorkspace = title => async (dispatch, getState) => {
+  console.log('createWs', title)
   const res = await apiAction({ type: WORKSPACE_CREATE, payload: { title } })
   dispatch(res)
   dispatch(loadWorkspaces())
@@ -65,7 +69,7 @@ const reducer = (state = initialState, action) => {
   switch (action.type) {
     case WORKSPACE_OPEN:
       // Also clear archives. Todo: should this live somewhere else?
-      return { ...state, selected: action.payload }
+      return { ...state, selected: action.payload.key }
     case WORKSPACES_LOAD:
       return { ...reduceAsyncAction(state, action) }
     // case WORKSPACE_CREATE:

@@ -27,14 +27,20 @@ function Daemon (opts) {
   this.server = server
 
   this.ws = websocket(Object.assign({}, opts, { server }), this.onConnection.bind(this))
-  if (this.server) {
-    this.server.listen(this.config.port, () => console.log('Server listening on port %s', this.config.port))
-    this.server.on('error', (e) => this.emit('error', e))
-  }
-  this.emit('ready')
 }
 
 inherits(Daemon, EventEmitter)
+
+Daemon.prototype.listen = function (server) {
+  const self = this
+  if (this.server) {
+    this.server.listen(this.config.port, () => {
+      console.log('Server listening on port %s', this.config.port)
+      self.emit('ready')
+    })
+    this.server.on('error', (e) => this.emit('error', e))
+  }
+}
 
 Daemon.prototype.onConnection = function (stream, req) {
   debug('handle connection, url: %s', req.url)
