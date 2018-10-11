@@ -74,7 +74,7 @@ async function createArchive (session, action) {
   const workspace = session.workspace
   const archive = await workspace.createArchive(action.payload)
   await archive.ready()
-  return result(action, [archive.info])
+  return result(action, archive.info)
 }
 
 async function listWorkspaces (session, action) {

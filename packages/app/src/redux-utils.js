@@ -41,7 +41,7 @@ export function reduceAsyncAction (state, action, mergeData) {
   // console.log('reduce async', action, meta, meta.pending)
   if (pending) return { ...state, started, pending: true }
   if (error) return { ...state, started, pending: false, error: error }
-  else return { ...state, started, pending: false, error: false, data: payload }
+  else return { ...state, started, pending: false, error: false, data: mergeData(state.data, payload) }
 }
 
 export function isPending (action) {
