@@ -39,11 +39,15 @@ class ArchiveScreen extends React.PureComponent {
     const { archive } = this.state
 
     return <div className='ma-4'>
+      <div className='flex mb-4'>
+        <div className='p-2 w-1/4 flex-no-shrink'>
+          <CreateArchive />
+        </div>
+      </div>
       <ReduxQuery select={select.sortedByName} fetch={this.fetch} shouldRefetch={() => false}>
         {(archives) => (
           <div className='flex mb-4'>
             <div className='p-2 w-1/4 flex-no-shrink'>
-              <CreateArchive />
               <ListArchives archives={archives} onSelect={this.selectArchive} />
             </div>
             <div className='flex-1 w-3/4'>
