@@ -43,8 +43,8 @@ const ListDir = (props) => {
   return (
     <ReduxQuery select={selectDir} fetch={loadDirlist} {...props}>
       {(dirs) => {
-        return <List items={sort(dirs)} onSelect={props.onSelect} renderItem={item => <ListDirItem item={item} />} />}
-      }
+        return <List items={sort(dirs)} onSelect={props.onSelect} renderItem={item => <ListDirItem item={item} />} />
+      }}
     </ReduxQuery>
   )
 }
@@ -53,6 +53,18 @@ ListDir.propTypes = {
   archive: PropTypes.string,
   dir: PropTypes.string,
   onSelect: PropTypes.func
+}
+
+class NestedListDir extends React.Component {
+  constructor () {
+    super()
+    this.state = { dir: null }
+  }
+
+  render () {
+
+  }
+
 }
 
 export default ListDir

@@ -4,7 +4,6 @@ import { select } from './duck'
 import { Heading } from '@archipel/ui'
 
 const ArchiveInfo = ({ archive }) => {
-  console.log('ARCHIVEINFO', archive)
   return <ReduxQuery select={select.archiveByKey} archive={archive} async={false} >
     {(archive) => {
       if (!archive) return null

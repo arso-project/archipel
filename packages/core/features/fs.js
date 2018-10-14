@@ -22,6 +22,7 @@ function Fs (storage, key, opts) {
   if (!(this instanceof Fs)) return new Fs(storage, key, opts)
   const self = this
   this.hyperdrive = hyperdrive(storage, key, opts)
+  this.db = this.hyperdrive.db
 
   // Copy functions from hyperdrive.
   const asyncFuncs = ['ready', 'readFile', 'writeFile', 'readdir', 'mkdir', 'stat']
