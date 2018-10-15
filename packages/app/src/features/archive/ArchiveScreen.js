@@ -7,6 +7,8 @@ import { actions, select } from './duck'
 import ListArchives from './ListArchives'
 import CreateArchive from './CreateArchive'
 
+import { Consumer } from 'ucore/react'
+
 const Archives = ({onSelect}) => (
   <div className='p-2 w-1/4 flex-no-shrink'>
     <ListArchives onSelect={onSelect} />
@@ -31,8 +33,10 @@ class ArchiveScreen extends React.PureComponent {
   }
 
   fetch (dispatch) {
+    console.log(dispatch)
     this.setState({ archive: null })
-    dispatch(actions.loadArchives)
+    // dispatch(actions.loadArchives)
+    return actions.loadArchives()
   }
 
   render () {
@@ -44,7 +48,7 @@ class ArchiveScreen extends React.PureComponent {
           <CreateArchive />
         </div>
       </div>
-      <ReduxQuery select={select.sortedByName} fetch={this.fetch} shouldRefetch={() => false}>
+      <Consumer store='archive' select={'sortedByName'} init={'loadArchives'}>
         {(archives) => (
           <div className='flex mb-4'>
             <div className='p-2 w-1/4 flex-no-shrink'>
@@ -55,7 +59,7 @@ class ArchiveScreen extends React.PureComponent {
             </div>
           </div>
         )}
-      </ReduxQuery>
+      </Consumer>
     </div>
   }
 }

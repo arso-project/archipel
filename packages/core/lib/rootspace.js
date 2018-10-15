@@ -5,12 +5,10 @@ const pify = require('pify')
 const datenc = require('dat-encoding')
 const crypto = require('hypercore-crypto')
 const thunky = require('thunky')
-const rpcify = require('hyperpc').rpcify
-const debug  = require('debug')
 
 const Workspace = require('./workspace')
 
-const { hex, keyToFolder, chainStorage, ready } = require('./util')
+const { hex, keyToFolder, chainStorage } = require('./util')
 
 module.exports = Rootspace
 

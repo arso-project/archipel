@@ -1,7 +1,8 @@
 import React from 'react'
-import { connect } from 'react-redux'
-import { openWorkspace, loadWorkspaces, selectWorkspace, selectWorkspaces, createWorkspace } from './duck'
-import Maybe from '../util/Maybe'
+// import { connect } from 'react-redux'
+// import { openWorkspace, loadWorkspaces, selectWorkspace, selectWorkspaces, createWorkspace } from './duck'
+import { Consumer } from 'ucore/react'
+// import Maybe from '../util/Maybe'
 import { Heading, Modal, Foldable, Button, List } from '@archipel/ui'
 
 class CreateWorkspace extends React.Component {
@@ -28,8 +29,7 @@ class CreateWorkspace extends React.Component {
   }
 }
 
-const SelectWorkspace = ({ workspaces, workspace, onSelect, onCreate }) => {
-  console.log(workspace)
+const SelectWorkspaceWidget = ({ workspaces, workspace, onSelect, onCreate }) => {
   return <div className='flex text-xs'>
     { workspace && <span><em>{workspace.info.title}</em>&nbsp;</span> }
     <Modal toggle={props => <span {...props} className='cursor-pointer'>Change</span>}>
@@ -37,7 +37,7 @@ const SelectWorkspace = ({ workspaces, workspace, onSelect, onCreate }) => {
         <React.Fragment>
           <Heading>Select Workspace</Heading>
           <List items={workspaces} onSelect={item => () => { onSelect(item.key); toggle() }}>
-            {(item) => item.info.title.toString() || item.key}
+            {(item) => item.info.title || item.key}
           </List>
           <Foldable heading='Create Workspace'>
             <CreateWorkspace onCreate={onCreate} />
@@ -48,26 +48,44 @@ const SelectWorkspace = ({ workspaces, workspace, onSelect, onCreate }) => {
   </div>
 }
 
-const mapStateToProps = (state, props) => {
-  return {
-    workspaces: selectWorkspaces(state),
-    workspace: selectWorkspace(state)
-  }
+const SelectWorkspace = () => {
+  return <Consumer store='workspace' select={[s => s, 'current']}>
+    {([state, current], { loadWorkspaces, openWorkspace, createWorkspace }) => {
+      console.log('SELECT WORKSPACE', state, current)
+      if (!state.started) loadWorkspaces()
+      if (state.pending || !state.data || !state.data.length) return <div>No data</div>
+      return <SelectWorkspaceWidget
+        workspaces={state.data}
+        workspace={current}
+        onSelect={key => openWorkspace(key)}
+        onCreate={title => createWorkspace(title)}
+      />
+    }}
+  </Consumer>
 }
 
-export default connect(mapStateToProps)(class extends React.Component {
-  componentDidMount () {
-    this.props.dispatch(loadWorkspaces())
-  }
-  render () {
-    const { workspaces, workspace, dispatch } = this.props
-    return <Maybe {...workspaces}>
-      {(workspaces) => <SelectWorkspace
-        workspaces={workspaces}
-        workspace={workspace}
-        onSelect={key => dispatch(openWorkspace(key))}
-        onCreate={title => dispatch(createWorkspace(title))}
-      />}
-    </Maybe>
-  }
-})
+export default SelectWorkspace
+
+// const mapStateToProps = (state, props) => {
+//   return {
+//     workspaces: selectWorkspaces(state),
+//     workspace: selectWorkspace(state)
+//   }
+// }
+
+// export default connect(mapStateToProps)(class extends React.Component {
+//   componentDidMount () {
+//     this.props.dispatch(loadWorkspaces())
+//   }
+//   render () {
+//     const { workspaces, workspace, dispatch } = this.props
+//     return <Maybe {...workspaces}>
+//       {(workspaces) => <SelectWorkspace
+//         workspaces={workspaces}
+//         workspace={workspace}
+//         onSelect={key => dispatch(openWorkspace(key))}
+//         onCreate={title => dispatch(createWorkspace(title))}
+//       />}
+//     </Maybe>
+//   }
+// })

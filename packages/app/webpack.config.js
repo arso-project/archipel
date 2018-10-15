@@ -18,7 +18,8 @@ const shared = (argv) => ({
         include: [
           path.resolve(__dirname, 'src'),
           path.resolve(__dirname, 'index.js'),
-          archipelUiPath
+          archipelUiPath,
+          /ucore/
         ],
         use: {
           loader: 'babel-loader',

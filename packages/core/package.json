@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node server.js",
     "test": "tape test/*.js"
   },
   "repository": {
@@ -18,6 +19,7 @@
   "homepage": "https://github.com/archipel-somoco/archipel-core#readme",
   "dependencies": {
     "dat-encoding": "^5.0.1",
+    "debug": "^4.1.0",
     "hex-to-32": "^2.0.0",
     "hyper-graph-db": "^0.3.6",
     "hypercore-crypto": "^1.0.0",
@@ -26,7 +28,8 @@
     "inherits": "^2.0.3",
     "lodash.pickby": "^4.6.0",
     "pify": "^4.0.0",
-    "thunky": "^1.0.2"
+    "thunky": "^1.0.2",
+    "ucore": "^0.3.0"
   },
   "devDependencies": {
     "random-access-memory": "^3.0.0",
