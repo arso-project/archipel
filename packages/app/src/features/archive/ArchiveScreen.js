@@ -20,7 +20,6 @@ class ArchiveScreen extends React.PureComponent {
     super()
     this.state = { archive: null }
     this.selectArchive = this.selectArchive.bind(this)
-    this.fetch = this.fetch.bind(this)
     // todo: rethink this app root thing of course.
     this.archiveTabs = window.__archipelApp.getAll('archiveTabs')
   }
@@ -32,13 +31,6 @@ class ArchiveScreen extends React.PureComponent {
     }
   }
 
-  fetch (dispatch) {
-    console.log(dispatch)
-    this.setState({ archive: null })
-    // dispatch(actions.loadArchives)
-    return actions.loadArchives()
-  }
-
   render () {
     const { archive } = this.state
 
@@ -48,7 +40,7 @@ class ArchiveScreen extends React.PureComponent {
           <CreateArchive />
         </div>
       </div>
-      <Consumer store='archive' select={'sortedByName'} init={'loadArchives'}>
+      <Consumer store='archive' select={'sortedByName'}>
         {(archives) => (
           <div className='flex mb-4'>
             <div className='p-2 w-1/4 flex-no-shrink'>
