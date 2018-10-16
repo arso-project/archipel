@@ -42,8 +42,8 @@ const CreateArchiveWidgetTransmitter = ({ onCreate }) => {
 
 const CreateArchive = () => {
   return <Consumer store='archive'>
-    {([state, current], { createArchive }) => {
-      console.log('CREATE ARCHIVE', state, current)
+    {(state, { createArchive }) => {
+      console.log('CREATE ARCHIVE', state)
       return <CreateArchiveWidgetTransmitter
         onCreate={title => createArchive(title)}
       />
