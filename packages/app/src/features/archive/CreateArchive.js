@@ -1,31 +1,57 @@
 import React from 'react'
-import { connect } from 'react-redux'
+// import { connect } from 'react-redux'
 import { Button, Foldable } from '@archipel/ui'
+import { Consumer } from 'ucore/react'
 
-import { actions } from './duck'
+// import { actions } from './duck'
 
-class CreateArchive extends React.Component {
+class CreateArchiveWidget extends React.Component {
   constructor () {
     super()
     this.state = { title: '' }
   }
+
+  onCreate (e) {
+    if (this.state.title) {
+      this.props.onCreate(this.state.title)
+      //this.setState({title: ''})
+    }
+  }
+
   render () {
-    const { onCreateArchive } = this.props
     return (
       <Foldable heading='Create archive'>
         <div className='flex mb-2'>
           <span>Title: </span>
-          <input type='text'
+          <input type='text' placeholder='Title'
             className='p-1 border-2'
             onChange={(e) => this.setState({title: e.target.value})}
           />
         </div>
-        <Button onClick={(e) => this.state.title && onCreateArchive(this.state.title)}>Create Archive</Button>
+        <Button onClick={this.onCreate}>Create Archive</Button>
       </Foldable>
     )
   }
 }
 
+const CreateArchiveWidgetTransmitter = ({ onCreate }) => {
+  return <CreateArchiveWidget
+    onCreate={title => onCreate}
+  />
+}
+
+const CreateArchive = () => {
+  return <Consumer store='archive'>
+    {([state, current], { createArchive }) => {
+      console.log('CREATE ARCHIVE', state, current)
+      return <CreateArchiveWidgetTransmitter
+        onCreate={title => createArchive(title)}
+      />
+    }}
+  </Consumer>
+}
+
+/*
 const mapState = (state, props) => ({
 })
 
@@ -34,3 +60,5 @@ const mapDispatch = dispatch => ({
 })
 
 export default connect(mapState, mapDispatch)(CreateArchive)
+*/
+export default CreateArchive
