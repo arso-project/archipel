@@ -14,7 +14,34 @@ module.exports = {
     proxies: 'hyperdrive',
     proxy: Fs
   }],
-  onAction
+  onAction,
+  plugin: fsPlugin
+}
+
+async function fsPlugin (core, opts) {
+  core.rpc.reply('fs/stats', async (req, res) => {
+    if (!req.session.workspace) throw new Error('No workspace.')
+    let [key, ...path] = req.id.split('/')
+    path = path.join('/')
+    const archive = req.session.workspace.archive(key)
+    await archive.ready()
+    const fs = archive.fs
+    let readdir = await fs.readdir(path)
+    const stats = readdir.map(async name => {
+      let childpath = [path, name].join('/')
+      let id = [key, childpath].join('/')
+      const stat = await fs.stat(childpath)
+      stats[id] = {
+        key,
+        id,
+        path: childpath,
+        name,
+        isDirectory: stat.isDirectory()
+      }
+    })
+    const completed = await Promise.all(stats)
+    return completed.reduce((ret, stat) => { ret[stat.id] = stat; return ret }, {})
+  })
 }
 
 // A promisified wrapper around hyperdrive.

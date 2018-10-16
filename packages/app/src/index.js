@@ -27,6 +27,7 @@ core.register(ucoreRpc, { url: websocketUrl })
 core.register(ucoreStore)
 core.register(workspace)
 core.register(archive)
+core.register(fs)
 core.ready((err) => {
   if (err) console.log('BOOT ERROR', err)
 })
