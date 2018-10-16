@@ -29,7 +29,7 @@
     "lodash.pickby": "^4.6.0",
     "pify": "^4.0.0",
     "thunky": "^1.0.2",
-    "ucore": "^0.3.0"
+    "ucore": "^0.3.1"
   },
   "devDependencies": {
     "random-access-memory": "^3.0.0",
