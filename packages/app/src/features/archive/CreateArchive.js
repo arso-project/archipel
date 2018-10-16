@@ -9,12 +9,13 @@ class CreateArchiveWidget extends React.Component {
   constructor () {
     super()
     this.state = { title: '' }
+    this.onCreate = this.onCreate.bind(this)
   }
 
   onCreate (e) {
     if (this.state.title) {
       this.props.onCreate(this.state.title)
-      //this.setState({title: ''})
+      this.setState({title: ''})
     }
   }
 
@@ -34,19 +35,10 @@ class CreateArchiveWidget extends React.Component {
   }
 }
 
-const CreateArchiveWidgetTransmitter = ({ onCreate }) => {
-  return <CreateArchiveWidget
-    onCreate={title => onCreate}
-  />
-}
-
 const CreateArchive = () => {
   return <Consumer store='archive'>
     {(state, { createArchive }) => {
-      console.log('CREATE ARCHIVE', state)
-      return <CreateArchiveWidgetTransmitter
-        onCreate={title => createArchive(title)}
-      />
+      return <CreateArchiveWidget onCreate={title => createArchive(title)} />
     }}
   </Consumer>
 }

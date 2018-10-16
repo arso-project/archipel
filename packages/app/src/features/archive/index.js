@@ -15,7 +15,6 @@ async function archivePlugin (core, opts) {
   let store = core.makeStore('archive', storeConstructor)
   core.getStore('workspace').subscribe(onWorkspaceChange, 'current')
   function onWorkspaceChange (state, oldState) {
-    console.log('workspaceChange!', store)
     store.loadArchives()
   }
 }

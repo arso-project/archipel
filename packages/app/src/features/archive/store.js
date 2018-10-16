@@ -1,14 +1,14 @@
-import { modifyData, sortByProp } from '../../redux-utils'
-import { createSelector } from 'reselect'
+import { sortByProp } from '../../redux-utils'
 
 const initialState = {
   archives: []
 }
 
-const createArchive = (title) => async (set, { get, core }) => {
-  const res = await core.rpc.request('workspace/createArchive')
+const createArchive = (title) => async (set, { get, core, actions }) => {
+  let info = { title }
+  const res = await core.rpc.request('workspace/createArchive', { info })
   console.log('RES', res)
-  loadArchives()
+  actions.loadArchives()
 }
 
 const loadArchives = () => async (set, { get, core }) => {
