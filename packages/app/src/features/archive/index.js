@@ -1,5 +1,5 @@
 import duck from './duck'
-import store from './store'
+import storeConstructor from './store'
 import ArchiveInfo from './ArchiveInfo'
 
 export default {
@@ -12,5 +12,10 @@ export default {
 }
 
 async function archivePlugin (core, opts) {
-  core.makeStore('archive', store)
+  let store = core.makeStore('archive', storeConstructor)
+  core.getStore('workspace').subscribe(onWorkspaceChange, 'current')
+  function onWorkspaceChange (state, oldState) {
+    console.log('workspaceChange!', store)
+    store.loadArchives()
+  }
 }

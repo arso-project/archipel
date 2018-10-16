@@ -1,9 +1,7 @@
 import React from 'react'
 import { List } from '@archipel/ui'
-import ReduxQuery from '../util/ReduxQuery'
 import PropTypes from 'proptypes'
-
-import { loadDirlist, selectDir } from './duck'
+import { Consumer } from 'ucore/react'
 
 const ListDirItem = (props) => {
   const { name, isDirectory } = props.item // also: path
@@ -30,7 +28,9 @@ function sortByProps (list, props) {
 }
 
 function sort (list) {
-  return sortByProps(list, ['isDirectory:desc', 'name'])
+  console.log('GOT DIRS!', list)
+  return list
+  // return sortByProps(list, ['isDirectory:desc', 'name'])
 }
 
 // function sortedSelectDir (state, props) {
@@ -40,12 +40,14 @@ function sort (list) {
 // }
 
 const ListDir = (props) => {
+  const { archive, dir, onSelect } = props
+  const id = archive + '/' + dir
   return (
-    <ReduxQuery select={selectDir} fetch={loadDirlist} {...props}>
+    <Consumer store='fs' select={'getChildren'} init={'fetchStats'} id={id}>
       {(dirs) => {
-        return <List items={sort(dirs)} onSelect={props.onSelect} renderItem={item => <ListDirItem item={item} />} />
+        return <List items={sort(dirs)} onSelect={onSelect} renderItem={item => <ListDirItem item={item} />} />
       }}
-    </ReduxQuery>
+    </Consumer>
   )
 }
 
@@ -53,18 +55,6 @@ ListDir.propTypes = {
   archive: PropTypes.string,
   dir: PropTypes.string,
   onSelect: PropTypes.func
-}
-
-class NestedListDir extends React.Component {
-  constructor () {
-    super()
-    this.state = { dir: null }
-  }
-
-  render () {
-
-  }
-
 }
 
 export default ListDir

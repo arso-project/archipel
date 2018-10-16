@@ -8,12 +8,12 @@ const initialState = {
 
 const loadWorkspaces = () => async (set, { get, core, actions }) => {
   if (get().started) return
-  set(draft => { draft.started = true })
+  set(draft => { draft.started = true; draft.pending = true })
 
   const res = await core.rpc.request('workspace/list')
   set(draft => { draft.data = res.data; draft.pending = false })
 
-  if (get().selected && res.data.length) {
+  if (!get().selected && res.data.length) {
     actions.openWorkspace(res.data[0].key)
   } else if (!res.data.length) {
     actions.createWorkspace('Default workspace')
@@ -29,10 +29,6 @@ const openWorkspace = key => async (set, { get, core, actions }) => {
   } catch (e) {
     console.log('WORKSPACE OPEN: ERROR', e) // todo
   }
-
-  core.getStore('archive').loadArchives()
-
-  // load archives
 }
 
 const createWorkspace = title => async (set, { core, actions }) => {
