@@ -28,6 +28,7 @@ async function boot (opts) {
 }
 
 async function archipel (app, opts) {
-  const dbPath = process.env.ARCHIPEL_DB_BATH || p.resolve(p.join(__dirname, '../..', '.db'))
+  let dbPath = process.env.ARCHIPEL_DB_PATH || p.join(__dirname, '../..', '.db')
+  dbPath = p.resolve(dbPath)
   app.decorate('root', Rootspace(dbPath))
 }

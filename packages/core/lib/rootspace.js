@@ -122,7 +122,6 @@ Rootspace.prototype._saveWorkspace = function (workspace, data) {
     if (!node) value = {}
     else value = node.value
     const newValue = Object.assign({}, value, data)
-    console.log('sve', newValue)
     this.db.put(this._dbKey(workspace), newValue)
   })
 }
