@@ -31,8 +31,17 @@ window.setInterval = global.setInterval = function (fn, ms) {
   }
   return setInterval(fn, ms)
 }
+
+// SETUP
 process.once('loaded', () => {
-  document.addEventListener('DOMContentLoaded', () => require(pathPrefix + '/dist/electron/bundle.electron.js'))
+  document.addEventListener('DOMContentLoaded', () => {
+    var ipc = require('electron').ipcRenderer
+    ipc.send('rpc')
+    ipc.on('rpc', (ev, port) => {
+      window.ARCHIPEL_WEBSOCKET_URL = 'ws://localhost:' + port + '/ucore'
+      require(pathPrefix + '/dist/electron/bundle.electron.js')
+    })
+  })
 })
 
 if (isDev) {

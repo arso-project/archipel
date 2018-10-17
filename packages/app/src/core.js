@@ -8,7 +8,9 @@ import fs from './features/fs'
 import workspace from './features/workspace'
 import componentRegistry from './lib/component-registry'
 
-const websocketUrl = window.location.origin.replace(/^http/, 'ws') + '/ucore'
+const websocketUrl = window.ARCHIPEL_WEBSOCKET_URL
+  ? window.ARCHIPEL_WEBSOCKET_URL
+  : window.location.origin.replace(/^http/, 'ws') + '/ucore'
 
 const core = ucore()
 core.register(ucoreRpc, { url: websocketUrl })

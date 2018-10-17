@@ -19,8 +19,8 @@
     "dist:all": "electron-builder --linux --mac --win"
   },
   "dependencies": {
-    "find-free-port": "^2.0.0",
-    "weak": "^1.0.1"
+    "@archipel/core": "^0.1.0",
+    "find-free-port": "^2.0.0"
   },
   "devDependencies": {
     "devtron": "^1.4.0",

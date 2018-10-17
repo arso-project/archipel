@@ -5,7 +5,7 @@ const { app, BrowserWindow, Menu } = require('electron')
 const path = require('path')
 // const defaultMenu = require('electron-default-menu')
 
-const rpc = require('./lib/rpc.js')
+const archipel = require('./lib/archipel.js')
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -48,7 +48,7 @@ app.on('ready', () => {
   // Menu.setApplicationMenu(Menu.buildFromTemplate(menu))
   Menu.setApplicationMenu(null)
 
-  rpc(win)
+  archipel(win)
 
   if (isDev) {
     win.webContents.openDevTools()
