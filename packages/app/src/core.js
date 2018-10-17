@@ -18,6 +18,7 @@ core.register(app)
 core.register(workspace)
 core.register(archive)
 core.register(fs)
+
 core.ready((err) => {
   if (err) console.log('BOOT ERROR', err)
 })

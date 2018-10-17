@@ -5,7 +5,7 @@ import { Consumer } from 'ucore/react'
 
 // import { actions } from './duck'
 
-class CreateArchiveWidget extends React.Component {
+class CreateArchiveWidget extends React.PureComponent {
   constructor () {
     super()
     this.state = { title: '' }
@@ -15,7 +15,7 @@ class CreateArchiveWidget extends React.Component {
   onCreate (e) {
     if (this.state.title) {
       this.props.onCreate(this.state.title)
-      this.setState({title: ''})
+      this.setState({ title: '' })
     }
   }
 

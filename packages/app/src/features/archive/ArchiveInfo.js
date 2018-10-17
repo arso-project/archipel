@@ -1,9 +1,8 @@
 import React from 'react'
 import { Consumer } from 'ucore/react'
-// import { select } from './duck'
 import { Heading } from '@archipel/ui'
 
-const ArchiveInfo = ({ archive }) => {
+const ArchiveInfo = () => {
   return <Consumer store='archive' select={'selectedArchive'}>
     {(archive) => {
       if (!archive) return null

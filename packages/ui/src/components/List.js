@@ -16,15 +16,15 @@ class List extends React.Component {
   }
 
   render () {
+    const self = this
     let { items, renderItem, children } = this.props
-    let { selected } = this.state
     if (!items) return <span>No items.</span>
     const clsBase = 'p-2 m-1 cursor-pointer overflow-hidden '
     renderItem = renderItem || children || defaultRender
     return (
       <ul className='list-reset'>
         { items.map((item, i) => {
-          let cls = clsBase + (selected === i ? 'bg-teal' : 'bg-bright hover:bg-teal')
+          let cls = clsBase + (isSelected(item, i) ? 'bg-teal-dark hover:bg-teal-dark' : 'bg-bright hover:bg-teal')
           return (
             <li className={cls} key={i} onClick={this.onSelect(item, i)}>
               {renderItem(item, i)}
@@ -33,6 +33,17 @@ class List extends React.Component {
         })}
       </ul>
     )
+
+    function isSelected (item, i) {
+      if (self.props.selected) {
+        if (typeof self.props.selected === 'function') {
+          return self.props.selected(item)
+        } else return self.props.selected === i
+      } else if (self.state.selected === i) {
+        return true
+      }
+      return false
+    }
   }
 }
 
