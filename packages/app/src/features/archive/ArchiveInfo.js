@@ -1,21 +1,20 @@
 import React from 'react'
-import ReduxQuery from '../util/ReduxQuery'
-import { select } from './duck'
+import { Consumer } from 'ucore/react'
+// import { select } from './duck'
 import { Heading } from '@archipel/ui'
 
 const ArchiveInfo = ({ archive }) => {
-  return <div>Nothing here yet.</div>
-  // return <ReduxQuery select={select.archiveByKey} archive={archive} async={false} >
-  //   {(archive) => {
-  //     if (!archive) return null
-  //     return (
-  //       <div>
-  //         <Heading>{archive.title}</Heading>
-  //         <pre>{archive.key}</pre>
-  //       </div>
-  //     )
-  //   }}
-  // </ReduxQuery>
+  return <Consumer store='archive' select={'selectedArchive'}>
+    {(archive) => {
+      if (!archive) return null
+      return (
+        <div>
+          <Heading>Archive: {archive.title}</Heading>
+          <pre>Key: {archive.key}</pre>
+        </div>
+      )
+    }}
+  </Consumer>
 }
 
 export default ArchiveInfo

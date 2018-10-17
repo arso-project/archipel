@@ -8,8 +8,9 @@ import { Consumer } from 'ucore/react'
 
 const ArchiveList = ({ onSelect }) => (
   <Consumer store='archive' select={'sortedByName'}>
-    {(archives) => (
-      <ListArchives archives={archives} onSelect={onSelect} />
+    {(archives, { selectArchive }) => (
+      // Probably not the best place to unite onSelect passed down from ArchiveScreen and the update of the archive store!
+      <ListArchives archives={archives} onSelect={(item, i) => (e) => { onSelect(item, i)(e); selectArchive(item.key) }} />
     )}
   </Consumer>
 )
