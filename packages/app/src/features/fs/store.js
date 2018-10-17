@@ -12,10 +12,11 @@ const fetchStats = ({ archive, path }) => async (set, { core }) => {
   })
 }
 
-const createDir = ({ parent, name }) => async (set, { core, actions }) => {
+const createDir = ({ archive, parent, name }) => async (set, { core, actions }) => {
   try {
-    const { id } = await core.rpc.request('fs/mkdir', { parent, name })
-    actions.fetchStat({ id })
+    let path = joinPath(parent, name)
+    await core.rpc.request('fs/mkdir', { key: archive, path })
+    actions.fetchStats({ archive, path: parent })
   } catch (err) {
     console.log('createDir error', err)
   }

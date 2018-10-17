@@ -13,7 +13,7 @@ class CreateDirWidget extends React.Component {
 
   onCreate (e) {
     if (this.state.title) {
-      this.props.onCreate({ parent: this.props.dir, name: this.state.title })
+      this.props.onCreate({ archive: this.props.archive, parent: this.props.dir, name: this.state.title })
       this.setState({ title: '' })
     }
   }

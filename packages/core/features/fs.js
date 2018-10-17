@@ -33,14 +33,17 @@ async function fsPlugin (core, opts) {
     const stats = []
 
     if (stat.isDirectory()) {
-      parentStat.children = await fs.readdir(path)
-      const childStats = parentStat.children.map(async name => {
-        let childPath = joinPath(path, name)
-        let childStat = await fs.stat(childPath)
-        return cleanStat(childStat, childPath, key)
-      })
-      const completed = await Promise.all(childStats)
-      completed.forEach(stat => stats.push(stat))
+      let children = await fs.readdir(path)
+      if (children.filter(c => c).length) {
+        parentStat.children = children
+        const childStats = parentStat.children.map(async name => {
+          let childPath = joinPath(path, name)
+          let childStat = await fs.stat(childPath)
+          return cleanStat(childStat, childPath, key)
+        })
+        const completed = await Promise.all(childStats)
+        completed.forEach(stat => stats.push(stat))
+      }
     }
 
     stats.unshift(parentStat)
