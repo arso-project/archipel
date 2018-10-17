@@ -3,7 +3,7 @@ import React from 'react'
 import { ScreenRender, ScreenSwitcher } from './ScreenController.js'
 import SelectWorkspace from '../workspace/SelectWorkspace.js'
 
-const Header = ({children}) => (
+const Header = ({ children }) => (
   <div className='p-2 bg-dark text-bright text-xs w-full h-8'>
     <div className='flex justify-between'>
       {children}
@@ -11,7 +11,7 @@ const Header = ({children}) => (
   </div>
 )
 
-const Footer = ({children}) => (
+const Footer = ({ children }) => (
   <div className='p-2 bg-dark text-bright text-xs w-full h-8'>{children}</div>
 )
 

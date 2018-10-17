@@ -1,7 +1,7 @@
 import React from 'react'
-import { connect } from 'react-redux'
 
 import ArchiveScreen from '../archive/ArchiveScreen.js'
+import { Consumer } from 'ucore/react'
 
 const Screens = {
   archives: ArchiveScreen
@@ -30,13 +30,14 @@ class ScreenSelect extends React.Component {
   }
 }
 
-const mapStateToProps = (state, props) => ({
-  screen: state.app.ui.screen
-})
+export const ScreenRender = () => (
+  <Consumer store='app'>
+    {({ screen }, { setScreen }) => <ScreenController screen={screen} setScreen={setScreen} />}
+  </Consumer>
+)
 
-const mapDispatchToProps = (dispatch) => ({
-  setScreen: (screen) => dispatch({ type: 'SET_UI_SCREEN', screen })
-})
-
-export const ScreenRender = connect(mapStateToProps, mapDispatchToProps)(ScreenController)
-export const ScreenSwitcher = connect(mapStateToProps, mapDispatchToProps)(ScreenSelect)
+export const ScreenSwitcher = () => (
+  <Consumer store='app'>
+    {({ screen }, { setScreen }) => <ScreenSelect screen={screen} setScreen={setScreen} />}
+  </Consumer>
+)
