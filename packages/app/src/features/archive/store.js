@@ -7,7 +7,6 @@ const initialState = {
 const createArchive = (title) => async (set, { get, core, actions }) => {
   let info = { title }
   const res = await core.rpc.request('workspace/createArchive', { info })
-  console.log('RES', res)
   actions.loadArchives()
 }
 

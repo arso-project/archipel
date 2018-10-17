@@ -1,10 +1,10 @@
 import React from 'react'
-import { Tabs, List } from '@archipel/ui'
+import { Tabs } from '@archipel/ui'
 
 import ListArchives from './ListArchives'
 import CreateArchive from './CreateArchive'
 
-import { Consumer } from 'ucore/react'
+import { Consumer, WithCore } from 'ucore/react'
 
 const ArchiveList = ({ onSelect }) => (
   <Consumer store='archive' select={'sortedByName'}>
@@ -16,12 +16,14 @@ const ArchiveList = ({ onSelect }) => (
 )
 
 class ArchiveScreen extends React.PureComponent {
-  constructor () {
+  constructor (props) {
     super()
     this.state = { archive: null }
     this.selectArchive = this.selectArchive.bind(this)
     // todo: rethink this app root thing of course.
-    this.archiveTabs = window.__archipelApp.getAll('archiveTabs')
+    this.archiveTabs = props.core.components.getAll('archiveTabs').map(item => {
+      return { title: item.opts.title, component: item.component }
+    })
   }
 
   selectArchive (archive) {
@@ -48,4 +50,4 @@ class ArchiveScreen extends React.PureComponent {
   }
 }
 
-export default ArchiveScreen
+export default (props) => <WithCore>{core => <ArchiveScreen {...props} core={core} />}</WithCore>
