@@ -1,28 +1,46 @@
 import React from 'react'
 import { Button, Foldable } from '@archipel/ui'
+import { Consumer } from 'ucore/react'
 
 // TODO: Convert to ucore store.
 
-class CreateDir extends React.Component {
+class CreateDirWidget extends React.Component {
   constructor () {
     super()
     this.state = { title: '' }
+    this.onCreate = this.onCreate.bind(this)
   }
+
+  onCreate (e) {
+    if (this.state.title) {
+      this.props.onCreate({ parent: this.props.dir, name: this.state.title })
+      this.setState({ title: '' })
+    }
+  }
+
   render () {
-    const { archive, dir, onCreateDir } = this.props
     return (
       <Foldable heading='Create dir'>
         <div className='flex mb-2'>
           <span>Title: </span>
           <input type='text'
             className='p-1 border-2'
-            onChange={(e) => this.setState({title: e.target.value})}
+            onChange={(e) => this.setState({ title: e.target.value })}
           />
-          <Button onClick={(e) => this.state.title && onCreateDir({archive, dir, name: this.state.title})}>Create Dir</Button>
+          <Button onClick={this.onCreate}>Create Dir</Button>
         </div>
       </Foldable>
     )
   }
+}
+
+const CreateDir = (props) => {
+  const { archive, dir } = props
+  return <Consumer store='fs' select={state => null}>
+    {(state, { createDir }) => {
+      return <CreateDirWidget archive={archive} dir={dir} onCreate={createDir} />
+    }}
+  </Consumer>
 }
 
 export default CreateDir
