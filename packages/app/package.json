@@ -28,7 +28,7 @@
     "speedometer": "^1.1.0",
     "through2": "^2.0.3",
     "thunky": "^1.0.2",
-    "ucore": "^0.3.2",
+    "ucore": "^0.3.4",
     "websocket-stream": "^5.1.2"
   },
   "devDependencies": {

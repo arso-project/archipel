@@ -1,8 +1,7 @@
 import React from 'react'
-import { connect } from 'react-redux'
 import { Button, Foldable } from '@archipel/ui'
 
-import { createDir } from './duck'
+// TODO: Convert to ucore store.
 
 class CreateDir extends React.Component {
   constructor () {
@@ -26,11 +25,4 @@ class CreateDir extends React.Component {
   }
 }
 
-const mapState = (state, props) => ({
-})
-
-const mapDispatch = dispatch => ({
-  onCreateDir: ({archive, dir, name}) => { dispatch(createDir({archive, dir, name})) }
-})
-
-export default connect(mapState, mapDispatch)(CreateDir)
+export default CreateDir

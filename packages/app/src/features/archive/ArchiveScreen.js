@@ -1,18 +1,17 @@
 import React from 'react'
 import { Tabs, List } from '@archipel/ui'
 
-import ReduxQuery from '../util/ReduxQuery'
-import { actions, select } from './duck'
-
 import ListArchives from './ListArchives'
 import CreateArchive from './CreateArchive'
 
 import { Consumer } from 'ucore/react'
 
-const Archives = ({onSelect}) => (
-  <div className='p-2 w-1/4 flex-no-shrink'>
-    <ListArchives onSelect={onSelect} />
-  </div>
+const ArchiveList = ({ onSelect }) => (
+  <Consumer store='archive' select={'sortedByName'}>
+    {(archives) => (
+      <ListArchives archives={archives} onSelect={onSelect} />
+    )}
+  </Consumer>
 )
 
 class ArchiveScreen extends React.PureComponent {
@@ -38,20 +37,12 @@ class ArchiveScreen extends React.PureComponent {
       <div className='flex mb-4'>
         <div className='p-2 w-1/4 flex-no-shrink'>
           <CreateArchive />
+          <ArchiveList onSelect={this.selectArchive} />
+        </div>
+        <div className='flex-1 w-3/4'>
+          { archive && <Tabs tabs={this.archiveTabs} archive={archive} /> }
         </div>
       </div>
-      <Consumer store='archive' select={'sortedByName'}>
-        {(archives) => (
-          <div className='flex mb-4'>
-            <div className='p-2 w-1/4 flex-no-shrink'>
-              <ListArchives archives={archives} onSelect={this.selectArchive} />
-            </div>
-            <div className='flex-1 w-3/4'>
-              { archive && <Tabs tabs={this.archiveTabs} archive={archive} /> }
-            </div>
-          </div>
-        )}
-      </Consumer>
     </div>
   }
 }

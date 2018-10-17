@@ -1,8 +1,5 @@
 import React from 'react'
-// import { connect } from 'react-redux'
-// import { openWorkspace, loadWorkspaces, selectWorkspace, selectWorkspaces, createWorkspace } from './duck'
 import { Consumer } from 'ucore/react'
-// import Maybe from '../util/Maybe'
 import { Heading, Modal, Foldable, Button, List } from '@archipel/ui'
 
 class CreateWorkspace extends React.Component {
@@ -51,7 +48,6 @@ const SelectWorkspaceWidget = ({ workspaces, workspace, onSelect, onCreate }) =>
 const SelectWorkspace = () => {
   return <Consumer store='workspace' select={[s => s, 'current']}>
     {([state, current], { loadWorkspaces, openWorkspace, createWorkspace }) => {
-      console.log('SELECT WORKSPACE', state, current)
       if (!state.started) loadWorkspaces()
       if (state.pending || !state.data || !state.data.length) return <div>No data</div>
       return <SelectWorkspaceWidget

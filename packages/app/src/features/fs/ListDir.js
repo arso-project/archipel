@@ -10,6 +10,7 @@ const ListDirItem = (props) => {
 }
 
 function sortByProps (list, props) {
+  if (!Array.isArray(list) || !list.length) return list
   return [...list].sort((a, b) => {
     return props.reduce((ret, prop) => {
       if (ret !== 0) return ret
@@ -28,22 +29,13 @@ function sortByProps (list, props) {
 }
 
 function sort (list) {
-  console.log('GOT DIRS!', list)
-  return list
-  // return sortByProps(list, ['isDirectory:desc', 'name'])
+  return sortByProps(list, ['isDirectory:desc', 'name'])
 }
-
-// function sortedSelectDir (state, props) {
-//   const list = selectDir(state, props)
-//   console.log(list)
-//   return (list && list.length) ? sort(list) : list
-// }
 
 const ListDir = (props) => {
   const { archive, dir, onSelect } = props
-  const id = archive + '/' + dir
   return (
-    <Consumer store='fs' select={'getChildren'} init={'fetchStats'} id={id}>
+    <Consumer store='fs' select={'getChildren'} init={'fetchStats'} archive={archive} path={dir}>
       {(dirs) => {
         return <List items={sort(dirs)} onSelect={onSelect} renderItem={item => <ListDirItem item={item} />} />
       }}

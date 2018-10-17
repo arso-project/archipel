@@ -1,4 +1,7 @@
-const initialState = {
+
+const store = {}
+
+store.initialState = {
   pending: false,
   started: false,
   error: null,
@@ -33,24 +36,21 @@ const openWorkspace = key => async (set, { get, core, actions }) => {
 
 const createWorkspace = title => async (set, { core, actions }) => {
   const res = await core.rpc.request('workspace/create', { info: { title } })
+  // todo: handle result
   actions.loadWorkspaces()
 }
 
-const actions = {
+store.actions = {
   loadWorkspaces,
   openWorkspace,
   createWorkspace
 }
 
-const select = {
+store.select = {
   current (state) {
     if (!state.selected) return null
     else return state.data.filter(w => w.key === state.selected)[0]
   }
 }
 
-export default {
-  initialState,
-  actions,
-  select
-}
+export default store

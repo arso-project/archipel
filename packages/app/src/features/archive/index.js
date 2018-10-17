@@ -1,9 +1,7 @@
-import duck from './duck'
 import storeConstructor from './store'
 import ArchiveInfo from './ArchiveInfo'
 
 export default {
-  duck,
   plugin: archivePlugin,
   archiveTabs: [{
     title: 'Info',

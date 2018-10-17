@@ -4,7 +4,7 @@ import { Heading } from '@archipel/ui'
 import { apiAction } from '../../lib/rpc'
 import BackendQuery from '../util/BackendQuery'
 
-const FileContent = ({content}) => {
+const FileContent = ({ content }) => {
   return (
     <div className='p-4 border-2 bg-grey-lighter'>
       <pre className='overflow-hidden'>
@@ -14,19 +14,13 @@ const FileContent = ({content}) => {
   )
 }
 
-const loadFileContent = async (props) => {
-  const { archive, file } = props
-  const meta = { key: archive, file: file }
-  return apiAction({ type: 'FILE_LOAD', meta })
-}
-
 const ViewFile = (props) => {
-  const { file } = props
+  const { path } = props
   return (
     <div>
-      <Heading>{file}</Heading>
-      <BackendQuery {...props} fetch={loadFileContent}>
-        {(fileContent) => <FileContent content={fileContent} />}
+      <Heading>{path}</Heading>
+      <BackendQuery {...props} request={(props) => ['fs/fileContent', { key: props.archive, path: props.path }]}>
+        {(data) => <FileContent content={data.content} />}
       </BackendQuery>
     </div>
   )

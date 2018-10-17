@@ -6,7 +6,7 @@ import CreateDir from './CreateDir'
 import UploadFile from './UploadFile'
 import ViewFile from './ViewFile'
 
-const Dir = ({archive, dir, depth, onSelect}) => (
+const Dir = ({ archive, dir, depth, onSelect }) => (
   <div className='p-2 w-1/4'>
     <Heading>{dir}</Heading>
     <Foldable heading='Actions'>
@@ -17,9 +17,9 @@ const Dir = ({archive, dir, depth, onSelect}) => (
   </div>
 )
 
-const File = ({archive, file}) => (
+const File = ({ archive, path }) => (
   <div className='p-2 w-1/4'>
-    <ViewFile archive={archive} file={file} />
+    <ViewFile archive={archive} path={path} />
   </div>
 )
 
@@ -31,7 +31,6 @@ class FsScreen extends React.PureComponent {
   }
 
   componentDidUpdate (prevProps) {
-    console.log('didUpdate', prevProps, this.props)
     if (prevProps.archive !== this.props.archive) this.setState({ dirs: ['/'], file: null })
   }
 
@@ -59,7 +58,7 @@ class FsScreen extends React.PureComponent {
     return <div>
       <div className='flex mb-4 max-w-full'>
         {dirs.map((dir, i) => <Dir archive={archive} key={i} dir={dir} depth={i} onSelect={this.selectFile(i)} />)}
-        {file && <File archive={archive} file={file} />}
+        {file && <File archive={archive} path={file} />}
       </div>
     </div>
   }

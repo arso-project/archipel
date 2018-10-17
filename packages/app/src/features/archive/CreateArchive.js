@@ -36,7 +36,7 @@ class CreateArchiveWidget extends React.Component {
 }
 
 const CreateArchive = () => {
-  return <Consumer store='archive'>
+  return <Consumer store='archive' select={state => null}>
     {(state, { createArchive }) => {
       return <CreateArchiveWidget onCreate={title => createArchive(title)} />
     }}

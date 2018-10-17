@@ -2,12 +2,13 @@ const initialState = {
   stats: {}
 }
 
-const fetchStats = ({ id }) => async (set, { core }) => {
-  set(draft => { draft.stats[id] = { pending: true } })
-  const res = await core.rpc.request('fs/stats', { id })
+const fetchStats = ({ archive, path }) => async (set, { core }) => {
+  // set(draft => { draft.stats[id] = { pending: true } })
+  // const { key, path } = splitId(id)
+  const key = archive
+  const res = await core.rpc.request('fs/stat', { key, path })
   set(draft => {
-    draft.stats[id].pending = false
-    draft.stats[id].data = res.data
+    res.stats.forEach(stat => { draft.stats[joinId(stat)] = stat })
   })
 }
 
@@ -20,10 +21,16 @@ const createDir = ({ parent, name }) => async (set, { core, actions }) => {
   }
 }
 
-const getChildren = (state, { id }) => {
+const getChildren = (state, { archive, path }) => {
+  let id = joinId({ key: archive, path })
   if (!state.stats[id]) return null
   if (!state.stats[id].children) return null
-  return state.stats[id].children.map(id => state.stats[id])
+  let parent = state.stats[id]
+  let ret = parent.children.map(name => {
+    let childId = joinId({ path: joinPath(parent.path, name), key: parent.key })
+    return state.stats[childId]
+  })
+  return ret
 }
 
 export default {
@@ -35,4 +42,20 @@ export default {
   select: {
     getChildren
   }
+}
+
+function splitId (id) {
+  const [ key, ...path ] = id.split('/')
+  return { key, path: path.join('/') }
+}
+
+function joinId ({ key, path }) {
+  if (path[0] === '/') path = path.substring(1)
+  return key + '/' + path
+}
+
+function joinPath (prefix, suffix) {
+  if (prefix.slice(-1) === '/') prefix = prefix.substring(0, prefix.length - 1)
+  if (suffix[0] === '/') suffix = suffix.substring(1)
+  return prefix + '/' + suffix
 }
