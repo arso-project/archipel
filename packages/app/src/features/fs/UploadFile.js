@@ -1,5 +1,4 @@
 import React from 'react'
-import { connect } from 'react-redux'
 import PropTypes from 'prop-types'
 
 import fileReader from 'filereader-stream'
@@ -9,8 +8,7 @@ import through from 'through2'
 import pump from 'pump'
 
 import { Button, Foldable, List } from '@archipel/ui'
-import { apiActionStream } from '../../lib/rpc'
-import { loadDirlist } from './duck'
+import { WithCore } from 'ucore/react'
 
 function updateAt (arr, i, put) {
   return arr.map((item, j) => j === i ? Object.assign({}, item, put) : item)
@@ -41,7 +39,7 @@ const FileListItem = (file) => {
 }
 
 class UploadFile extends React.Component {
-  constructor () {
+  constructor (props) {
     super()
     this.uploadRef = React.createRef()
     this.state = {
@@ -88,8 +86,9 @@ class UploadFile extends React.Component {
 
   async uploadFile (file, i) {
     this.setState({ files: updateAt(this.state.files, i, { pending: true }) })
+    const { dir, core } = this.props
     const { name } = file
-    const path = (this.props.dir === '/' ? '' : this.props.dir) + '/' + name
+    const path = (dir === '/' ? '' : dir) + '/' + name
     const speedo = speedometer()
     let speed = 0
     let written = 0
@@ -107,18 +106,12 @@ class UploadFile extends React.Component {
     pump(reader, passthrough)
 
     const key = this.props.archive
-    const meta = {
-      key,
-      file: path
-    }
-    const res = await apiActionStream({
-      type: 'FILE_WRITE',
-      meta
-    }, reader)
-    // todo: handle error.
+    const res = await core.rpc.request('fs/writeFile', { key, path, stream: reader })
     clearInterval(debounce)
     this.setState({ files: updateAt(this.state.files, i, { pending: false, done: true, written, speed }), pending: false, done: true })
-    this.props.afterFileUpload()
+
+    // todo: is this clean enough?
+    core.getStore('fs').fetchStats({ archive: key, path: this.props.dir })
   }
 
   render () {
@@ -148,8 +141,4 @@ UploadFile.propTypes = {
   dir: PropTypes.string
 }
 
-const mapDispatchToProps = (dispatch, props) => ({
-  afterFileUpload: () => dispatch(loadDirlist(props))
-})
-
-export default connect(null, mapDispatchToProps)(UploadFile)
+export default (props) => <WithCore>{core => <UploadFile {...props} core={core} />}</WithCore>
