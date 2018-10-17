@@ -1,12 +1,5 @@
 import React from 'react'
 
-import { createStore, applyMiddleware, compose } from 'redux'
-import { Provider as StoreProvider } from 'react-redux'
-import { combineReducers } from './redux-utils'
-
-import thunk from 'redux-thunk'
-import logger from 'redux-logger'
-
 import PluginManager from './lib/plugin-manager'
 import App from './features/app/App'
 
@@ -28,27 +21,10 @@ archipel
 // todo: this should be passed via a react context.
 window.__archipelApp = archipel
 
-let composeFunc = compose
-let middleware = [thunk]
-
-const reducer = combineReducers(archipel.getAll('duck'))
-
-if (process.env.NODE_ENV === 'development') {
-  middleware = [...middleware, logger]
-  composeFunc = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || composeFunc
-}
-
-const store = createStore(
-  reducer,
-  composeFunc(applyMiddleware(...middleware))
-)
-
 const ArchipelApp = () => (
-  <StoreProvider store={store}>
-    <Provider core={core}>
-      <App />
-    </Provider>
-  </StoreProvider>
+  <Provider core={core}>
+    <App />
+  </Provider>
 )
 
 export default ArchipelApp

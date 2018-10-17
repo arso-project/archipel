@@ -1,6 +1,6 @@
 import React from 'react'
 import Maybe from './Maybe'
-import { defaultAsyncState } from '../../redux-utils'
+import { defaultAsyncState } from '../../lib/state-utils'
 import { WithCore } from 'ucore/react'
 
 export const defaultShouldRefetch = (prevProps, props) => {

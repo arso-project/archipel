@@ -1,4 +1,4 @@
-import { sortByProp } from '../../redux-utils'
+import { sortByProp } from '../../lib/state-utils'
 
 const initialState = {
   archives: []
