@@ -26,31 +26,26 @@ function joinPath (prefix, suffix) {
 
 async function fsPlugin (core, opts) {
   core.rpc.reply('fs/stat', async (req) => {
-    try {
-      let { key, path } = req
-      const fs = await _getFs(req)
-      const stat = await fs.stat(path)
-      // let stats = { path: cleanStat(stat, path) }
-      let parentStat = cleanStat(stat, path, key)
-      let stats = []
+    const { key, path } = req
+    const fs = await _getFs(req)
+    const stat = await fs.stat(path)
+    const parentStat = cleanStat(stat, path, key)
+    const stats = []
 
-      if (stat.isDirectory()) {
-        let readdir = await fs.readdir(path)
-        parentStat.children = readdir
-        const childStats = readdir.map(async name => {
-          let childpath = joinPath(path, name)
-          const stat = await fs.stat(childpath)
-          return cleanStat(stat, childpath, key)
-        })
-        const completed = await Promise.all(childStats)
-        completed.forEach(stat => stats.push(stat))
-        // stats = completed.reduce((stats, stat) => Object.assign(stats, { [stat.path]: stat }))
-      }
+    if (stat.isDirectory()) {
+      parentStat.children = await fs.readdir(path)
+      const childStats = parentStat.children.map(async name => {
+        let childPath = joinPath(path, name)
+        let childStat = await fs.stat(childPath)
+        return cleanStat(childStat, childPath, key)
+      })
+      const completed = await Promise.all(childStats)
+      completed.forEach(stat => stats.push(stat))
+    }
 
-      stats.unshift(parentStat)
+    stats.unshift(parentStat)
 
-      return { stats }
-    } catch (e) { console.log(e) }
+    return { stats }
 
     function cleanStat (stat, path, key) {
       return {

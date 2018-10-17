@@ -37,16 +37,14 @@ class FsScreen extends React.PureComponent {
   selectFile (depth) {
     const self = this
     return (file) => (e) => {
-      let { path, name, isDirectory } = file
-      if (path === '/') path = ''
-      const filepath = path + '/' + name
+      let { path, isDirectory } = file
       if (isDirectory) {
         let newDirs
-        if (depth >= self.state.dirs) newDirs = [...self.state.dirs, filepath]
-        else newDirs = self.state.dirs.slice(0, depth + 1).concat([filepath])
+        if (depth >= self.state.dirs) newDirs = [...self.state.dirs, path]
+        else newDirs = self.state.dirs.slice(0, depth + 1).concat([path])
         self.setState({ file: null, dirs: [...newDirs] })
       } else {
-        self.setState({ file: filepath })
+        self.setState({ file: path })
       }
     }
   }
