@@ -16,6 +16,11 @@ const loadArchives = () => async (set, { get, core }) => {
   set(draft => { draft.archives = res.data })
 }
 
+const shareArchive = (key) => async (set, { get, core, actions }) => {
+  await core.rpc.request('workspace/shareArchive', { key: key })
+  actions.loadArchives()
+}
+
 const selectArchive = (key) => (set) => {
   set(draft => { draft.selected = key })
 }
@@ -33,7 +38,8 @@ module.exports = {
   actions: {
     createArchive,
     loadArchives,
-    selectArchive
+    selectArchive,
+    shareArchive
   },
   select: {
     sortedByName,

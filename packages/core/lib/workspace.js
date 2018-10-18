@@ -34,6 +34,7 @@ function Workspace (storage, key, opts) {
   this._storage = chainStorage(storage)
 
   this.db = hyperdb(this._storage('workspace'), key, opts)
+  this.sharedArchives = []
 
   // this.ready = thunky((done) => self._ready(done))
   this.ready = asyncThunk(this._ready.bind(this))
@@ -117,7 +118,8 @@ Workspace.prototype.createArchive = async function (info) {
     await pify(this.db.put.bind(this.db))('archive/' + datenc.toStr(key), {
       added: Date.now() / 1000,
       key: datenc.toStr(key),
-      source: true
+      source: true,
+      shared: false
     })
   } catch (e) { console.log('ERROR createArchive', e) }
 
@@ -138,6 +140,12 @@ Workspace.prototype.addArchive = function (key, opts) {
   return archive
 }
 
+Workspace.prototype.shareArchive = async function (key, opts) {
+  let idx = this.archives.findIndex(a => a.info.key === key)
+  this.archives[idx].info.archipel.shared = !this.archives[idx].info.archipel.shared
+  return this.archives[idx].info.archipel.shared
+}
+
 Workspace.prototype._loadArchive = function (key, opts) {
   key = datenc.toBuf(key)
   const name = 'archive/' + keyToFolder(key)
@@ -153,7 +161,6 @@ Workspace.prototype._pushArchive = function (archive) {
   this._byKey[hex(archive.key)] = idx - 1
   this.emit('archive', archive)
 }
-
 
 // Workspace.prototype.__hyperpc = {
 //   override: {

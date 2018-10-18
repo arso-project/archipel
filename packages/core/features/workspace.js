@@ -33,4 +33,10 @@ async function workspace (core, opts) {
     await archive.ready()
     return { data: archive.info }
   })
+
+  core.rpc.reply('workspace/shareArchive', async (req) => {
+    if (!req.session.workspace) throw new Error('No workspace.')
+    const res = await req.session.workspace.shareArchive(req.key)
+    return res
+  })
 }

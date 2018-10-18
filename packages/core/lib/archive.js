@@ -184,6 +184,7 @@ Archive.prototype._defaultInfo = function () {
     archipel: {
       type: 'archipel-archive-v1',
       primary: true,
+      shared: false,
       mounts: {}
     }
   }
