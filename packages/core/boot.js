@@ -11,6 +11,7 @@ const Rootspace = require('./lib/rootspace')
 module.exports = boot
 
 async function boot (opts) {
+  opts = opts || {}
   const core = ucore()
   if (!opts.noHttp) core.register(server, { staticPath: process.env.ARCHIPEL_STATIC_PATH })
 
