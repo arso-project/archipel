@@ -32,11 +32,16 @@ class RpcQuery extends React.PureComponent {
     }
   }
 
+  componentWillUnmount () {
+    this.willUnmount = true
+  }
+
   async doFetch () {
     this.setState({ pending: true, started: true })
     try {
       let [ type, req ] = this.props.fetch(this.props)
       let res = await this.core.rpc.request(type, req)
+      if (this.willUnmount) return
       this.setState({ pending: false, data: res, error: false })
     } catch (error) {
       this.setState({ pending: false, error })

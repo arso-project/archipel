@@ -2,45 +2,70 @@ import React from 'react'
 import { List } from '@archipel/ui'
 import PropTypes from 'proptypes'
 import { Consumer } from 'ucore/react'
+import { propsDidChange, sortByProps } from '../../lib/state-utils'
 
 const ListDirItem = (props) => {
-  const { name, isDirectory } = props.item // also: path
-  const color = isDirectory ? 'text-blue' : 'text-red'
-  return <span className={color}>{name}</span>
-}
+  const { archive, onToggle, toggled, childOnSelect, item } = props
+  const { name, isDirectory } = item // also: path
 
-function sortByProps (list, props) {
-  if (!Array.isArray(list) || !list.length) return list
-  return [...list].sort((a, b) => {
-    return props.reduce((ret, prop) => {
-      if (ret !== 0) return ret
-      if (typeof prop === 'function') return prop(a, b)
-      let order = 'asc'
-      if (prop.indexOf(':')) {
-        [prop, order] = prop.split(':')
-      }
-      if (a[prop] === b[prop]) return ret
-      if (a[prop] > b[prop]) ret = 1
-      if (a[prop] < b[prop]) ret = -1
-      if (order === 'desc') ret = ret * -1
-      return ret
-    }, 0)
-  })
+  const color = isDirectory ? 'text-blue' : 'text-red'
+
+  const Toggle = isDirectory ? <span onClick={onToggle(item)} className='p-2 bg-black text-white font-bold'>+</span> : null
+
+  const Sub = toggled === item.path ? (
+    <div className='ml-2'>
+      <ListDir archive={archive} dir={item.path} onSelect={childOnSelect} />
+    </div>
+  ) : null
+
+  return <div>{Toggle}<span className={color}>{name}</span>{Sub}</div>
 }
 
 function sort (list) {
   return sortByProps(list, ['isDirectory:desc', 'name'])
 }
 
-const ListDir = (props) => {
-  const { archive, dir, onSelect } = props
-  return (
-    <Consumer store='fs' select={'getChildren'} init={'fetchStats'} archive={archive} path={dir}>
-      {(dirs) => {
-        return <List items={sort(dirs)} onSelect={onSelect} renderItem={item => <ListDirItem item={item} />} />
-      }}
-    </Consumer>
-  )
+class ListDir extends React.Component {
+  constructor (props) {
+    super(props)
+    this.state = { toggled: null }
+    this.onToggle = this.onToggle.bind(this)
+  }
+
+  onToggle (item) {
+    return (e) => {
+      e.stopPropagation()
+      this.setState({ toggled: item.path })
+    }
+  }
+
+  componentWillReceiveProps (nextProps) {
+    if (propsDidChange(this.props, nextProps, ['archive', 'dir'])) this.setState({ toggled: null })
+  }
+
+  render () {
+    const { archive, dir, onSelect } = this.props
+    const { toggled } = this.state
+    return (
+      <Consumer
+        store='fs'
+        select={'getChildren'}
+        fetch={'fetchStats'}
+        fetchOnChange={[archive, dir]}
+        archive={archive}
+        path={dir}
+        // key={archive + dir}
+        toggled={toggled}>
+        {(dirs) => {
+          return (
+            <List items={sort(dirs)} onSelect={onSelect} renderItem={item =>
+              <ListDirItem archive={archive} item={item} toggled={toggled} onToggle={this.onToggle} childOnSelect={onSelect} />
+            } />
+          )
+        }}
+      </Consumer>
+    )
+  }
 }
 
 ListDir.propTypes = {

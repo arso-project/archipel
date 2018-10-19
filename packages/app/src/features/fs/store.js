@@ -1,5 +1,9 @@
+import { createSelector } from 'reselect'
+import { sortByProps } from '../../lib/state-utils'
+
 const initialState = {
-  stats: {}
+  stats: {},
+  ui: {}
 }
 
 const fetchStats = ({ archive, path }) => async (set, { core }) => {
@@ -8,7 +12,9 @@ const fetchStats = ({ archive, path }) => async (set, { core }) => {
   const key = archive
   const res = await core.rpc.request('fs/stat', { key, path })
   set(draft => {
-    res.stats.forEach(stat => { draft.stats[joinId(stat)] = stat })
+    res.stats.forEach(stat => {
+      draft.stats[joinId(stat)] = stat
+    })
   })
 }
 
@@ -34,6 +40,11 @@ const getChildren = (state, { archive, path }) => {
   return ret
 }
 
+const getChildrenSortedByName = (state, { archive, path }) => {
+  const list = getChildren(state, { archive, path })
+  return sortByProps(list, ['isDirectory:desc', 'name'])
+}
+
 export default {
   initialState,
   actions: {
@@ -41,7 +52,8 @@ export default {
     createDir
   },
   select: {
-    getChildren
+    getChildren,
+    getChildrenSortedByName
   }
 }
 
