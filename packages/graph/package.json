@@ -2,18 +2,25 @@
   "name": "@archipel/graph",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
     "test": "tape test/*"
   },
   "author": "Franz Heinzmann",
   "license": "MIT",
+  "browser": "frontend/index.js",
+  "main": "backend/index.js",
   "dependencies": {
     "hyper-readings": "0.0.15",
-    "superstruct": "^0.6.0"
+    "hypergraph": "^1.1.0",
+    "superstruct": "^0.6.0",
+    "@archipel/ui": "^1.0",
+    "react": "^16.5.2",
+    "react-dom": "^16.5.2",
+    "proptypes": "^1.1.0",
+    "ucore": "^0.3.5"
   },
   "devDependencies": {
+    "rollup-plugin-peer-deps-external": "^2.2.0",
     "tape": "^4.9.1"
   }
 }

@@ -5,6 +5,7 @@ const server = require('./features/http-server')
 const rpc = require('ucore/rpc/server')
 const workspace = require('./features/workspace')
 const fs = require('./features/fs')
+const graph = require('@archipel/graph/backend')
 
 const Rootspace = require('./lib/rootspace')
 
@@ -22,6 +23,8 @@ async function boot (opts) {
   core.use(archipel)
   core.use(workspace)
   core.register(fs)
+  core.register(graph)
+
   await core.ready()
   if (!opts.noHttp) core.httpServer.listen(8080, console.log('Server listening on port 8080'))
 

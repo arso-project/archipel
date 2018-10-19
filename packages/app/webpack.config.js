@@ -17,6 +17,7 @@ const shared = (argv) => ({
         // exclude: /(node_modules)/,
         include: [
           path.resolve(__dirname, 'src'),
+          path.resolve(__dirname, '..'),
           path.resolve(__dirname, 'index.js'),
           archipelUiPath,
           /ucore/

@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/archipel-somoco/archipel-core#readme",
   "dependencies": {
+    "@archipel/graph": "^0.1.0",
     "dat-encoding": "^5.0.1",
     "debug": "^4.1.0",
     "hex-to-32": "^2.0.0",

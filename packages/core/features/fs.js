@@ -4,13 +4,9 @@ const p = require('path')
 
 const pump = require('pump')
 
-// module.exports = Fs
-
-const KEY = 'fs'
-
 module.exports = {
   mounts: [{
-    name: KEY,
+    name: 'fs',
     root: true,
     proxies: 'hyperdrive',
     proxy: Fs
