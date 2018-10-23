@@ -19,16 +19,18 @@ class Foldable extends React.Component {
     let { heading, render, children } = this.props
     let triangle = this.state.open ? '▼' : '►'
     triangle = <span className='text-sm w-6'>{triangle}</span>
-    // if (typeof heading === 'function') heading = () => heading
     render = render || children
-    // let Headline
-    // if (!heading) heading = '... ->'
-    // if (typeof heading === 'string') Headline = <React.Fragment>{heading}</React.Fragment>
-    // if (typeof heading === 'function') Headline = heading
-    // // else Headline = defaultHeadline
+    let realHeading
+    if (typeof heading === 'string') {
+      realHeading = ({ onClick, prefix }) => (
+        <Heading className='text-purple-dark cursor-pointer mb-2' noMy={1} fontSize={2} onClick={onClick}>{prefix} {heading}</Heading>
+      )
+    }
+    let onClick = () => this.toggle()
+    let mainCls = 'p-2 mb-2' + (this.state.open ? ' bg-grey-lightest' : '')
     return (
-      <div className='pb-2 mb-2'>
-        <Heading className='text-purple-dark text-lg cursor-pointer ' onClick={() => this.toggle()}>{triangle} {heading}</Heading>
+      <div className={mainCls}>
+        {realHeading({ onClick, prefix: triangle })}
         {this.state.open &&
           <div className='p-2'>
             {render}

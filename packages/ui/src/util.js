@@ -1,6 +1,6 @@
 export function cls (props, ...classes) {
   const className = []
-  if (props.s) className.push(props.s)
+  if (props.cls) className.push(props.cls)
   if (props.className) {
     // if (Array.isArray(props.className)) classNames.pus
     className.push(props.className)
@@ -16,7 +16,7 @@ export function cls (props, ...classes) {
 
 export function proplist (props, classes, exclude) {
   exclude = exclude || []
-  exclude.push('children', 'className')
+  exclude.push('children', 'className', 'cls')
   const list = Object.keys(props).reduce((list, prop) => {
     if (exclude.indexOf(prop) < 0) list[prop] = props[prop]
     return list

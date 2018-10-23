@@ -2,13 +2,26 @@ import React from 'react'
 import { proplist } from '../util'
 import Tag from './Tag'
 
-const Heading = ({...props}) => {
+const sizes = [
+  'text-xs',
+  'text-sm',
+  'text-base',
+  'text-lg',
+  'text-xl',
+  'text-2xl',
+  'text-3xl',
+  'text-4xl',
+  'text-5xl'
+]
+
+const Heading = ({ ...props }) => {
   if (!props.is) props.is = 'h2'
-  const cls = ['my-4']
-  if (props.size) cls.push(`text-${props.size}-xl`)
-  else cls.push(`text-xl`)
+  props.cls = props.cls || []
+  if (!props.noMy) props.cls.push('my-4')
+  if (!props.fontSize) props.fontSize = 4
+  props.cls.push(sizes[props.fontSize])
   return (
-    <Tag {...proplist(props, cls, ['size'])}>
+    <Tag {...proplist(props, null, ['size'])}>
       {props.children}
     </Tag>
   )
