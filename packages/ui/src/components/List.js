@@ -24,9 +24,11 @@ class List extends React.Component {
     return (
       <ul className='list-reset'>
         { items.map((item, i) => {
-          let cls = clsBase + (isSelected(item, i) ? 'bg-teal-dark hover:bg-teal-dark' : 'bg-bright hover:bg-teal')
+          // let cls = clsBase + (isSelected(item, i) ? 'bg-teal-dark hover:bg-teal-dark' : 'bg-bright hover:bg-teal')
+          let cls = clsBase + (isSelected(item, i) ? 'bg-grey-lightest' : 'hover:bg-grey-lightest')
+          let key = typeof item === 'object' && item.id ? item.id : i
           return (
-            <li className={cls} key={i} onClick={this.onSelect(item, i)}>
+            <li className={cls} key={key} onClick={this.onSelect(item, i)}>
               {renderItem(item, i)}
             </li>
           )
