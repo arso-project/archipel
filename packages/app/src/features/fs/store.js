@@ -7,15 +7,17 @@ const initialState = {
 }
 
 const fetchStats = ({ archive, path }) => async (set, { core }) => {
-  // set(draft => { draft.stats[id] = { pending: true } })
-  // const { key, path } = splitId(id)
   const key = archive
-  const res = await core.rpc.request('fs/stat', { key, path })
-  set(draft => {
-    res.stats.forEach(stat => {
-      draft.stats[joinId(stat)] = stat
+  try {
+    const res = await core.rpc.request('fs/stat', { key, path })
+    set(draft => {
+      res.stats.forEach(stat => {
+        draft.stats[joinId(stat)] = stat
+      })
     })
-  })
+  } catch (e) {
+    console.log('fetchStats error', e)
+  }
 }
 
 const createDir = ({ archive, parent, name }) => async (set, { core, actions }) => {
@@ -30,8 +32,8 @@ const createDir = ({ archive, parent, name }) => async (set, { core, actions }) 
 
 const getChildren = (state, { archive, path }) => {
   let id = joinId({ key: archive, path })
-  if (!state.stats[id]) return null
-  if (!state.stats[id].children) return null
+  if (!state.stats[id]) return undefined
+  if (!state.stats[id].children) return state.stats[id].children // can be either [] (no children) or undefined (not yet fetched)
   let parent = state.stats[id]
   let ret = parent.children.map(name => {
     let childId = joinId({ path: joinPath(parent.path, name), key: parent.key })

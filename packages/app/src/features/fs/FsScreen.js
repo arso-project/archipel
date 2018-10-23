@@ -30,8 +30,8 @@ class FsScreen extends React.PureComponent {
     this.selectFile = this.selectFile.bind(this)
   }
 
-  componentDidUpdate (prevProps) {
-    if (prevProps.archive !== this.props.archive) this.setState({ dirs: ['/'], file: null })
+  componentWillReceiveProps (nextProps) {
+    if (nextProps.archive !== this.props.archive) this.setState({ dirs: ['/'], file: null })
   }
 
   selectFile (depth) {

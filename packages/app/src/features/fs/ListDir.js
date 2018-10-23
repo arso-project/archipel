@@ -46,16 +46,19 @@ class ListDir extends React.Component {
   render () {
     const { archive, dir, onSelect } = this.props
     const { toggled } = this.state
+
     return (
       <Consumer
         store='fs'
         select={'getChildren'}
         fetch={'fetchStats'}
         fetchOnChange={[archive, dir]}
+        fetchOnResult={sel => sel === undefined}
+
         archive={archive}
         path={dir}
-        // key={archive + dir}
         toggled={toggled}>
+
         {(dirs) => {
           return (
             <List items={sort(dirs)} onSelect={onSelect} renderItem={item =>
@@ -63,6 +66,7 @@ class ListDir extends React.Component {
             } />
           )
         }}
+
       </Consumer>
     )
   }

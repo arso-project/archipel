@@ -39,6 +39,8 @@ async function fsPlugin (core, opts) {
         })
         const completed = await Promise.all(childStats)
         completed.forEach(stat => stats.push(stat))
+      } else {
+        parentStat.children = []
       }
     }
 
@@ -52,7 +54,7 @@ async function fsPlugin (core, opts) {
         path,
         name: p.parse(path).base,
         isDirectory: stat.isDirectory(),
-        children: []
+        children: undefined
       }
     }
   })
