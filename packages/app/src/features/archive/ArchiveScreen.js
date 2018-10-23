@@ -3,6 +3,7 @@ import { Tabs } from '@archipel/ui'
 
 import ListArchives from './ListArchives'
 import CreateArchive from './CreateArchive'
+import AddArchive from './AddArchive'
 
 import { Consumer } from 'ucore/react'
 
@@ -15,6 +16,7 @@ class ArchiveScreen extends React.PureComponent {
       <div className='flex mb-4'>
         <div className='p-2 w-1/4 flex-no-shrink'>
           <CreateArchive />
+          <AddArchive />
           <ListArchives archives={archives} selected={archive} onSelect={(item, i) => (e) => { onSelect(item.key) }} />
         </div>
         <div className='flex-1 w-3/4'>

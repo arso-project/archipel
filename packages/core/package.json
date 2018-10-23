@@ -21,6 +21,7 @@
     "@archipel/graph": "^0.1.0",
     "dat-encoding": "^5.0.1",
     "debug": "^4.1.0",
+    "discovery-swarm": "^5.1.2",
     "hex-to-32": "^2.0.0",
     "hyper-graph-db": "^0.3.6",
     "hypercore-crypto": "^1.0.0",

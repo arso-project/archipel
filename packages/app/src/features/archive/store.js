@@ -4,6 +4,8 @@ const initialState = {
   archives: []
 }
 
+/* Actions */
+
 const createArchive = (title) => async (set, { get, core, actions }) => {
   let info = { title }
   await core.rpc.request('workspace/createArchive', { info })
@@ -21,9 +23,16 @@ const shareArchive = (key) => async (set, { get, core, actions }) => {
   actions.loadArchives()
 }
 
+const loadRemoteArchives = () => async (set, { get, core }) => {
+  let res = await core.rpc.request('workspace/loadRemoteArchives')
+  set(draft => { draft.remoteArchives = res.data })
+}
+
 const selectArchive = (key) => (set) => {
   set(draft => { draft.selected = key })
 }
+
+/* Selectors */
 
 const sortedByName = state => sortByProp([...state.archives], 'title')
 
@@ -33,16 +42,23 @@ const selectedArchive = state => {
   }
 }
 
+const remoteArchives = state => {
+  if (!state.remoteArchives) return null
+  return state.remoteArchives
+}
+
 module.exports = {
   initialState,
   actions: {
     createArchive,
     loadArchives,
     selectArchive,
-    shareArchive
+    shareArchive,
+    loadRemoteArchives
   },
   select: {
     sortedByName,
-    selectedArchive
+    selectedArchive,
+    remoteArchives
   }
 }

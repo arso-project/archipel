@@ -54,4 +54,3 @@ function Graph (storage, key, opts) {
     self[key] = self.hyperdrive[key]
   })
 }
-

@@ -6,6 +6,7 @@ const thunky = require('thunky')
 const inherits = require('inherits')
 const rpcify = require('hyperpc').rpcify
 const pify = require('pify')
+const netswarm = require('discovery-swarm')
 
 const Archive = require('./archive')
 
@@ -141,9 +142,46 @@ Workspace.prototype.addArchive = function (key, opts) {
 }
 
 Workspace.prototype.shareArchive = async function (key, opts) {
-  let idx = this.archives.findIndex(a => a.info.key === key)
+  // write shared status into json
+  // call provideArchiveOnline for shared Archives at init
+  const idx = this.archives.findIndex(a => a.info.key === key)
   this.archives[idx].info.archipel.shared = !this.archives[idx].info.archipel.shared
+  console.log('Workspace.shareArchive():', key, this.archives[idx].info.archipel.shared)
+  if (this.archives[idx].info.archipel.shared) this.provideArchiveOnline(key)
   return this.archives[idx].info.archipel.shared
+}
+
+Workspace.prototype.provideArchiveOnline = async function (key, opts) {
+  let idx = this.archives.findIndex(a => a.info.key === key)
+  // Warning: archive.replicate breaks!!!
+  const stream = this.archives[idx].replicate({ live: false })
+  const sw = netswarm({
+    id: this.archives[idx].key,
+    stream: stream,
+  })
+  // which port?
+  await sw.listen(2000)
+  await sw.join('archipel-somoco-testing', {
+    lookup: false,
+    announce: true
+  })
+  await sw.on('connecting', (peer) => { console.log('connection to', peer) })
+}
+
+Workspace.prototype.loadRemoteArchives = async function (key, opts) {
+  await this.ready()
+  const sw = netswarm({
+    id: this.key,
+  })
+  // which port?
+  await sw.listen(2001)
+  await sw.join('archipel-somoco-testing', {
+    lookup: true,
+    announce: false
+  })
+  let peers = []
+  await sw.on('peer', (peer) => { peers.push(peer) })
+  return peers
 }
 
 Workspace.prototype._loadArchive = function (key, opts) {
