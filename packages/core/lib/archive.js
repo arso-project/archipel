@@ -78,14 +78,9 @@ Archive.prototype.byKey = function (key) {
 }
 
 Archive.prototype.replicate = function (opts) {
-  console.log('Archive.replicate(', opts, '):', this.mounts)
-  try {
-    this.mounts.forEach((mount) => {
-      mount.db.replicate(opts)
-    })
-  } catch (err) {
-    console.log('ERROR at Archive.replicate:', err)
-  }
+  this.mounts.forEach((mount) => {
+    mount.db.replicate(opts)
+  })
 }
 
 Archive.prototype._ready = async function () {

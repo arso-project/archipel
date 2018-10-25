@@ -40,9 +40,11 @@ async function workspace (core, opts) {
     return res
   })
 
-  core.rpc.reply('workspace/loadRemoteArchives', async (req) => {
+  core.rpc.reply('workspace/addRemoteArchive', async (req) => {
     if (!req.session.workspace) throw new Error('No workspace.')
-    const remoteArchives = await req.session.workspace.loadRemoteArchives()
-    return { data: remoteArchives }
+    let { key, title } = req
+    let opts = { info: { title: title } }
+    const res = await req.session.workspace.addRemoteArchive(key, opts)
+    return res
   })
 }

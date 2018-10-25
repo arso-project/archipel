@@ -2,58 +2,50 @@ import React from 'react'
 import { Button, List, Foldable } from '@archipel/ui'
 import { Consumer } from 'ucore/react'
 
-const Archive = ({ item, selected }) => {
-  return (
-    <span>
-      <strong>{item.title}</strong> <Key string={item.key} />
-    </span>
-  )
-}
-
-const Key = ({ string }) => (
-  <strong className=''>
-    {string.substring(0, 8)}…
-  </strong>
-)
+// TODO: improve Feedback, set Title, set shared Flag, preserve shared State at Archive Info
 
 class AddArchiveWidget extends React.PureComponent {
   constructor () {
     super()
-    this.state = {
-      started: false,
-      pending: false,
-      done: false
-    }
+    this.state = { key: '',
+      title: '' }
+    this.onAdd = this.onAdd.bind(this)
   }
 
-  onClick () {
-    this.props.loadRemoteArchives()
-    this.setState({
-      started: true,
-      pending: true
-    })
+  onAdd (e) {
+    if (this.state.key) {
+      this.props.onAdd(this.state.key, this.state.title)
+      this.setState({ key: '', title: '' })
+    }
   }
 
   render () {
     return (
-      <Foldable heading='Add Archive' >
-        <Button onClick={() => this.onClick()} >Load remote archives</Button>
-
-        <List
-          items={this.state.done ? this.props.remoteArchives : this.state.pending ? ['pending'] : this.state.started ? ['started'] : ['-']}
-          // onSelect={this.props.onSelect}
-          // selected={item => item.key === selected}
-          // renderItem={item => <Archive item={item} />}
-        />
+      <Foldable heading='Add archive'>
+        <div className='flex mb-2'>
+          <span>Key: </span>
+          <input type='text' placeholder='Key'
+            className='p-1 border-2'
+            onChange={(e) => this.setState({ key: e.target.value })}
+          />
+        </div>
+        <div className='flex mb-2'>
+          <span>Title: </span>
+          <input type='text' placeholder='Title'
+            className='p-1 border-2'
+            onChange={(e) => this.setState({ title: e.target.value })}
+          />
+        </div>
+        <Button onClick={this.onAdd}>Add Archive</Button>
       </Foldable>
     )
   }
 }
 
 const AddArchive = () => {
-  return <Consumer store='archive' select={'remoteArchives'} >
-    {(remoteArchives, { loadRemoteArchives }) => {
-      return <AddArchiveWidget loadRemoteArchives={loadRemoteArchives} remoteArchives={remoteArchives} />
+  return <Consumer store='archive' select={state => null}>
+    {(state, { addRemoteArchive }) => {
+      return <AddArchiveWidget onAdd={title => addRemoteArchive(title)} />
     }}
   </Consumer>
 }
