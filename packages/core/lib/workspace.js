@@ -47,6 +47,7 @@ Workspace.prototype._ready = function (done) {
 
     let promises = []
     rs.on('data', (node) => {
+      console.log('NODE', node)
       promises.push(self.openArchive(node.value.key, node.value))
     })
     rs.on('end', () => {
@@ -114,9 +115,19 @@ Workspace.prototype.createArchive = async function (type, info) {
 
 Workspace.prototype.addRemoteArchive = async function (type, key, opts) {
   const archive = this.getConstructor(type)(this._storage(storageFolder(key, type)), key, opts)
-  await this.setStatus(key, { type, share: false, primary: true, key })
-  this.archives[key] = { key, status: this.getStatus(key), archive }
+  let status = {
+    key: key,
+    type,
+    primary: true,
+    share: false
+  }
+
+  await this.setStatus(key, status)
+
+  this.archives[key] = { key, status, archive }
+
   await this.setShare(key, true)
+
   return archive
 }
 
@@ -126,6 +137,18 @@ Workspace.prototype.listArchives = async function (opts) {
   const defaultFilter = ({ status }) => status && status.primary === true
   let filter = opts.filter || defaultFilter
   return Object.values(this.archives).filter(filter)
+}
+
+Workspace.prototype.getPrimaryArchives = function () {
+  const filter = ({ status }) => status && status.primary === true
+  return Object.values(this.archives).filter(filter).map(a => a.key)
+}
+
+Workspace.prototype.getPrimaryArchivesWithInfo = async function () {
+  await this.ready()
+  const self = this
+  let keys = this.getPrimaryArchives()
+  return Promise.all(keys.map(key => self.getStatusAndInfo(key)))
 }
 
 Workspace.prototype.getStatus = function (key) {
@@ -143,7 +166,7 @@ Workspace.prototype.getStatusAndInfo = async function (key) {
   if (!this.archives[key]) return null
   let status = await this.getStatus(key)
   let info = await this.archives[key].archive.getInfo()
-  return { ...info, status }
+  return { ...info, status, key }
 }
 
 Workspace.prototype.setStatus = function (key, status) {

@@ -31,13 +31,7 @@ async function workspace (core, opts) {
 
   core.rpc.reply('workspace/listArchives', async (req) => {
     if (!req.session.workspace) throw new Error('No workspace.')
-    const archives = await req.session.workspace.listArchives()
-    let proms = archives.map(async archive => {
-      let info = await archive.archive.getInfo()
-      info.status = archive.status
-      return info
-    })
-    let data = await Promise.all(proms)
+    const data = await req.session.workspace.getPrimaryArchivesWithInfo()
     return { data }
   })
 

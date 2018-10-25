@@ -1,7 +1,8 @@
 const hyperdrive = require('hyperdrive')
 const pify = require('pify')
 const pump = require('pump')
-const datenc = require('dat-encoding')
+// const datenc = require('dat-encoding')
+const { hex, asyncThunk } = require('../../lib/util')
 
 module.exports = ArchipelHyperdrive
 
@@ -10,6 +11,7 @@ function ArchipelHyperdrive (storage, key, opts) {
   const self = this
   this.hyperdrive = hyperdrive(storage, key, opts)
   this.db = this.hyperdrive.db
+  this.key = key
 
   this.info = null
   this.mounts = null
@@ -23,6 +25,8 @@ function ArchipelHyperdrive (storage, key, opts) {
   syncFuncs.forEach(func => {
     self[func] = self.hyperdrive[func].bind(self.hyperdrive)
   })
+
+  this.ready = pify(this.hyperdrive.ready.bind(this.hyperdrive))
 
   this.asyncWriteStream = (path, stream) => {
     return new Promise((resolve, reject) => {
@@ -40,7 +44,7 @@ function ArchipelHyperdrive (storage, key, opts) {
   // Copy static props.
   const props = ['key', 'discoveryKey', 'db']
   props.forEach(key => {
-    self[key] = self.hyperdrive[key]
+    self[key] = self.db[key]
   })
 }
 
@@ -57,7 +61,8 @@ ArchipelHyperdrive.prototype.getMounts = async function () {
 }
 
 ArchipelHyperdrive.prototype.setInfo = async function (info) {
-  if (!this.db.authorized) throw new Error('Cannot setInfo if not authorized.')
+  // await this.ready()
+  // if (!this.db.authorized) throw new Error('Cannot setInfo if not authorized.')
   info = info || {}
   let defaultInfo = this.info || this.defaultInfo()
   info = Object.assign({}, defaultInfo, info)
@@ -78,8 +83,8 @@ ArchipelHyperdrive.prototype.getInfo = async function () {
 
 ArchipelHyperdrive.prototype.defaultInfo = function () {
   const info = {
-    url: 'dat://' + datenc.toStr(this.key),
-    key: datenc.toStr(this.key),
+    url: 'dat://' + hex(this.key),
+    key: hex(this.key),
     archipel: {
       type: 'archipel-hyperdrive-v1',
       mounts: {}
