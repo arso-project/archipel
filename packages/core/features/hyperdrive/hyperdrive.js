@@ -19,7 +19,7 @@ function ArchipelHyperdrive (storage, key, opts) {
   asyncFuncs.forEach(func => {
     self[func] = pify(self.hyperdrive[func].bind(self.hyperdrive))
   })
-  const syncFuncs = ['createWriteStream', 'createReadStream']
+  const syncFuncs = ['createWriteStream', 'createReadStream', 'replicate']
   syncFuncs.forEach(func => {
     self[func] = self.hyperdrive[func].bind(self.hyperdrive)
   })
@@ -57,6 +57,7 @@ ArchipelHyperdrive.prototype.getMounts = async function () {
 }
 
 ArchipelHyperdrive.prototype.setInfo = async function (info) {
+  if (!this.db.authorized) throw new Error('Cannot setInfo if not authorized.')
   info = info || {}
   let defaultInfo = this.info || this.defaultInfo()
   info = Object.assign({}, defaultInfo, info)
@@ -70,7 +71,7 @@ ArchipelHyperdrive.prototype.getInfo = async function () {
     let info = await this.readFile('dat.json')
     this.info = JSON.parse(info.toString())
   } catch (e) {
-    this.info = this._defaultInfo()
+    this.info = this.defaultInfo()
   }
   return this.info
 }

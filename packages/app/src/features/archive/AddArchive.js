@@ -7,15 +7,14 @@ import { Consumer } from 'ucore/react'
 class AddArchiveWidget extends React.PureComponent {
   constructor () {
     super()
-    this.state = { key: '',
-      title: '' }
+    this.state = { key: '' }
     this.onAdd = this.onAdd.bind(this)
   }
 
   onAdd (e) {
     if (this.state.key) {
-      this.props.onAdd(this.state.key, this.state.title)
-      this.setState({ key: '', title: '' })
+      this.props.onAdd(this.state.key)
+      this.setState({ key: '' })
     }
   }
 
@@ -27,13 +26,6 @@ class AddArchiveWidget extends React.PureComponent {
           <input type='text' placeholder='Key'
             className='p-1 border-2'
             onChange={(e) => this.setState({ key: e.target.value })}
-          />
-        </div>
-        <div className='flex mb-2'>
-          <span>Title: </span>
-          <input type='text' placeholder='Title'
-            className='p-1 border-2'
-            onChange={(e) => this.setState({ title: e.target.value })}
           />
         </div>
         <Button onClick={this.onAdd}>Add Archive</Button>

@@ -15,8 +15,8 @@ const ArchiveInfo = () => {
           <pre>Key: {archive.key}</pre>
           <pre>Shared:
             <ToggleButton inactiveLabel='NO' activeLabel='YES'
-              value={archive.archipel.shared}
-              onToggle={() => shareArchive(key)}
+              value={archive.status.share}
+              onToggle={() => shareArchive(key, !archive.status.share)}
             />
           </pre>
         </div>

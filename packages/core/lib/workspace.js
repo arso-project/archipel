@@ -1,6 +1,7 @@
 const crypto = require('hypercore-crypto')
 const hyperdb = require('hyperdb')
 const debug = require('debug')('workspace')
+const hyperdiscovery = require('hyperdiscovery')
 const { hex, chainStorage, keyToFolder, asyncThunk } = require('./util')
 
 module.exports = Workspace
@@ -99,7 +100,7 @@ Workspace.prototype.createArchive = async function (type, info) {
     type,
     // opts,
     primary: true,
-    sync: false
+    share: false
   }
 
   await this.setStatus(key, status)
@@ -111,8 +112,12 @@ Workspace.prototype.createArchive = async function (type, info) {
   return archive
 }
 
-Workspace.prototype.addArchive = function (type, key, opts) {
-
+Workspace.prototype.addRemoteArchive = async function (type, key, opts) {
+  const archive = this.getConstructor(type)(this._storage(storageFolder(key, type)), key, opts)
+  await this.setStatus(key, { type, share: false, primary: true, key })
+  this.archives[key] = { key, status: this.getStatus(key), archive }
+  await this.setShare(key, true)
+  return archive
 }
 
 Workspace.prototype.listArchives = async function (opts) {
@@ -129,9 +134,16 @@ Workspace.prototype.getStatus = function (key) {
     let dbkey = keyToDbKey(key)
     self.db.get(dbkey, (err, node) => {
       if (err) reject(err)
-      resolve(node || {})
+      resolve(node.value || {})
     })
   })
+}
+
+Workspace.prototype.getStatusAndInfo = async function (key) {
+  if (!this.archives[key]) return null
+  let status = await this.getStatus(key)
+  let info = await this.archives[key].archive.getInfo()
+  return { ...info, status }
 }
 
 Workspace.prototype.setStatus = function (key, status) {
@@ -147,18 +159,27 @@ Workspace.prototype.setStatus = function (key, status) {
         if (!self.archives[key]) self.archives[key] = {}
         self.archives[key].status = value
         // self.emit('status', key, value)
-        resolve(true)
+        resolve(value)
       })
     })
   })
 }
 
-Workspace.prototype.shareArchive = function (key) {
-
+Workspace.prototype.setShare = async function (key, share) {
+  if (share) return this._doShare(key)
+  else return this._doUnshare(key)
 }
 
-Workspace.prototype.unshareArchive = function (key) {
+Workspace.prototype._doShare = async function (key) {
+  await this.setStatus(key, { share: true })
+  let archive = this.archives[key].archive
+  let network = hyperdiscovery(archive)
+  this.archives[key].network = network
+  network.on('connection', (peer) => console.log('got peer!'))
+}
 
+Workspace.prototype._doUnshare = async function (key) {
+  await this.setStatus(key, { share: false })
 }
 
 function storageFolder (key, type) {

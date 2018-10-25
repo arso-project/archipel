@@ -51,15 +51,16 @@ async function workspace (core, opts) {
 
   core.rpc.reply('workspace/shareArchive', async (req) => {
     if (!req.session.workspace) throw new Error('No workspace.')
-    const res = await req.session.workspace.shareArchive(req.key, req.share)
-    return res
+    await req.session.workspace.setShare(req.key, req.share)
+    let res = await req.session.workspace.getStatusAndInfo(req.key)
+    return { data: res }
   })
 
   core.rpc.reply('workspace/addRemoteArchive', async (req) => {
     if (!req.session.workspace) throw new Error('No workspace.')
-    let { key, title } = req
-    let opts = { info: { title: title } }
-    const res = await req.session.workspace.addRemoteArchive(key, opts)
+    let { key } = req
+    await req.session.workspace.addRemoteArchive('hyperdrive', key)
+    let res = await req.session.workspace.getStatusAndInfo(key)
     return res
   })
 }
