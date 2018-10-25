@@ -1,229 +1,170 @@
 const crypto = require('hypercore-crypto')
 const hyperdb = require('hyperdb')
-const events = require('events')
-const datenc = require('dat-encoding')
-const thunky = require('thunky')
-const inherits = require('inherits')
-const rpcify = require('hyperpc').rpcify
-const pify = require('pify')
-const netswarm = require('hyperdiscovery')
-
-const Archive = require('./archive')
-
+const debug = require('debug')('workspace')
 const { hex, chainStorage, keyToFolder, asyncThunk } = require('./util')
 
 module.exports = Workspace
 
 function Workspace (storage, key, opts) {
   if (!(this instanceof Workspace)) return new Workspace(storage, key, opts)
-  events.EventEmitter.call(this)
-  const self = this
-
-  this.key = key || null
-
-  this.archives = []
-  this._byKey = {}
-
-  this.info = {
-    key: key.toString('hex')
-  }
-  this.opts = opts
-
-  opts.reduce = (a, b) => a
-  opts.valueEncoding = 'json'
 
   this._storage = chainStorage(storage)
+  this.key = key
+  this.archives = {}
+  this.info = {}
 
-  this.db = hyperdb(this._storage('workspace'), key, opts)
-  this.sharedArchives = []
+  this.db = hyperdb(this._storage('workspace'), key, {
+    reduce: (a, b) => a,
+    valueEncoding: 'json'
+  })
 
-  // this.ready = thunky((done) => self._ready(done))
+  this.archiveTypes = opts.archiveTypes || {}
+
   this.ready = asyncThunk(this._ready.bind(this))
-
-  // if (opts.info) this.updateInfo(opts.info)
 }
 
-inherits(Workspace, events.EventEmitter)
+Workspace.prototype.registerArchiveTypes = function (archiveTypes) {
+  this.archiveTypes = { ...this.archiveTypes, ...archiveTypes }
+}
 
-// let idx = 0
+Workspace.prototype.getConstructor = function (type) {
+  if (!this.archiveTypes[type]) throw new Error('Archive type ' + type + ' not registered.')
+  return this.archiveTypes[type].constructor
+}
+
 Workspace.prototype._ready = function (done) {
-  // console.log('WS: %s, READY %s', this.key.toString('hex').substring(0, 4), idx++)
-  const rs = this.db.createReadStream('archive')
+  const self = this
 
-  rs.on('data', (node) => {
-    const archive = this._loadArchive(node.key)
-    archive.on('ready', finish)
+  this.db.get('info', (err, node) => {
+    if (err) done(err)
+    else if (node) this.info = node.value
+    openArchives(done)
   })
-  rs.on('end', () => finish())
 
-  if (this.opts.new && this.opts.info) {
-    this.updateInfo(this.opts.info, () => finish())
-  } else {
-    this.db.get('info', (err, node) => {
-      if (err) return
-      this.info = Object.assign({}, this.info, node.value)
-      finish()
+  function openArchives (done) {
+    const rs = self.db.createReadStream('archive')
+
+    let promises = []
+    rs.on('data', (node) => {
+      promises.push(self.openArchive(node.value.key, node.value))
     })
-  }
-
-  var end = 0
-  function finish () {
-    if (end === 2) done()
+    rs.on('end', () => {
+      Promise.all(promises).then(done).catch(done)
+    })
   }
 }
 
-Workspace.prototype.archive = async function (key) {
+Workspace.prototype.setInfo = function (info) {
+  const self = this
+  return new Promise((resolve, reject) => {
+    let value = Object.assign({}, self.info, info)
+    self.db.put('info', value, (err, res) => {
+      if (err) return reject(res)
+      self.info = value
+      resolve(value)
+    })
+  })
+}
+
+// todo: Error handling.
+Workspace.prototype.getArchive = async function (key, type) {
   await this.ready()
-  key = datenc.toStr(key)
-  if (this._byKey[key] === undefined) return null
-  const archive = this.archives[this._byKey[key]]
+  if (!this.archives[key]) throw new Error('Archive ' + key + ' not found.')
+  if (this.archives[key].status.type !== type) return Error('Archive type mismatch for ' + key + ': Expected ' + type + ', got ' + this.archives[key].status.type)
+  return this.archives[key].archive
+}
+
+Workspace.prototype.openArchive = async function (key, status) {
+  if (!status) status = await this.getStatus(key)
+  if (!status) throw new Error('Archive ' + key + ' not found.')
+  const type = status.type
+  const constructor = this.getConstructor(type)
+  const archive = constructor(this._storage(storageFolder(key, type), key, status.opts))
   await archive.ready()
-  return archive
+  this.archives[key] = { key, status, archive }
 }
 
-Workspace.prototype.getArchives = async function (cb) {
-  await this.ready()
-  await Promise.all(this.archives.map(a => a.ready()))
-  const info = this.archives.map(a => a.info)
-  return info
-}
-
-Workspace.prototype.updateInfo = function (info, cb) {
-  this.info = Object.assign({}, this.info, info)
-  this.db.put('info', this.info, () => {
-    this.emit('info.update', this.info)
-    if (cb) cb(null, this.info)
-  })
-}
-
-Workspace.prototype.getInfo = async function () {
-  await this.ready()
-  return this.info
-}
-
-// Workspace.prototype.mount = function (archive, opts) {
-//   this.archives.push(archive)
-// }
-
-Workspace.prototype.createArchive = async function (info) {
+Workspace.prototype.createArchive = async function (type, info) {
   const keyPair = crypto.keyPair()
-  const key = keyPair.publicKey
+  const key = hex(keyPair.publicKey)
   const opts = {
-    secretKey: keyPair.secretKey,
-    info: info
+    secretKey: keyPair.secretKey
   }
 
-  const archive = this._loadArchive(key, opts)
+  const archive = this.getConstructor(type)(this._storage(storageFolder(key, type)), key, opts)
+  await archive.ready()
 
-  try {
-    await pify(this.db.put.bind(this.db))('archive/' + datenc.toStr(key), {
-      added: Date.now() / 1000,
-      key: datenc.toStr(key),
-      source: true
-    })
-  } catch (e) { console.log('ERROR createArchive', e) }
+  let status = {
+    key: key,
+    type,
+    // opts,
+    primary: true,
+    sync: false
+  }
 
-  return archive
-}
+  await this.setStatus(key, status)
 
-Workspace.prototype.addArchive = function (key, opts) {
-  if (this._byKey[key]) return
+  if (info && archive.setInfo) await archive.setInfo(info)
 
-  const archive = this._loadArchive(key, opts)
-
-  this.db.put('archive/' + datenc.toStr(key), {
-    added: Date.now() / 1000,
-    key: datenc.toStr(datenc.toStr(key)),
-    source: false
-  })
+  this.archives[key] = { key, status, archive }
 
   return archive
 }
 
-Workspace.prototype.shareArchive = async function (key, opts) {
-  // write shared status into json
-  // call provideArchiveOnline for shared Archives at init
-  const idx = this.archives.findIndex(a => a.info.key === key)
-  this.archives[idx].info.archipel.shared = !this.archives[idx].info.archipel.shared
-  console.log('Workspace.shareArchive():', key, this.archives[idx].info.archipel.shared)
-  let res = 'null'
-  if (this.archives[idx].info.archipel.shared) res = this.provideArchiveRemote(key)
-  console.log(this.archives[idx].key, this.archives[idx].mounts[0].key)
-  return { shared: this.archives[idx].info.archipel.shared, remote: res }
+Workspace.prototype.addArchive = function (type, key, opts) {
+
 }
 
-Workspace.prototype.provideArchiveRemote = async function (key, opts) {
+Workspace.prototype.listArchives = async function (opts) {
   await this.ready()
-  console.log('provideRemote called')
-  let idx = this.archives.findIndex(a => a.info.key === key)
-  // Warning: archive.replicate breaks!!!
-  /*
-  this.archives[idx].mounts.forEach(mount => {
-    let network = netswarm(mount.db)
-    network.on('connection', (peer) => console.log('got peer!'))
-  })
-  */
-  let network = netswarm(this.archives[idx].mounts[0].db)
-  network.on('connection', (peer) => console.log('got peer!'))
-  console.log(this.archives)
-  console.log(this.archives[idx].mounts)
-  console.log(datenc.toStr(this.archives[idx].mounts[0].key))
-  return ({ archives: this.archives, sharedArchive: this.archives[idx] })
+  opts = opts || {}
+  const defaultFilter = ({ status }) => status && status.primary === true
+  let filter = opts.filter || defaultFilter
+  return Object.values(this.archives).filter(filter)
 }
 
-Workspace.prototype.addRemoteArchive = async function (key, opts) {
-  console.log('addRemoteArchive', key, opts)
-
-  const archive = this._loadArchive(key, opts)
-
-  try {
-    await pify(this.db.put.bind(this.db))('archive/' + datenc.toStr(key), {
-      added: Date.now() / 1000,
-      key: datenc.toStr(key),
-      source: true
+Workspace.prototype.getStatus = function (key) {
+  const self = this
+  return new Promise((resolve, reject) => {
+    let dbkey = keyToDbKey(key)
+    self.db.get(dbkey, (err, node) => {
+      if (err) reject(err)
+      resolve(node || {})
     })
-  } catch (e) { console.log('ERROR addRemoteArchive', e) }
-  console.log('addRemoteArchive', archive)
-
-  archive.ready()
-
-  console.log('addRemoteArchive', archive)
-
-  let network = netswarm(archive.mounts[0].db)
-  network.on('connection', (peer) => console.log('got peer!'))
-
-  archive.info.archipel.shared = true
-
-  return { archive: archive }
+  })
 }
 
-Workspace.prototype._loadArchive = function (key, opts) {
-  key = datenc.toBuf(key)
-  const name = 'archive/' + keyToFolder(key)
-  const archive = Archive(this._storage(name), key, opts)
-  this._pushArchive(archive)
-  // archive.ready(() => this._pushArchive(archive))
-  return archive
+Workspace.prototype.setStatus = function (key, status) {
+  const self = this
+  return new Promise((resolve, reject) => {
+    let dbkey = keyToDbKey(key)
+    self.db.get(dbkey, (err, node) => {
+      if (err) return reject(err)
+      let value = node ? node.value : {}
+      value = Object.assign({}, value, status)
+      self.db.put(dbkey, value, (err, res) => {
+        if (err) return reject(err)
+        if (!self.archives[key]) self.archives[key] = {}
+        self.archives[key].status = value
+        // self.emit('status', key, value)
+        resolve(true)
+      })
+    })
+  })
 }
 
-Workspace.prototype._pushArchive = function (archive) {
-  const idx = this.archives.push(archive)
-  // console.log('push archive', archive.key.toString('hex').substring(0, 8))
-  this._byKey[hex(archive.key)] = idx - 1
-  this.emit('archive', archive)
+Workspace.prototype.shareArchive = function (key) {
+
 }
 
-// Workspace.prototype.__hyperpc = {
-//   override: {
-//     archive: async function (key) { return rpcify(await this.archive(key)) },
-//     // getArchives: async function () {
-//     //   let archives = await this.getArchives()
-//     //   console.log('ARCHIVES', archives)
-//     //   return archives.map(a => rpcify(a))
-//     // },
-//     createArchive: async function (info) {
-//       console.log('CREATE OVERRIDEN', info)
-//       return rpcify(await this.createArchive(info))
-//     }
-//   }
-// }
+Workspace.prototype.unshareArchive = function (key) {
+
+}
+
+function storageFolder (key, type) {
+  return type + '/' + keyToFolder(key)
+}
+
+function keyToDbKey (key) {
+  return 'archive/' + hex(key)
+}

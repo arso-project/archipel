@@ -21,7 +21,7 @@ const Heading = ({ ...props }) => {
   if (!props.fontSize) props.fontSize = 4
   props.cls.push(sizes[props.fontSize])
   return (
-    <Tag {...proplist(props, null, ['size'])}>
+    <Tag {...proplist(props, null, ['size', 'noMy'])}>
       {props.children}
     </Tag>
   )

@@ -5,6 +5,7 @@ const pify = require('pify')
 const datenc = require('dat-encoding')
 const crypto = require('hypercore-crypto')
 const thunky = require('thunky')
+const debug = require('debug')('root')
 
 const Workspace = require('./workspace')
 
@@ -30,12 +31,18 @@ function Rootspace (storage, key, opts) {
   })
 
   this.ready = thunky((done) => self._ready(done))
+
+  this.archiveTypes = {}
 }
 
 inherits(Rootspace, events.EventEmitter)
 
 Rootspace.prototype._ready = function (done) {
   this.db.ready(done)
+}
+
+Rootspace.prototype.registerArchiveTypes = function (archiveTypes) {
+  this.archiveTypes = archiveTypes
 }
 
 Rootspace.prototype.getWorkspaces = async function (cb) {
@@ -80,21 +87,21 @@ Rootspace.prototype.createWorkspace = async function (info) {
   const keyPair = crypto.keyPair()
   const key = keyPair.publicKey
   const opts = {
-    secretKey: keyPair.secretKey,
-    new: true,
-    info: info || {}
+    secretKey: keyPair.secretKey
   }
 
+  debug('create workspace', hex(key).substr(3), info)
   const workspace = await this._openWorkspace(key, opts)
+  await workspace.setInfo(info)
 
-  const workspaceInfo = {
+  const workspaceStatus = {
     created: Date.now() / 1000,
     key: hex(workspace.key),
     authorized: true,
-    info: {}
+    info: info
   }
 
-  this._saveWorkspace(workspace, workspaceInfo)
+  this._saveWorkspace(workspace, workspaceStatus)
 
   return workspace
 }
@@ -134,6 +141,7 @@ Rootspace.prototype.getArchive = function (key) {
 Rootspace.prototype._openWorkspace = async function (key, opts) {
   key = datenc.toBuf(key)
   const name = 'workspace/' + keyToFolder(key)
+  opts.archiveTypes = this.archiveTypes
   const workspace = Workspace(this._storage(name), key, opts)
   await workspace.ready()
   this._pushWorkspace(workspace)
@@ -152,14 +160,14 @@ Rootspace.prototype._pushWorkspace = function (workspace) {
   const idx = this.workspaces.push(workspace)
   this._workspaceKeys[datenc.toStr(workspace.db.key)] = idx - 1
   this.emit('workspace', workspace)
-  workspace.on('info.update', (info) => {
-    this._saveWorkspace(workspace, { info })
-  })
-  workspace.on('archive', (archive) => {
-    const idx = self.archives.push(archive)
-    self._archiveKeys[datenc.toStr(archive.key)] = idx - 1
-    this.emit('archive', archive)
-  })
+  // workspace.on('info.update', (info) => {
+  //   this._saveWorkspace(workspace, { info })
+  // })
+  // workspace.on('archive', (archive) => {
+  //   const idx = self.archives.push(archive)
+  //   self._archiveKeys[datenc.toStr(archive.key)] = idx - 1
+  //   this.emit('archive', archive)
+  // })
 
   // workspace.on('info.update', (info) => self._updateWorkspaceInfo(workspace))
 }

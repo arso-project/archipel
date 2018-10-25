@@ -1,26 +1,18 @@
-const hyperdrive = require('hyperdrive')
-const pify = require('pify')
 const p = require('path')
-
-const pump = require('pump')
+const archipelHyperdrive = require('./hyperdrive')
 
 module.exports = {
-  mounts: [{
-    name: 'fs',
-    root: true,
-    proxies: 'hyperdrive',
-    proxy: Fs
-  }],
+  name: 'Archipel Hyperdrive',
   plugin: fsPlugin
 }
 
-function joinPath (prefix, suffix) {
-  if (prefix.slice(-1) === '/') prefix = prefix.substring(0, prefix.length - 1)
-  if (suffix[0] === '/') suffix = suffix.substring(1)
-  return prefix + '/' + suffix
-}
-
 async function fsPlugin (core, opts) {
+  core.registerArchiveType({
+    hyperdrive: {
+      constructor: archipelHyperdrive
+    }
+  })
+
   core.rpc.reply('fs/stat', async (req) => {
     const { key, path } = req
     const fs = await _getFs(req)
@@ -80,44 +72,13 @@ async function fsPlugin (core, opts) {
 async function _getFs (req) {
   if (!req.session.workspace) throw new Error('No workspace.')
   let { key } = req
-  const archive = await req.session.workspace.archive(key)
+  const archive = await req.session.workspace.getArchive(key, 'hyperdrive')
   await archive.ready()
-  return archive.fs
+  return archive
 }
 
-// A promisified wrapper around hyperdrive.
-function Fs (storage, key, opts) {
-  if (!(this instanceof Fs)) return new Fs(storage, key, opts)
-  const self = this
-  this.hyperdrive = hyperdrive(storage, key, opts)
-  this.db = this.hyperdrive.db
-
-  // Copy functions from hyperdrive.
-  const asyncFuncs = ['ready', 'readFile', 'writeFile', 'readdir', 'mkdir', 'stat']
-  asyncFuncs.forEach(func => {
-    self[func] = pify(self.hyperdrive[func].bind(self.hyperdrive))
-  })
-  const syncFuncs = ['createWriteStream', 'createReadStream']
-  syncFuncs.forEach(func => {
-    self[func] = self.hyperdrive[func].bind(self.hyperdrive)
-  })
-
-  this.asyncWriteStream = (path, stream) => {
-    return new Promise ((resolve, reject) => {
-      const ws = this.hyperdrive.createWriteStream(path)
-      pump(stream, ws)
-      ws.on('finish', () => resolve(true))
-      ws.on('error', (err) => reject(err))
-    })
-  }
-
-  // Copy event bus.
-  this.emit = (ev) => this.hyperdrive.emit(ev)
-  this.on = (ev, cb) => this.hyperdrive.on(ev, cb)
-
-  // Copy static props.
-  const props = ['key', 'discoveryKey', 'db']
-  props.forEach(key => {
-    self[key] = self.hyperdrive[key]
-  })
+function joinPath (prefix, suffix) {
+  if (prefix.slice(-1) === '/') prefix = prefix.substring(0, prefix.length - 1)
+  if (suffix[0] === '/') suffix = suffix.substring(1)
+  return prefix + '/' + suffix
 }

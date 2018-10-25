@@ -9,8 +9,8 @@ store.initialState = {
   selected: null
 }
 
-const loadWorkspaces = () => async (set, { get, core, actions }) => {
-  if (get().started) return
+const loadWorkspaces = (reload) => async (set, { get, core, actions }) => {
+  if (!reload && get().started) return
   set(draft => { draft.started = true; draft.pending = true })
 
   const res = await core.rpc.request('workspace/list')
@@ -37,7 +37,7 @@ const openWorkspace = key => async (set, { get, core, actions }) => {
 const createWorkspace = title => async (set, { core, actions }) => {
   const res = await core.rpc.request('workspace/create', { info: { title } })
   // todo: handle result
-  actions.loadWorkspaces()
+  actions.loadWorkspaces(true)
 }
 
 store.actions = {
