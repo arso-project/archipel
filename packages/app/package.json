@@ -11,8 +11,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@archipel/ui": "^1.0",
     "@archipel/graph": "^0.1.0",
+    "@archipel/ui": "^1.0",
     "@babel/runtime": "^7.0.0",
     "deep-object-diff": "^1.1.0",
     "filereader-stream": "^2.0.0",
@@ -23,6 +23,7 @@
     "react-dom": "^16.5.2",
     "react-redux": "^5.0.7",
     "react-toggle-button": "^2.2.0",
+    "react-values": "^0.3.0",
     "reselect": "^3.0.1",
     "speedometer": "^1.1.0",
     "through2": "^2.0.3",

@@ -11,7 +11,7 @@ const Key = ({ string }) => (
 const Archive = ({ item, selected }) => {
   return (
     <span>
-      <strong>{item.title}</strong> <Key string={item.key} />
+      <strong>{item.info.title}</strong> <Key string={item.key} />
     </span>
   )
 }

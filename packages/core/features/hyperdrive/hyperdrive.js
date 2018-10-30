@@ -1,8 +1,7 @@
 const hyperdrive = require('hyperdrive')
 const pify = require('pify')
 const pump = require('pump')
-// const datenc = require('dat-encoding')
-const { hex, asyncThunk } = require('../../lib/util')
+const { hex } = require('../../lib/util')
 
 module.exports = ArchipelHyperdrive
 
@@ -14,7 +13,7 @@ function ArchipelHyperdrive (storage, key, opts) {
   this.key = key
 
   this.info = null
-  this.mounts = null
+  this.mounts = []
 
   // Copy functions from hyperdrive.
   const asyncFuncs = ['ready', 'readFile', 'writeFile', 'readdir', 'mkdir', 'stat']
@@ -57,7 +56,7 @@ ArchipelHyperdrive.prototype.addMount = async function (mount) {
 
 ArchipelHyperdrive.prototype.getMounts = async function () {
   let info = await this.getInfo()
-  return info.archipel.mounts
+  return info.archipel.mounts || []
 }
 
 ArchipelHyperdrive.prototype.setInfo = async function (info) {
@@ -67,6 +66,7 @@ ArchipelHyperdrive.prototype.setInfo = async function (info) {
   let defaultInfo = this.info || this.defaultInfo()
   info = Object.assign({}, defaultInfo, info)
   info.archipel.mounts = this.mounts
+  this.info = info
   await this.writeFile('dat.json', JSON.stringify(info, null, 2))
 }
 
@@ -87,7 +87,7 @@ ArchipelHyperdrive.prototype.defaultInfo = function () {
     key: hex(this.key),
     archipel: {
       type: 'archipel-hyperdrive-v1',
-      mounts: {}
+      mounts: []
     }
   }
   return info

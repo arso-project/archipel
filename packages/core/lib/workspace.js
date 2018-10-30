@@ -1,37 +1,30 @@
-const crypto = require('hypercore-crypto')
 const hyperdb = require('hyperdb')
-const debug = require('debug')('workspace')
+const events = require('events')
 const hyperdiscovery = require('hyperdiscovery')
-const { hex, chainStorage, keyToFolder, asyncThunk } = require('./util')
+const inherits = require('inherits')
+
+const library = require('./library')
+const { hex, chainStorage, asyncThunk } = require('./util')
 
 module.exports = Workspace
 
 function Workspace (storage, key, opts) {
   if (!(this instanceof Workspace)) return new Workspace(storage, key, opts)
+  opts = opts || {}
 
-  this._storage = chainStorage(storage)
+  this.library = library(storage, { archiveTypes: opts.archiveTypes })
+
   this.key = key
-  this.archives = {}
   this.info = {}
 
-  this.db = hyperdb(this._storage('workspace'), key, {
+  this.db = hyperdb(chainStorage(storage)('workspace'), key, {
     reduce: (a, b) => a,
     valueEncoding: 'json'
   })
 
-  this.archiveTypes = opts.archiveTypes || {}
-
   this.ready = asyncThunk(this._ready.bind(this))
 }
-
-Workspace.prototype.registerArchiveTypes = function (archiveTypes) {
-  this.archiveTypes = { ...this.archiveTypes, ...archiveTypes }
-}
-
-Workspace.prototype.getConstructor = function (type) {
-  if (!this.archiveTypes[type]) throw new Error('Archive type ' + type + ' not registered.')
-  return this.archiveTypes[type].constructor
-}
+inherits(Workspace, events.EventEmitter)
 
 Workspace.prototype._ready = function (done) {
   const self = this
@@ -47,8 +40,8 @@ Workspace.prototype._ready = function (done) {
 
     let promises = []
     rs.on('data', (node) => {
-      console.log('NODE', node)
-      promises.push(self.openArchive(node.value.key, node.value))
+      const { type, key, opts, status } = node.value
+      return self.library.addArchive(type, key, opts, status)
     })
     rs.on('end', () => {
       Promise.all(promises).then(done).catch(done)
@@ -68,145 +61,79 @@ Workspace.prototype.setInfo = function (info) {
   })
 }
 
-// todo: Error handling.
-Workspace.prototype.getArchive = async function (key, type) {
-  await this.ready()
-  if (!this.archives[key]) throw new Error('Archive ' + key + ' not found.')
-  if (this.archives[key].status.type !== type) return Error('Archive type mismatch for ' + key + ': Expected ' + type + ', got ' + this.archives[key].status.type)
-  return this.archives[key].archive
+Workspace.prototype.getArchive = async function (key) {
+  return this.library.getArchive(key)
 }
 
-Workspace.prototype.openArchive = async function (key, status) {
-  if (!status) status = await this.getStatus(key)
-  if (!status) throw new Error('Archive ' + key + ' not found.')
-  const type = status.type
-  const constructor = this.getConstructor(type)
-  const archive = constructor(this._storage(storageFolder(key, type), key, status.opts))
-  await archive.ready()
-  this.archives[key] = { key, status, archive }
-}
-
-Workspace.prototype.createArchive = async function (type, info) {
-  const keyPair = crypto.keyPair()
-  const key = hex(keyPair.publicKey)
-  const opts = {
-    secretKey: keyPair.secretKey
-  }
-
-  const archive = this.getConstructor(type)(this._storage(storageFolder(key, type)), key, opts)
-  await archive.ready()
-
-  let status = {
-    key: key,
-    type,
-    // opts,
-    primary: true,
-    share: false
-  }
-
-  await this.setStatus(key, status)
-
+Workspace.prototype.createArchive = async function (type, info, opts) {
+  const archive = await this.library.addArchive(type, null, opts)
+  archive.setState({ share: false })
   if (info && archive.setInfo) await archive.setInfo(info)
-
-  this.archives[key] = { key, status, archive }
-
+  this.saveArchive(archive.key)
   return archive
 }
 
 Workspace.prototype.addRemoteArchive = async function (type, key, opts) {
-  const archive = this.getConstructor(type)(this._storage(storageFolder(key, type)), key, opts)
-  let status = {
-    key: key,
-    type,
-    primary: true,
-    share: false
-  }
-
-  await this.setStatus(key, status)
-
-  this.archives[key] = { key, status, archive }
-
-  await this.setShare(key, true)
-
+  const archive = await this.library.addArchive(type, key, opts)
+  this.saveArchive(archive.key)
+  // todo: share.
   return archive
 }
 
-Workspace.prototype.listArchives = async function (opts) {
-  await this.ready()
-  opts = opts || {}
-  const defaultFilter = ({ status }) => status && status.primary === true
-  let filter = opts.filter || defaultFilter
-  return Object.values(this.archives).filter(filter)
-}
-
-Workspace.prototype.getPrimaryArchives = function () {
-  const filter = ({ status }) => status && status.primary === true
-  return Object.values(this.archives).filter(filter).map(a => a.key)
-}
-
 Workspace.prototype.getPrimaryArchivesWithInfo = async function () {
+  const self = this
   await this.ready()
-  const self = this
-  let keys = this.getPrimaryArchives()
-  return Promise.all(keys.map(key => self.getStatusAndInfo(key)))
-}
-
-Workspace.prototype.getStatus = function (key) {
-  const self = this
-  return new Promise((resolve, reject) => {
-    let dbkey = keyToDbKey(key)
-    self.db.get(dbkey, (err, node) => {
-      if (err) reject(err)
-      resolve(node.value || {})
-    })
-  })
+  let archives = this.library.getPrimaryArchives()
+  return Promise.all(archives.map(archive => self.getStatusAndInfo(archive.key)))
 }
 
 Workspace.prototype.getStatusAndInfo = async function (key) {
-  if (!this.archives[key]) return null
-  let status = await this.getStatus(key)
-  let info = await this.archives[key].archive.getInfo()
-  return { ...info, status, key }
+  let archive = this.library.getArchive(key)
+  await archive.ready()
+  let info = await archive.getInfo()
+  let status = archive.getState()
+  return { info, status, key: archive.key }
 }
 
-Workspace.prototype.setStatus = function (key, status) {
+Workspace.prototype.saveArchive = async function (key) {
   const self = this
+  const archive = this.library.getArchive(key)
+
+  const value = {
+    key,
+    type: archive.type,
+    status: archive.getState(),
+    opts: {} // todo: support opts?
+  }
+
   return new Promise((resolve, reject) => {
     let dbkey = keyToDbKey(key)
-    self.db.get(dbkey, (err, node) => {
-      if (err) return reject(err)
-      let value = node ? node.value : {}
-      value = Object.assign({}, value, status)
-      self.db.put(dbkey, value, (err, res) => {
-        if (err) return reject(err)
-        if (!self.archives[key]) self.archives[key] = {}
-        self.archives[key].status = value
-        // self.emit('status', key, value)
-        resolve(value)
-      })
+    self.db.put(dbkey, value, (err, res) => {
+      return err ? reject(err) : resolve(value)
     })
   })
 }
 
 Workspace.prototype.setShare = async function (key, share) {
-  if (share) return this._doShare(key)
-  else return this._doUnshare(key)
+  const archive = this.library.getArchive(key)
+
+  archive.setState({ share })
+  this.saveArchive(archive.key)
+
+  if (share) return this._doShare(archive)
+  else return this._doUnshare(archive)
 }
 
-Workspace.prototype._doShare = async function (key) {
-  await this.setStatus(key, { share: true })
-  let archive = this.archives[key].archive
-  let network = hyperdiscovery(archive)
-  this.archives[key].network = network
+Workspace.prototype._doShare = async function (archive) {
+  const instance = archive.getInstance()
+  await instance.ready()
+  const network = hyperdiscovery(instance)
+  archive.network = network
   network.on('connection', (peer) => console.log('got peer!'))
 }
 
-Workspace.prototype._doUnshare = async function (key) {
-  await this.setStatus(key, { share: false })
-}
-
-function storageFolder (key, type) {
-  return type + '/' + keyToFolder(key)
+Workspace.prototype._doUnshare = async function (archive) {
+  if (archive.network) archive.network.close()
 }
 
 function keyToDbKey (key) {

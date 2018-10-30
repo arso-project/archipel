@@ -32,7 +32,7 @@ function asyncThunk (fn) {
 
 function pifyObj (obj, opts) {
   opts = opts || {}
-  const ret = {}
+ const ret = {}
   for (key in obj) {
     if (opts.include && opts.include.indexOf(key) === -1) continue
     if (typeof obj[key] === 'function') {
@@ -103,37 +103,3 @@ function omit (obj, keys) {
 function discoveryKey (publicKey) {
   return crypto.discoveryKey(datenc.toBuf(publicKey)).toString('hex')
 }
-
-// function chainedStorage () {
-//   const prefixes = Array.from(arguments)
-//   return function () {
-//     const names = Array.from(arguments)
-//     const parts = prefixes.concat(names)
-//     return path.join.apply(path.join, parts)
-//   }
-// }
-
-// function prefixStorage (prefix, storage) {
-//   return function (name, opts) {
-//     return storage(path.join(prefix, name), opts)
-//   }
-// }
-
-// function storage (prefix) {
-//   return function (name) {
-//     return path.join(prefix, name)
-//   }
-// }
-
-// async function athunky (thunk) {
-//   if (cb)
-// }
-//   this.ready = async (cb) => cbmaybe(cb, promise((reject, resolve) => {
-//     ready(err => err ? reject(err) : resolve())
-//   }))
-
-// function ready (fn) {
-//   return new Promise((resolve, reject) => {
-//     fn((err) => err ? reject(err) : resolve())
-//   })
-// }

@@ -15,7 +15,7 @@ async function fsPlugin (core, opts) {
 
   core.rpc.reply('fs/stat', async (req) => {
     const { key, path } = req
-    const fs = await _getFs(req)
+    const fs = await getHyperdrive(req)
     const stat = await fs.stat(path)
     const parentStat = cleanStat(stat, path, key)
     const stats = []
@@ -52,29 +52,30 @@ async function fsPlugin (core, opts) {
   })
 
   core.rpc.reply('fs/mkdir', async (req) => {
-    const fs = await _getFs(req)
-    return fs.mkdir(req.path)
+    const fs = await getHyperdrive(req)
+    const res = await fs.mkdir(req.path)
+    return res
   })
 
   core.rpc.reply('fs/readFile', async (req) => {
-    const fs = await _getFs(req)
+    const fs = await getHyperdrive(req)
     const res = await fs.readFile(req.path)
     const str = res.toString()
     return { content: str }
   })
 
   core.rpc.reply('fs/writeFile', async (req) => {
-    const fs = await _getFs(req)
+    const fs = await getHyperdrive(req)
     return fs.asyncWriteStream(req.path, req.stream)
   })
 }
 
-async function _getFs (req) {
+async function getHyperdrive (req) {
   if (!req.session.workspace) throw new Error('No workspace.')
   let { key } = req
   const archive = await req.session.workspace.getArchive(key, 'hyperdrive')
   await archive.ready()
-  return archive
+  return archive.getInstance()
 }
 
 function joinPath (prefix, suffix) {

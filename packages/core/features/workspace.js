@@ -37,9 +37,11 @@ async function workspace (core, opts) {
 
   core.rpc.reply('workspace/createArchive', async (req) => {
     if (!req.session.workspace) throw new Error('No workspace.')
-    const archive = await req.session.workspace.createArchive('hyperdrive', req.info)
-    await archive.ready()
-    let info = await archive.getInfo()
+    let workspace = req.session.workspace
+    const archive = await workspace.createArchive('hyperdrive', req.info)
+    await archive.instance.ready()
+    let info = await archive.instance.getInfo()
+    core.emit('workspace/createArchive', { workspace, archive })
     return { data: info }
   })
 
