@@ -41,6 +41,7 @@ Workspace.prototype._ready = function (done) {
     let promises = []
     rs.on('data', (node) => {
       const { type, key, opts, status } = node.value
+      console.log('openArchive', node.value)
       return self.library.addArchive(type, key, opts, status)
     })
     rs.on('end', () => {
@@ -66,7 +67,7 @@ Workspace.prototype.getArchive = async function (key) {
 }
 
 Workspace.prototype.createArchive = async function (type, info, opts) {
-  const archive = await this.library.addArchive(type, null, opts)
+  const archive = await this.library.createArchive(type, opts)
   archive.setState({ share: false })
   if (info && archive.setInfo) await archive.setInfo(info)
   this.saveArchive(archive.key)
@@ -74,7 +75,7 @@ Workspace.prototype.createArchive = async function (type, info, opts) {
 }
 
 Workspace.prototype.addRemoteArchive = async function (type, key, opts) {
-  const archive = await this.library.addArchive(type, key, opts)
+  const archive = await this.library.addRemoteArchive(type, key, opts)
   this.saveArchive(archive.key)
   // todo: share.
   return archive

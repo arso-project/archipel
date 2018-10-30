@@ -2,6 +2,7 @@ const inherits = require('inherits')
 const EventEmitter = require('events').EventEmitter
 const crypto = require('hypercore-crypto')
 const Archive = require('./archive')
+const debug = require('debug')('archipel-library')
 
 const { chainStorage, folderName } = require('./util')
 
@@ -23,20 +24,40 @@ Library.prototype.getArchiveConstructor = function (type) {
   return this.archiveTypes[type].constructor
 }
 
-Library.prototype.pushArchive = async function (archive) {
-  this.archives[archive.key] = archive
+Library.prototype.createArchive = async function (type, opts, status) {
+  const defaultStatus = {
+    primary: true,
+    parent: null,
+    authorized: true,
+    loaded: true
+  }
+  status = Object.assign({}, defaultStatus, status)
+  return this.addArchive(type, null, opts, status)
+}
 
-  const mounts = await archive.getMounts()
+Library.prototype.addRemoteArchive = async function (type, key, opts, status) {
+  const defaultStatus = {
+    primary: true,
+    parent: null,
+    authorized: false,
+    loaded: false
+  }
+  status = Object.assign({}, defaultStatus, status)
+  return this.addArchive(type, key, opts, status)
+}
 
-  mounts.forEach(mountInfo => {
-    const { type, key, opts } = mountInfo
-    if (this.archives[key]) return
-    this.addMount(archive.key, type, key, opts)
-  })
+Library.prototype.addMount = async function (parentKey, type, key, opts) {
+  // const parent = this.getArchive(parentKey)
+  const status = {
+    primary: false,
+    parent: parentKey,
+    authorized: false, // todo!
+    loaded: false // todo!
+  }
+  return this.addArchive(type, key, opts, status)
 }
 
 Library.prototype.addArchive = async function (type, key, opts, status) {
-  status = Object.assign({}, { primary: true }, status)
   const instance = this._makeInstance(type, key, opts)
   const archive = Archive(this, type, instance, status)
   await this.pushArchive(archive)
@@ -44,12 +65,14 @@ Library.prototype.addArchive = async function (type, key, opts, status) {
   return archive
 }
 
-Library.prototype.addMount = async function (parentKey, type, key, opts) {
-  const status = {
-    primary: false,
-    parent: parentKey
-  }
-  return this.addArchive(type, key, opts, status)
+Library.prototype.pushArchive = async function (archive) {
+  this.archives[archive.key] = archive
+
+  archive.on('mount', (mountInfo) => {
+    const { type, key, opts } = mountInfo
+    if (this.archives[key]) return
+    this.addMount(archive.key, type, key, opts)
+  })
 }
 
 Library.prototype.getArchive = function (key) {
