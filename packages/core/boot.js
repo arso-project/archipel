@@ -12,6 +12,19 @@ const Rootspace = require('./lib/rootspace')
 module.exports = boot
 
 async function boot (opts) {
+  // read out process.argv to get start parameters:
+  let args = {}
+  process.argv.slice(2).forEach(function (val, index, array) {
+    // console.log(index + ': ' + val)
+    let arg = val.split(/[=:]/)
+    Object.assign(args, JSON.parse(`{ "${arg[0]}":"${arg[1]}"}`))
+  })
+  let { port, dbpath, ...rest } = args
+  port = Number(port) || 8080
+  dbpath = dbpath || '.db'
+  process.env.ARCHIPEL_DB_PATH = p.join(__dirname, '../..', dbpath)
+
+  // actual programm code:
   opts = opts || {}
   const core = ucore()
   if (!opts.noHttp) core.register(server, { staticPath: process.env.ARCHIPEL_STATIC_PATH })
@@ -26,7 +39,7 @@ async function boot (opts) {
   core.register(graph)
 
   await core.ready()
-  if (!opts.noHttp) core.httpServer.listen(8080, console.log('Server listening on port 8080'))
+  if (!opts.noHttp) core.httpServer.listen(port, console.log(`Server listening on port ${port}`))
 
   return core
 }
