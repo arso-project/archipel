@@ -31,7 +31,8 @@ async function workspace (core, opts) {
 
   core.rpc.reply('workspace/listArchives', async (req) => {
     if (!req.session.workspace) throw new Error('No workspace.')
-    const data = await req.session.workspace.getPrimaryArchivesWithInfo()
+    const archives = await req.session.workspace.getPrimaryArchivesWithInfo()
+    const data = archives.reduce((data, archive) => Object.assign(data, { [archive.key]: archive }), {})
     return { data }
   })
 

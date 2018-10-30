@@ -1,7 +1,9 @@
 import { sortByProp } from '../../lib/state-utils'
 
 const initialState = {
-  archives: {}
+  archives: {},
+  started: false,
+  selected: null
 }
 
 /* Actions */
@@ -13,9 +15,14 @@ const createArchive = (title) => async (set, { get, core, actions }) => {
 }
 
 const loadArchives = () => async (set, { get, core }) => {
-  set(draft => { draft.started = true })
+  set(draft => { draft.started = true; draft.archives = [] })
   const res = await core.rpc.request('workspace/listArchives')
-  set(draft => { res.data.forEach(archive => { draft.archives[archive.key] = archive }) })
+  set(draft => {
+    draft.archives = res.data
+    if (draft.selected && !draft.archives[draft.selected]) {
+      draft.selected = null
+    }
+  })
 }
 
 const shareArchive = (key, value) => async (set, { get, core, actions }) => {
