@@ -1,6 +1,5 @@
 const hyperdb = require('hyperdb')
 const events = require('events')
-const hyperdiscovery = require('hyperdiscovery')
 const inherits = require('inherits')
 
 const library = require('./library')
@@ -10,6 +9,7 @@ module.exports = Workspace
 
 function Workspace (storage, key, opts) {
   if (!(this instanceof Workspace)) return new Workspace(storage, key, opts)
+  const self = this
   opts = opts || {}
 
   this.library = library(storage, { archiveTypes: opts.archiveTypes })
@@ -23,6 +23,10 @@ function Workspace (storage, key, opts) {
   })
 
   this.ready = asyncThunk(this._ready.bind(this))
+
+  this.library.on('archive', archive => {
+    archive.on('set:state', () => self.saveArchive(archive.key))
+  })
 }
 inherits(Workspace, events.EventEmitter)
 
@@ -41,7 +45,6 @@ Workspace.prototype._ready = function (done) {
     let promises = []
     rs.on('data', (node) => {
       const { type, key, opts, status } = node.value
-      console.log('openArchive', node.value)
       return self.library.addArchive(type, key, opts, status)
     })
     rs.on('end', () => {
@@ -77,7 +80,6 @@ Workspace.prototype.createArchive = async function (type, info, opts) {
 Workspace.prototype.addRemoteArchive = async function (type, key, opts) {
   const archive = await this.library.addRemoteArchive(type, key, opts)
   this.saveArchive(archive.key)
-  // todo: share.
   return archive
 }
 
@@ -117,24 +119,7 @@ Workspace.prototype.saveArchive = async function (key) {
 
 Workspace.prototype.setShare = async function (key, share) {
   const archive = this.library.getArchive(key)
-
-  archive.setState({ share })
-  this.saveArchive(archive.key)
-
-  if (share) return this._doShare(archive)
-  else return this._doUnshare(archive)
-}
-
-Workspace.prototype._doShare = async function (archive) {
-  const instance = archive.getInstance()
-  await instance.ready()
-  const network = hyperdiscovery(instance)
-  archive.network = network
-  network.on('connection', (peer) => console.log('got peer!'))
-}
-
-Workspace.prototype._doUnshare = async function (archive) {
-  if (archive.network) archive.network.close()
+  archive.setShare(share)
 }
 
 function keyToDbKey (key) {

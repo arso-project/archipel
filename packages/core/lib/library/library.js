@@ -29,7 +29,8 @@ Library.prototype.createArchive = async function (type, opts, status) {
     primary: true,
     parent: null,
     authorized: true,
-    loaded: true
+    loaded: true,
+    shared: false
   }
   status = Object.assign({}, defaultStatus, status)
   return this.addArchive(type, null, opts, status)
@@ -40,19 +41,21 @@ Library.prototype.addRemoteArchive = async function (type, key, opts, status) {
     primary: true,
     parent: null,
     authorized: false,
-    loaded: false
+    loaded: false,
+    shared: true
   }
   status = Object.assign({}, defaultStatus, status)
   return this.addArchive(type, key, opts, status)
 }
 
 Library.prototype.addMount = async function (parentKey, type, key, opts) {
-  // const parent = this.getArchive(parentKey)
+  const parent = this.getArchive(parentKey)
   const status = {
     primary: false,
     parent: parentKey,
     authorized: false, // todo!
-    loaded: false // todo!
+    loaded: false, // todo!
+    shared: parent.shared
   }
   return this.addArchive(type, key, opts, status)
 }
@@ -61,11 +64,12 @@ Library.prototype.addArchive = async function (type, key, opts, status) {
   const instance = this._makeInstance(type, key, opts)
   const archive = Archive(this, type, instance, status)
   await this.pushArchive(archive)
-  this.emit('add:archive', archive)
+  this.emit('archive', archive)
   return archive
 }
 
 Library.prototype.pushArchive = async function (archive) {
+  if (this.archives[archive.key]) return
   this.archives[archive.key] = archive
 
   archive.on('mount', (mountInfo) => {

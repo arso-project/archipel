@@ -1,5 +1,6 @@
 const EventEmitter = require('events').EventEmitter
 const inherits = require('inherits')
+const hyperdiscovery = require('hyperdiscovery')
 
 const { hex, asyncThunk } = require('../util')
 
@@ -18,7 +19,12 @@ function Archive (library, type, instance, state) {
 
   // this.ready = asyncThunk(this._ready.bind(this))
   this.ready = instance.ready
-  this.ready(() => self.loadMounts())
+  this.ready(() => {
+    self.loadMounts()
+    if (self.getState().share) {
+      self.startShare()
+    }
+  })
 }
 inherits(Archive, EventEmitter)
 
@@ -35,12 +41,11 @@ Archive.prototype._ready = function (done) {
   // })
 }
 
-Archive.prototype.makePersistentMount = async function (prefix, type, opts) {
+Archive.prototype.makePersistentMount = async function (prefix, type) {
   await this.ready()
   if (!this.isAuthorized()) throw new Error('Archive is not writable.')
-  opts = opts || {}
-  const archive = await this.library.addMount(this.key, type, null, opts)
-  const mountInfo = { prefix, type, key: archive.key, opts }
+  const archive = await this.library.addMount(this.key, type, null)
+  const mountInfo = { prefix, type, key: archive.key }
   await this.instance.addMount(mountInfo)
   this.pushMount(mountInfo)
   return archive
@@ -115,4 +120,18 @@ Archive.prototype.isLoaded = function () {
 
 Archive.prototype.isAuthorized = function () {
   return this.isLoaded() && this.state.authorized
+}
+
+Archive.prototype.setShare = function (share) {
+  this.setState({ share })
+  if (share) {
+    this.startShare()
+  }
+}
+
+Archive.prototype.startShare = function () {
+  const instance = this.getInstance()
+  const network = hyperdiscovery(instance)
+  this.network = network
+  network.on('connection', (peer) => console.log('got peer!'))
 }
