@@ -50,7 +50,6 @@ function init (store) {
     return q
   }
 
-
   const skipProps = ['__path', 'inspect', 'constructor']
   const literalNames = ['id', 'type']
   function makeProxy () {

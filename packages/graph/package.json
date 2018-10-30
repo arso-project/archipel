@@ -10,10 +10,11 @@
   "browser": "frontend/index.js",
   "main": "backend/index.js",
   "dependencies": {
+    "@archipel/ui": "^1.0",
+    "@archipel/app": "^0.1.0",
     "hyper-readings": "0.0.15",
     "hypergraph": "^1.1.0",
     "superstruct": "^0.6.0",
-    "@archipel/ui": "^1.0",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
     "proptypes": "^1.1.0",
