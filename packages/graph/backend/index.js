@@ -1,5 +1,4 @@
 const ArchipelHypergraph = require('./hypergraph')
-const through2 = require('through2')
 
 module.exports = { plugin }
 
@@ -11,7 +10,7 @@ async function plugin (core, opts) {
   })
 
   core.on('workspace/createArchive', async ({ workspace, archive }) => {
-    if (!(archive.isPrimary() && archive.type === 'hyperdrive')) return
+    if (!(archive.isPrimary() && archive.getState().authorized && archive.type === 'hyperdrive')) return
     const mount = await archive.makePersistentMount('graph', 'hypergraph')
     const graph = mount.getInstance()
     const key = mount.key
@@ -40,6 +39,7 @@ async function plugin (core, opts) {
   // })
 }
 
+// const through2 = require('through2')
 // const makeBuffered = (limit) => {
 //   let buf = []
 //   return through2.obj(function (chunk, enc, next) {

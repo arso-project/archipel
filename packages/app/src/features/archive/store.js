@@ -28,7 +28,6 @@ const loadArchives = () => async (set, { get, core }) => {
 const shareArchive = (key, value) => async (set, { get, core, actions }) => {
   let res
   res = await core.rpc.request('workspace/shareArchive', { key: key, share: value })
-  console.log('res', res.data)
   set(draft => { draft.archives[key] = res.data })
   return res
 }
