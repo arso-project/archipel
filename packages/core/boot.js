@@ -39,6 +39,19 @@ async function boot (opts) {
   }
 }
 
+async function archipel (core, opts) {
+  let archiveTypes
+  core.decorate('registerArchiveType', (newTypes) => {
+    archiveTypes = { ...archiveTypes, ...newTypes }
+  })
+  core.decorate('getArchiveTypes', () => archiveTypes)
+
+  core.decorate('root', Rootspace(opts.dbPath))
+  core.ready(() => {
+    core.root.registerArchiveTypes(archiveTypes)
+  })
+}
+
 async function config (core, opts) {
   const defaultConfig = {
     noHttp: false,
@@ -62,18 +75,6 @@ async function config (core, opts) {
   })
 }
 
-async function archipel (core, opts) {
-  let archiveTypes
-  core.decorate('registerArchiveType', (newTypes) => {
-    archiveTypes = { ...archiveTypes, ...newTypes }
-  })
-  core.decorate('getArchiveTypes', () => archiveTypes)
-
-  core.decorate('root', Rootspace(opts.dbPath))
-  core.ready(() => {
-    core.root.registerArchiveTypes(archiveTypes)
-  })
-}
 
 function getCliConfig () {
   console.log(process.cwd())
