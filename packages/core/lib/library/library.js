@@ -30,7 +30,7 @@ Library.prototype.createArchive = async function (type, opts, status) {
     parent: null,
     authorized: true,
     loaded: true,
-    shared: false
+    share: false
   }
   status = Object.assign({}, defaultStatus, status)
   return this.addArchive(type, null, opts, status)
@@ -42,7 +42,7 @@ Library.prototype.addRemoteArchive = async function (type, key, opts, status) {
     parent: null,
     authorized: false,
     loaded: false,
-    shared: true
+    share: true
   }
   status = Object.assign({}, defaultStatus, status)
   return this.addArchive(type, key, opts, status)
@@ -55,7 +55,7 @@ Library.prototype.addMount = async function (parentKey, type, key, opts) {
     parent: parentKey,
     authorized: false, // todo!
     loaded: false, // todo!
-    shared: parent.shared
+    share: parent.share
   }
   return this.addArchive(type, key, opts, status)
 }

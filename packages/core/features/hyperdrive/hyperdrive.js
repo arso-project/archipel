@@ -11,6 +11,7 @@ function ArchipelHyperdrive (storage, key, opts) {
   this.hyperdrive = hyperdrive(storage, key, opts)
   this.db = this.hyperdrive.db
   this.key = key
+  this.discoveryKey = this.hyperdrive.discoveryKey
 
   this.info = null
   this.mounts = []
@@ -39,12 +40,6 @@ function ArchipelHyperdrive (storage, key, opts) {
   // Copy event bus.
   this.emit = (ev) => this.hyperdrive.emit(ev)
   this.on = (ev, cb) => this.hyperdrive.on(ev, cb)
-
-  // Copy static props.
-  const props = ['key', 'discoveryKey', 'db']
-  props.forEach(key => {
-    self[key] = self.db[key]
-  })
 }
 
 // Workspace interface.
@@ -56,7 +51,10 @@ ArchipelHyperdrive.prototype.addMount = async function (mount) {
 
 ArchipelHyperdrive.prototype.getMounts = async function () {
   let info = await this.getInfo()
-  return info.archipel.mounts || []
+  if (info && info.archipel && info.archipel.mounts) {
+    return info.archipel.mounts
+  }
+  return []
 }
 
 ArchipelHyperdrive.prototype.setInfo = async function (info) {
@@ -70,15 +68,25 @@ ArchipelHyperdrive.prototype.setInfo = async function (info) {
   await this.writeFile('dat.json', JSON.stringify(info, null, 2))
 }
 
-ArchipelHyperdrive.prototype.getInfo = async function () {
-  if (this.info) return this.info
-  try {
-    let info = await this.readFile('dat.json')
-    this.info = JSON.parse(info.toString())
-  } catch (e) {
-    this.info = this.defaultInfo()
-  }
-  return this.info
+ArchipelHyperdrive.prototype.getInfo = function () {
+  const self = this
+  return new Promise(async (resolve, reject) => {
+    if (self.info) return resolve(self.info)
+    try {
+      // For remote archives self will only resolve after the db has been synced.
+      // Therefore, add a timeout
+      let timeout = setTimeout(() => {
+        resolve(self.defaultInfo())
+      }, 500)
+
+      let info = await self.readFile('dat.json')
+      clearTimeout(timeout)
+      self.info = JSON.parse(info.toString())
+    } catch (e) {
+      self.info = self.defaultInfo()
+    }
+    resolve(self.info)
+  })
 }
 
 ArchipelHyperdrive.prototype.defaultInfo = function () {

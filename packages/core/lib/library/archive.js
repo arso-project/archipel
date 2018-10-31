@@ -11,35 +11,23 @@ function Archive (library, type, instance, state) {
   const self = this
 
   this.instance = instance
+  this.db = instance.db
   this.key = hex(instance.key)
   this.library = library
   this.state = state || {}
   this.type = type
   this.mounts = []
 
-  // this.ready = asyncThunk(this._ready.bind(this))
   this.ready = instance.ready
   this.ready(() => {
-    self.loadMounts()
     if (self.getState().share) {
       self.startShare()
     }
+    self.loadMounts()
+    self.db.once('remote-update', () => self.setState({ loaded: true }))
   })
 }
 inherits(Archive, EventEmitter)
-
-Archive.prototype._ready = function (done) {
-  // const self = this
-  // console.log('DONE', done)
-  // this.instance.ready(() => {
-  //   let timeout = setTimeout(() => done(), 200)
-  //   self.loadMounts().then(() => {
-  //     clearTimeout(timeout)
-  //     self.setState({ loaded: true })
-  //     done()
-  //   })
-  // })
-}
 
 Archive.prototype.makePersistentMount = async function (prefix, type) {
   await this.ready()
@@ -89,7 +77,6 @@ Archive.prototype.getInstance = function () {
 }
 
 Archive.prototype.getInfo = async function () {
-  if (!this.isLoaded()) return {}
   if (this.instance.getInfo) return this.instance.getInfo()
   return {}
 }
