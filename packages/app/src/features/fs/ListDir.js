@@ -4,13 +4,23 @@ import PropTypes from 'proptypes'
 import { Consumer } from 'ucore/react'
 import { propsDidChange, sortByProps } from '../../lib/state-utils'
 
+import { MdChevronRight, MdExpandMore, MdFolder, MdInsertDriveFile } from 'react-icons/md'
+
 const ListDirItem = (props) => {
   const { archive, onToggle, toggled, childOnSelect, item } = props
   const { name, isDirectory } = item // also: path
 
-  const color = isDirectory ? 'text-blue' : 'text-red'
+  const color = isDirectory ? 'text-blue' : ''
 
-  const Toggle = isDirectory ? <span onClick={onToggle(item)} className='p-2 bg-black text-white font-bold'>+</span> : null
+  let toggleOnClick = isDirectory ? onToggle(item) : () => {}
+  let Toggle = (
+    <span onClick={toggleOnClick} className='w-8 inline-block'>
+      { isDirectory && toggled && <MdExpandMore />}
+      { isDirectory && !toggled && <MdChevronRight />}
+    </span>
+  )
+
+  const Icon = isDirectory ? MdFolder : MdInsertDriveFile
 
   const Sub = toggled === item.path ? (
     <div className='ml-2'>
@@ -18,7 +28,16 @@ const ListDirItem = (props) => {
     </div>
   ) : null
 
-  return <div>{Toggle}<span className={color}>{name}</span>{Sub}</div>
+  return (
+    <div>
+      {Toggle}
+      <span className={color}>
+        <Icon />
+        {name}
+      </span>
+      {Sub}
+    </div>
+  )
 }
 
 function sort (list) {

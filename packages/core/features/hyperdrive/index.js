@@ -1,5 +1,6 @@
 const p = require('path')
 const archipelHyperdrive = require('./hyperdrive')
+const mime = require('mime-types')
 
 module.exports = {
   name: 'Archipel Hyperdrive',
@@ -47,6 +48,7 @@ async function fsPlugin (core, opts) {
         path,
         name: p.parse(path).base,
         isDirectory: stat.isDirectory(),
+        mimetype: mime.lookup(path),
         children: undefined
       }
     }

@@ -1,4 +1,5 @@
 import React from 'react'
+import { IconContext } from 'react-icons'
 
 import { ScreenRender, ScreenSwitcher } from './ScreenController.js'
 import SelectWorkspace from '../workspace/SelectWorkspace.js'
@@ -22,17 +23,21 @@ class App extends React.Component {
   }
 
   render () {
-    return <div className='h-screen flex flex-col font-sans'>
-      <Header>
-        <div className=''><ScreenSwitcher /></div>
-        <div className='text-orange font-bold'>Archipel: Somoco</div>
-        <div className=''><SelectWorkspace /></div>
-      </Header>
-      <div className='flex-1'>
-        <ScreenRender />
+    return (
+      <div className='h-screen flex flex-col font-sans'>
+        <IconContext.Provider value={{ style: { verticalAlign: 'middle', marginRight: '5px' } }}>
+          <Header>
+            <div className=''><ScreenSwitcher /></div>
+            <div className='text-orange font-bold'>Archipel: Somoco</div>
+            <div className=''><SelectWorkspace /></div>
+          </Header>
+          <div className='flex-1'>
+            <ScreenRender />
+          </div>
+          <Footer>Footer</Footer>
+        </IconContext.Provider>
       </div>
-      <Footer>Footer</Footer>
-    </div>
+    )
   }
 }
 
