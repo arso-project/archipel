@@ -40,6 +40,12 @@ function ArchipelHyperdrive (storage, key, opts) {
   // Copy event bus.
   this.emit = (ev) => this.hyperdrive.emit(ev)
   this.on = (ev, cb) => this.hyperdrive.on(ev, cb)
+  this.watch()
+}
+
+ArchipelHyperdrive.prototype.watch = function () {
+  const self = this
+  this.db.watch('/', () => self.emit('change'))
 }
 
 // Workspace interface.

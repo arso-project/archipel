@@ -12,12 +12,17 @@ const fetchStats = ({ archive, path }) => async (set, { core }) => {
     const res = await core.rpc.request('fs/stat', { key, path })
     set(draft => {
       res.stats.forEach(stat => {
-        draft.stats[joinId(stat)] = stat
+        draft.stats[stat.key] = draft.stats[stat.key] || {}
+        draft.stats[stat.key][stat.path] = stat
       })
     })
   } catch (e) {
     console.log('fetchStats error', e)
   }
+}
+
+const clearStats = ({ archive }) => async (set, { core }) => {
+  set(draft => { draft.stats[archive] = undefined })
 }
 
 const createDir = ({ archive, parent, name }) => async (set, { core, actions }) => {
@@ -31,13 +36,12 @@ const createDir = ({ archive, parent, name }) => async (set, { core, actions }) 
 }
 
 const getChildren = (state, { archive, path }) => {
-  let id = joinId({ key: archive, path })
-  if (!state.stats[id]) return undefined
-  if (!state.stats[id].children) return state.stats[id].children // can be either [] (no children) or undefined (not yet fetched)
-  let parent = state.stats[id]
+  const { stats } = state
+  if (!stats[archive] || !stats[archive][path]) return undefined
+  if (!stats[archive][path].children) return stats[archive][path].children // can be either [] (no children) or undefined (not yet fetched)
+  let parent = stats[archive][path]
   let ret = parent.children.map(name => {
-    let childId = joinId({ path: joinPath(parent.path, name), key: parent.key })
-    return state.stats[childId]
+    return stats[archive][joinPath(parent.path, name)]
   })
   return ret
 }
@@ -51,22 +55,13 @@ export default {
   initialState,
   actions: {
     fetchStats,
+    clearStats,
     createDir
   },
   select: {
     getChildren,
     getChildrenSortedByName
   }
-}
-
-function splitId (id) {
-  const [ key, ...path ] = id.split('/')
-  return { key, path: path.join('/') }
-}
-
-function joinId ({ key, path }) {
-  if (path[0] === '/') path = path.substring(1)
-  return key + '/' + path
 }
 
 function joinPath (prefix, suffix) {

@@ -14,6 +14,7 @@ async function fsPlugin (core, opts) {
   })
 
   core.rpc.reply('fs/stat', async (req) => {
+    maybeWatch(req)
     const { key, path } = req
     const fs = await getHyperdrive(req)
     const stat = await fs.stat(path)
@@ -68,6 +69,17 @@ async function fsPlugin (core, opts) {
     const fs = await getHyperdrive(req)
     return fs.asyncWriteStream(req.path, req.stream)
   })
+
+  let watchlist = []
+  async function maybeWatch (req) {
+    const { key } = req
+    if (watchlist.indexOf(key) > -1) return
+    watchlist.push(key)
+    const archive = await req.session.workspace.getArchive(key, 'hyperdrive')
+    archive.getInstance().on('change', () => {
+      core.rpc.request('fs/clearStats', { archive: key })
+    })
+  }
 }
 
 async function getHyperdrive (req) {
