@@ -60,6 +60,7 @@ async function config (core, opts) {
     cliConfig: true,
     staticPath: process.env.ARCHIPEL_STATIC_PATH || p.join(__dirname, '../app/dist/web'),
     rpc: {
+      websocket: true,
       prefix: '/ucore'
     }
   }
@@ -74,7 +75,6 @@ async function config (core, opts) {
     return key ? config[key] : config
   })
 }
-
 
 function getCliConfig () {
   console.log(process.cwd())
