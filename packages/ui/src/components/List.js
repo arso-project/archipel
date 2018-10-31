@@ -17,7 +17,7 @@ class List extends React.Component {
 
   render () {
     const self = this
-    let { items, renderItem, children } = this.props
+    let { items, renderItem, children, grid } = this.props
     if (!items) return <span>No items.</span>
     const clsBase = 'p-2 m-1 cursor-pointer overflow-hidden '
     renderItem = renderItem || children || defaultRender
@@ -27,6 +27,7 @@ class List extends React.Component {
           // let cls = clsBase + (isSelected(item, i) ? 'bg-teal-dark hover:bg-teal-dark' : 'bg-bright hover:bg-teal')
           let cls = clsBase + (isSelected(item, i) ? 'bg-grey-lightest' : 'hover:bg-grey-lightest')
           let key = typeof item === 'object' && item.id ? item.id : i
+          if (grid) cls += ' float-left w-1/4 border-transparent border-8'
           return (
             <li className={cls} key={key} onClick={this.onSelect(item, i)}>
               {renderItem(item, i)}

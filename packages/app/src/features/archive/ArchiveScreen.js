@@ -14,12 +14,12 @@ class ArchiveScreen extends React.PureComponent {
 
     return <div className='ma-4'>
       <div className='flex mb-4'>
-        <div className='p-2 w-1/4 flex-no-shrink'>
+        <div className='p-2 w-64 flex-no-shrink'>
           <CreateArchive />
           <AddArchive />
           <ListArchives archives={archives} selected={archive} onSelect={(item, i) => (e) => { onSelect(item.key) }} />
         </div>
-        <div className='flex-1 w-3/4'>
+        <div className='flex-1'>
           { archive && <Tabs tabs={tabs} archive={archive} /> }
         </div>
       </div>

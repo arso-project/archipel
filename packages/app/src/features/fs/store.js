@@ -35,6 +35,12 @@ const createDir = ({ archive, parent, name }) => async (set, { core, actions }) 
   }
 }
 
+const getStat = (state, { archive, path }) => {
+  const { stats } = state
+  if (!stats[archive] || !stats[archive][path]) return undefined
+  return stats[archive][path]
+}
+
 const getChildren = (state, { archive, path }) => {
   const { stats } = state
   if (!stats[archive] || !stats[archive][path]) return undefined
@@ -59,6 +65,7 @@ export default {
     createDir
   },
   select: {
+    getStat,
     getChildren,
     getChildrenSortedByName
   }

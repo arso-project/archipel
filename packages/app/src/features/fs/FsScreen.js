@@ -5,58 +5,74 @@ import ListDir from './ListDir'
 import CreateDir from './CreateDir'
 import UploadFile from './UploadFile'
 import ViewFile from './ViewFile'
+import { Consumer } from 'ucore/react'
 
-const Dir = ({ archive, dir, depth, onSelect }) => (
-  <div className='p-2 w-1/4'>
+const Dir = ({ archive, dir, selected, full, onSelect }) => (
+  <div className=''>
     <Heading>{dir}</Heading>
-    <Foldable heading='Actions'>
-      <CreateDir archive={archive} dir={dir} />
-      <UploadFile archive={archive} dir={dir} />
-    </Foldable>
-    <ListDir archive={archive} dir={dir} onSelect={onSelect} />
+    { full && (
+      <React.Fragment>
+        <Foldable heading='Actions'>
+          <CreateDir archive={archive} dir={dir} />
+          <UploadFile archive={archive} dir={dir} />
+        </Foldable>
+      </React.Fragment>
+    )}
+    <ListDir archive={archive} dir={dir} selected={selected} onSelect={onSelect} full={full} />
   </div>
 )
 
-const File = ({ archive, path }) => (
-  <div className='p-2 w-1/4'>
-    <ViewFile archive={archive} path={path} />
-  </div>
+// const File = ({ archive, path }) => (
+//   <div className='p-2 w-1/4'>
+//     <ViewFile archive={archive} path={path} />
+//   </div>
+// )
+
+const Content = ({ archive, path, onSelect }) => (
+  <Consumer store='fs' select='getStat' archive={archive} path={path}>
+    {(stat) => {
+      if (!stat) return null
+      if (stat.isDirectory) return <Dir archive={archive} dir={path} onSelect={onSelect} full />
+      else return <ViewFile archive={archive} path={path} stat={stat} />
+    }}
+  </Consumer>
 )
 
 class FsScreen extends React.PureComponent {
   constructor () {
     super()
-    this.state = { dirs: ['/'], file: null }
+    this.state = { selected: '/' }
     this.selectFile = this.selectFile.bind(this)
   }
 
   componentWillReceiveProps (nextProps) {
-    if (nextProps.archive !== this.props.archive) this.setState({ dirs: ['/'], file: null })
+    if (nextProps.archive !== this.props.archive) this.setState({ selected: '/' })
   }
 
-  selectFile (depth) {
+  componentDidMount () {
+
+  }
+
+  selectFile (fileOrPath) {
     const self = this
-    return (file) => (e) => {
-      let { path, isDirectory } = file
-      if (isDirectory) {
-        let newDirs
-        if (depth >= self.state.dirs) newDirs = [...self.state.dirs, path]
-        else newDirs = self.state.dirs.slice(0, depth + 1).concat([path])
-        self.setState({ file: null, dirs: [...newDirs] })
-      } else {
-        self.setState({ file: path })
-      }
+    return (e) => {
+      self.setState({ selected: typeof fileOrPath === 'object' ? fileOrPath.path : fileOrPath })
     }
   }
 
   render () {
     const { archive } = this.props
-    const { dirs, file } = this.state
+    const { selected } = this.state
 
     return <div>
       <div className='flex mb-4 max-w-full'>
-        {dirs.map((dir, i) => <Dir archive={archive} key={i} dir={dir} depth={i} onSelect={this.selectFile(i)} />)}
-        {file && <File archive={archive} path={file} />}
+        {/* {dirs.map((dir, i) => <Dir archive={archive} key={i} dir={dir} depth={i} onSelect={this.selectFile(i)} />)} */}
+        <div className='w-1/4'>
+          {<Dir archive={archive} dir={'/'} selected={selected} onSelect={this.selectFile} />}
+        </div>
+        <div className='w-3/4'>
+          {selected && <Content archive={archive} path={selected} onSelect={this.selectFile} />}
+        </div>
       </div>
     </div>
   }

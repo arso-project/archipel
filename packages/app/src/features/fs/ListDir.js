@@ -7,41 +7,63 @@ import { propsDidChange, sortByProps } from '../../lib/state-utils'
 import { MdChevronRight, MdExpandMore, MdFolder, MdInsertDriveFile } from 'react-icons/md'
 
 const ListDirItem = (props) => {
-  const { archive, onToggle, toggled, childOnSelect, item } = props
+  const { archive, onToggle, toggled, childOnSelect, item, grid } = props
   const { name, isDirectory } = item // also: path
 
   const color = isDirectory ? 'text-blue' : ''
 
-  let toggleOnClick = isDirectory ? onToggle(item) : () => {}
-  let Toggle = (
-    <span onClick={toggleOnClick} className='w-8 inline-block'>
-      { isDirectory && toggled && <MdExpandMore />}
-      { isDirectory && !toggled && <MdChevronRight />}
-    </span>
-  )
+  let Toggle
+  let Sub
+  if (!grid) {
+    let toggleOnClick = isDirectory ? onToggle(item) : () => {}
+    Toggle = (
+      <span onClick={toggleOnClick} className='w-8 inline-block'>
+        { isDirectory && toggled && <MdExpandMore />}
+        { isDirectory && !toggled && <MdChevronRight />}
+      </span>
+    )
+    if (toggled === item.path) {
+      Sub = (
+        <div className='ml-2'>
+          <ListDir archive={archive} dir={item.path} onSelect={childOnSelect} />
+        </div>
+      )
+    }
+  }
 
   const Icon = isDirectory ? MdFolder : MdInsertDriveFile
 
-  const Sub = toggled === item.path ? (
-    <div className='ml-2'>
-      <ListDir archive={archive} dir={item.path} onSelect={childOnSelect} />
-    </div>
-  ) : null
-
-  return (
-    <div>
-      {Toggle}
-      <span className={color}>
-        <Icon />
-        {name}
-      </span>
-      {Sub}
-    </div>
-  )
+  if (!grid) {
+    return (
+      <div>
+        {Toggle}
+        <span className={color}>
+          <Icon />
+          {name}
+        </span>
+        {Sub}
+      </div>
+    )
+  } else {
+    return (
+      <div className='p-1 text-center'>
+        <Icon size={80} /><br />
+        <span className={color}>{name}</span>
+      </div>
+    )
+  }
 }
 
 function sort (list) {
   return sortByProps(list, ['isDirectory:desc', 'name'])
+}
+
+function filter (list, includeFiles) {
+  if (!list) return []
+  return list.filter(stat => {
+    if (!includeFiles && !stat.isDirectory) return false
+    return true
+  })
 }
 
 class ListDir extends React.Component {
@@ -63,7 +85,7 @@ class ListDir extends React.Component {
   }
 
   render () {
-    const { archive, dir, onSelect } = this.props
+    const { archive, dir, selected, full, onSelect } = this.props
     const { toggled } = this.state
 
     return (
@@ -80,8 +102,8 @@ class ListDir extends React.Component {
 
         {(dirs) => {
           return (
-            <List items={sort(dirs)} onSelect={onSelect} renderItem={item =>
-              <ListDirItem archive={archive} item={item} toggled={toggled} onToggle={this.onToggle} childOnSelect={onSelect} />
+            <List items={sort(filter(dirs, full))} onSelect={onSelect} grid={full} renderItem={item =>
+              <ListDirItem archive={archive} item={item} grid={full} toggled={toggled} onToggle={this.onToggle} childOnSelect={onSelect} />
             } />
           )
         }}

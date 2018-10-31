@@ -29,10 +29,12 @@ class Tabs extends React.Component {
     const { tabs, ...props } = this.props
     const { selected } = this.state
     return (
-      <div className='flex'>
-        <TabHeader tabs={tabs} onSelect={this.onSelect} selected={selected} />
-        <div className='flex-1'>
-          <TabContent tabs={tabs} selected={selected} props={props} />
+      <div>
+        <div className='flex'>
+          <TabHeader tabs={tabs} onSelect={this.onSelect} selected={selected} />
+          <div className='flex-1'>
+            <TabContent tabs={tabs} selected={selected} props={props} />
+          </div>
         </div>
       </div>
     )

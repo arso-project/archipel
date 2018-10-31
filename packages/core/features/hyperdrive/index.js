@@ -48,7 +48,7 @@ async function fsPlugin (core, opts) {
         path,
         name: p.parse(path).base,
         isDirectory: stat.isDirectory(),
-        mimetype: mime.lookup(path),
+        mimetype: stat.isDirectory() ? 'archipel/directory' : mime.lookup(path),
         children: undefined
       }
     }
@@ -63,8 +63,8 @@ async function fsPlugin (core, opts) {
   core.rpc.reply('fs/readFile', async (req) => {
     const fs = await getHyperdrive(req)
     const res = await fs.readFile(req.path)
-    const str = res.toString()
-    return { content: str }
+    // const str = res.toString()
+    return { content: res }
   })
 
   core.rpc.reply('fs/writeFile', async (req) => {
