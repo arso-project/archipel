@@ -3,7 +3,7 @@ const EventEmitter = require('events').EventEmitter
 const crypto = require('hypercore-crypto')
 const Archive = require('./archive')
 
-const { chainStorage, folderName } = require('./util')
+const { asyncThunky, chainStorage, folderName } = require('./util')
 
 module.exports = Library
 
@@ -14,9 +14,14 @@ function Library (storage, opts) {
   this.storage = chainStorage(storage)
   this.instances = {}
   this.archives = {}
-  this.archiveTypes = opts.archiveTypes
+  this.archiveTypes = opts.archiveTypes || {}
+  this.ready = asyncThunky(this._ready.bind(this))
 }
 inherits(Library, EventEmitter)
+
+Library.prototype._ready = function (done) {
+  done()
+}
 
 Library.prototype.getArchiveConstructor = function (type) {
   if (!this.archiveTypes[type]) throw new Error(`Archive type ${type} not registered.`)
@@ -80,6 +85,10 @@ Library.prototype.pushArchive = async function (archive) {
 
 Library.prototype.getArchive = function (key) {
   return this.archives[key]
+}
+
+Library.prototype.getArchives = function () {
+  return this.archives
 }
 
 Library.prototype.getArchiveInstance = function (key) {
