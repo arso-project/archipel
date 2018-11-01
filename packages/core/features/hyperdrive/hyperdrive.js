@@ -52,9 +52,9 @@ ArchipelHyperdrive.prototype.watch = function () {
 
 ArchipelHyperdrive.prototype.addMount = async function (mount) {
   let existing = this.mounts.findIndex(({ key }) => key === mount.key)
-  if (existing !== undefined) this.mounts[existing] = mount
+  if (existing !== -1) this.mounts[existing] = mount
   else this.mounts.push(mount)
-  return this.setInfo()
+  await this.setInfo()
 }
 
 ArchipelHyperdrive.prototype.getMounts = async function () {
@@ -68,6 +68,7 @@ ArchipelHyperdrive.prototype.getMounts = async function () {
 ArchipelHyperdrive.prototype.setInfo = async function (info) {
   // await this.ready()
   // if (!this.db.authorized) throw new Error('Cannot setInfo if not authorized.')
+  await this.getMounts()
   info = info || {}
   let defaultInfo = this.info || this.defaultInfo()
   info = Object.assign({}, defaultInfo, info)

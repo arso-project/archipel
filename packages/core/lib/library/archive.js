@@ -3,13 +3,14 @@ const inherits = require('inherits')
 const hyperdiscovery = require('hyperdiscovery')
 const debug = require('debug')('archive')
 
-const { hex, asyncThunk } = require('../util')
+const { hex, asyncThunky } = require('../util')
 
 module.exports = Archive
 
 function Archive (library, type, instance, state) {
   if (!(this instanceof Archive)) return new Archive(library, type, instance, state)
   const self = this
+  this._loaded = false
 
   this.instance = instance
   this.db = instance.db
@@ -19,12 +20,18 @@ function Archive (library, type, instance, state) {
   this.type = type
   this.mounts = []
 
-  this.ready = instance.ready
-  this.ready(() => {
-    if (self.getState().share) {
-      self.startShare()
-    }
-    self.loadMounts()
+  this.ready = asyncThunky(this._ready.bind(this))
+  this.ready()
+}
+inherits(Archive, EventEmitter)
+
+Archive.prototype._ready = async function (done) {
+  const self = this
+  this.instance.ready(async () => {
+    if (self._loaded) return
+    self._loaded = true
+    await self.loadMounts()
+
     self.db.once('remote-update', () => self.setState({ loaded: true }))
 
     let db = this.getInstance().db
@@ -33,9 +40,14 @@ function Archive (library, type, instance, state) {
       if (err) throw err
       if (res) self.setState({ authorized: true })
     })
+
+    if (self.getState().share) {
+      self.startShare()
+    }
+
+    done()
   })
 }
-inherits(Archive, EventEmitter)
 
 Archive.prototype.makePersistentMount = async function (prefix, type) {
   await this.ready()
@@ -66,7 +78,8 @@ Archive.prototype.loadMounts = async function () {
 
 Archive.prototype.getMounts = async function () {
   await this.ready()
-  return this.mounts
+  if (!this.mounts) return []
+  return this.mounts.map(mount => this.library.getArchive(mount.key))
 }
 
 Archive.prototype.getMount = async function (prefix) {
@@ -119,7 +132,7 @@ Archive.prototype.isAuthorized = function () {
   return this.isLoaded() && this.state.authorized
 }
 
-Archive.prototype.setShare = function (share) {
+Archive.prototype.setShare = async function (share) {
   this.setState({ share })
   if (share) {
     this.startShare()
@@ -127,10 +140,18 @@ Archive.prototype.setShare = function (share) {
 }
 
 Archive.prototype.startShare = function () {
-  const instance = this.getInstance()
-  const network = hyperdiscovery(instance)
-  this.network = network
-  network.on('connection', (peer) => console.log('got peer!'))
+  this.instance.db.ready(async () => {
+    const instance = this.getInstance()
+    const network = hyperdiscovery(instance.db)
+    this.network = network
+    network.on('connection', (peer) => console.log('got peer!'))
+
+    // todo: really always share all mounts?
+    let mounts = await this.getMounts()
+    mounts.forEach(mount => {
+      mount.startShare()
+    })
+  })
 }
 
 Archive.prototype.authorizeWriter = function (key) {

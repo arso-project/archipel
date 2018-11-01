@@ -28,6 +28,8 @@ function Workspace (storage, key, opts) {
   this.library.on('archive', archive => {
     archive.on('set:state', () => self.saveArchive(archive.key))
   })
+
+  this.ready()
 }
 inherits(Workspace, events.EventEmitter)
 
@@ -38,7 +40,7 @@ Workspace.prototype._ready = function (done) {
     // For empty databases, the get() method seems
     // to not invoke the callback at all.
     // @todo: I think this is a bug in hyperdb.
-    if (!db.source.length) return done()
+    if (!db.source.length && db.local.length < 2) return done()
     loadInfo()
   })
 
@@ -57,8 +59,9 @@ Workspace.prototype._ready = function (done) {
       const { type, key, opts, status } = node.value
       return self.library.addArchive(type, key, opts, status)
     })
-    rs.on('end', () => {
-      Promise.all(promises).then(done).catch(done)
+    rs.on('end', async () => {
+      await Promise.all(promises)
+      done()
     })
   }
 }
@@ -93,13 +96,13 @@ Workspace.prototype.createArchive = async function (type, info, opts) {
   const archive = await this.library.createArchive(type, opts)
   archive.setState({ share: false })
   if (info && archive.setInfo) await archive.setInfo(info)
-  this.saveArchive(archive.key)
+  await this.saveArchive(archive.key)
   return archive
 }
 
 Workspace.prototype.addRemoteArchive = async function (type, key, opts) {
   const archive = await this.library.addRemoteArchive(type, key, opts)
-  this.saveArchive(archive.key)
+  await this.saveArchive(archive.key)
   return archive
 }
 
