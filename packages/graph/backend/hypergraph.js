@@ -9,6 +9,9 @@ function ArchipelHypergraph (storage, key, opts) {
   this.hypergraph = hypergraph(storage, key, opts)
   this.db = this.hypergraph.db
   this.key = key
+  this.discoveryKey = this.db.discoveryKey
+  this.ready = this.hypergraph.ready
+  // this.replicate = this.db.replicate.bind(this.db)
 
   // Copy functions from hypergraph
   const asyncFuncs = ['ready', 'get', 'put']

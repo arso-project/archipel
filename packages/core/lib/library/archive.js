@@ -139,18 +139,17 @@ Archive.prototype.setShare = async function (share) {
   }
 }
 
-Archive.prototype.startShare = function () {
-  this.instance.db.ready(async () => {
-    const instance = this.getInstance()
-    const network = hyperdiscovery(instance.db)
-    this.network = network
-    network.on('connection', (peer) => console.log('got peer!'))
+Archive.prototype.startShare = async function () {
+  await this.ready()
+  const instance = this.getInstance()
+  const network = hyperdiscovery(instance.db)
+  this.network = network
+  network.on('connection', (peer) => console.log('got peer!'))
 
-    // todo: really always share all mounts?
-    let mounts = await this.getMounts()
-    mounts.forEach(mount => {
-      mount.startShare()
-    })
+  // todo: really always share all mounts?
+  let mounts = await this.getMounts()
+  mounts.forEach(mount => {
+    mount.startShare()
   })
 }
 
