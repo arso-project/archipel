@@ -4,93 +4,58 @@ const hyperdb = require('hyperdb')
 const pify = require('pify')
 const datenc = require('dat-encoding')
 const crypto = require('hypercore-crypto')
-const thunky = require('thunky')
-const debug = require('debug')('root')
 
-const Workspace = require('./workspace')
+const Workspace = require('./workspace.js')
 
-const { hex, keyToFolder, chainStorage } = require('./util')
+const { asyncThunky, hex, keyToFolder, chainStorage } = require('./util')
 
-module.exports = Rootspace
+module.exports = WorkspaceManager
 
-function Rootspace (storage, key, opts) {
-  if (!(this instanceof Rootspace)) return new Rootspace(storage, key, opts)
-  events.EventEmitter.call(this)
-  const self = this
-
+function WorkspaceManager (storage, key, opts) {
+  if (!(this instanceof WorkspaceManager)) return new WorkspaceManager(storage, key, opts)
   this.workspaces = []
-  this.archives = []
-  this._workspaceKeys = {}
-  this._archiveKeys = {}
+  this.storage = chainStorage(storage)
 
-  this._storage = chainStorage(storage)
-
-  this.db = hyperdb(this._storage('root'), key, {
+  this.db = hyperdb(this.storage('root'), key, {
     valueEncoding: 'json',
     reduce: (a, b) => a
   })
 
-  this.ready = thunky((done) => self._ready(done))
+  this.ready = asyncThunky(this._ready.bind(this))
 
   this.archiveTypes = {}
 }
+inherits(WorkspaceManager, events.EventEmitter)
 
-inherits(Rootspace, events.EventEmitter)
-
-Rootspace.prototype._ready = function (done) {
+WorkspaceManager.prototype._ready = function (done) {
   this.db.ready(done)
 }
 
-Rootspace.prototype.registerArchiveTypes = function (archiveTypes) {
+WorkspaceManager.prototype.registerArchiveTypes = function (archiveTypes) {
   this.archiveTypes = archiveTypes
 }
 
-Rootspace.prototype.getWorkspaces = async function (cb) {
-  try {
-    let workspaces = await pify(this.db.list.bind(this.db))('workspace')
-    if (workspaces) workspaces = workspaces.map(ws => ws.value)
-    if (cb) cb(workspaces)
-    else return workspaces
-  } catch (e) {
-    if (cb) return cb(e)
-    else return e
-  }
+WorkspaceManager.prototype.getWorkspaces = async function () {
+  let workspaces = await pify(this.db.list.bind(this.db))('workspace')
+  if (workspaces) workspaces = workspaces.map(ws => ws.value)
+  return workspaces
 }
 
-Rootspace.prototype.getWorkspace = async function (key) {
-  key = hex(key)
-  if (this._workspaceKeys[key]) return this.workspaces[this._workspaceKeys[key]]
+WorkspaceManager.prototype.getWorkspace = async function (key) {
+  if (this.workspaces[key]) return this.workspaces[key]
+
   const spaces = await this.getWorkspaces()
-  const authorizedByKey = spaces.reduce((r, sp) => {
-    if (sp.authorized) r[sp.key] = sp
-    return r
-  }, {})
-
-  if (authorizedByKey[key]) {
-    return this._openWorkspace(key, authorizedByKey[key])
-  } else throw new Error('Workspace not found or not authorized.')
-
-  // let node = await pify(this.db.get.bind(this.db))('workspace/' + key)
-  // check access here.
-  // if (node.value && node.value.key) {
-  //   return this._openWorkspace(node.value.key, node.value)
-  // }
+  if (!spaces.find(ws => ws.key === key)) throw new Error('Workspace ' + key + ' not found.')
+  return this._openWorkspace(key)
 }
 
-Rootspace.prototype.getDefaultWorkspace = async function (opts) {
-  const spaces = await this.getWorkspaces()
-  if (!spaces) return null
-  return this.getWorkspace(spaces[0].key)
-}
-
-Rootspace.prototype.createWorkspace = async function (info) {
+WorkspaceManager.prototype.createWorkspace = async function (info) {
   const keyPair = crypto.keyPair()
   const key = keyPair.publicKey
   const opts = {
     secretKey: keyPair.secretKey
   }
 
-  debug('create workspace', hex(key).substr(3), info)
   const workspace = await this._openWorkspace(key, opts)
   await workspace.setInfo(info)
 
@@ -106,94 +71,26 @@ Rootspace.prototype.createWorkspace = async function (info) {
   return workspace
 }
 
-Rootspace.prototype.deleteWorkspace = async function (key) {
-  const self = this
-  const dbKey = this._dbKey({ key })
-  try {
-    let node = await pify(this.db.get.bind(this.db))(dbKey)
-    if (node) {
-      self.closeWorkspace(key)
-      await pify(self.db.del.bind(this.db))(dbKey)
-      return true
-    }
-  } catch (e) {
-    console.log('ERROR', e)
-    return false
-  }
-}
-
-Rootspace.prototype._saveWorkspace = function (workspace, data) {
-  this.db.get(this._dbKey(workspace), (err, node) => {
+WorkspaceManager.prototype._saveWorkspace = function (workspace, data) {
+  this.db.get(dbKey(workspace), (err, node) => {
     if (err) return // todo
-    let value
-    if (!node) value = {}
-    else value = node.value
+    let value = node ? node.value : {}
     const newValue = Object.assign({}, value, data)
-    this.db.put(this._dbKey(workspace), newValue)
+    this.db.put(dbKey(workspace), newValue)
   })
 }
 
-Rootspace.prototype.getArchive = function (key) {
-  if (!this._archiveKeys[key]) return null
-  return this.archives[this._archiveKeys[key]]
-}
-
-Rootspace.prototype._openWorkspace = async function (key, opts) {
+WorkspaceManager.prototype._openWorkspace = async function (key, opts) {
+  opts = opts || {}
   key = datenc.toBuf(key)
   const name = 'workspace/' + keyToFolder(key)
   opts.archiveTypes = this.archiveTypes
-  const workspace = Workspace(this._storage(name), key, opts)
+  const workspace = Workspace(this.storage(name), key, opts)
   await workspace.ready()
-  this._pushWorkspace(workspace)
+  this.workspaces[key] = workspace
   return workspace
 }
 
-Rootspace.prototype.closeWorkspace = async function (key) {
-  key = datenc.toStr(key)
-  let idx = this._workspaceKeys[key]
-  delete this.workspaces[idx]
-  delete this._worksapceKeys[idx]
-}
-
-Rootspace.prototype._pushWorkspace = function (workspace) {
-  const self = this
-  const idx = this.workspaces.push(workspace)
-  this._workspaceKeys[datenc.toStr(workspace.db.key)] = idx - 1
-  this.emit('workspace', workspace)
-  // workspace.on('info.update', (info) => {
-  //   this._saveWorkspace(workspace, { info })
-  // })
-  // workspace.on('archive', (archive) => {
-  //   const idx = self.archives.push(archive)
-  //   self._archiveKeys[datenc.toStr(archive.key)] = idx - 1
-  //   this.emit('archive', archive)
-  // })
-
-  // workspace.on('info.update', (info) => self._updateWorkspaceInfo(workspace))
-}
-
-// Rootspace.prototype._updateWorkspaceInfo = function (workspace) {
-//   this.db.get(this._dbKey(workspace), (err, node) => {
-//     if (err) return
-//     node.info = workspace.info
-//     this.info = workspace.info
-//     this.db.put(this._dbKey(workspace), node)
-//   })
-// }
-
-Rootspace.prototype._dbKey = function (workspace) {
+function dbKey (workspace) {
   return 'workspace/' + datenc.toStr(workspace.key)
 }
-
-// Rootspace.__hyperpc = {
-//   include: [
-//     'getWorkspace',
-//     'getDefaultWorkspace',
-//     'createWorkspace',
-//     'getWorkspaces'
-//   ],
-//   override: {
-//     getWorkspace: async function (key) { return rpcify(await this.getWorkspace(key)) },
-//     getDefaultWorkspace: async function (opts) { return rpcify(await this.getDefaultWorkspace(opts) )}
-//   }
-// }

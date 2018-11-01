@@ -1,6 +1,7 @@
 const hyperdb = require('hyperdb')
 const events = require('events')
 const inherits = require('inherits')
+const pify = require('pify')
 
 const library = require('./library')
 const { hex, chainStorage, asyncThunk } = require('./util')
@@ -61,6 +62,16 @@ Workspace.prototype.setInfo = function (info) {
       if (err) return reject(res)
       self.info = value
       resolve(value)
+    })
+  })
+}
+
+Workspace.prototype.getInfo = async function () {
+  return new Promise((resolve, reject) => {
+    this.db.get('info', (err, node) => {
+      if (err) return reject(err)
+      else if (!node) return resolve({})
+      return resolve(node.value)
     })
   })
 }

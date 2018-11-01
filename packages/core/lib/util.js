@@ -2,6 +2,7 @@
 const path = require('path')
 const datenc = require('dat-encoding')
 const crypto = require('hypercore-crypto')
+const thunky = require('thunky')
 // const hexTo32 = require('hex-to-32')
 
 module.exports = {
@@ -14,6 +15,7 @@ module.exports = {
   pifi,
   keyToFolder,
   asyncThunk,
+  asyncThunky,
   pifyObj
 }
 
@@ -29,6 +31,22 @@ function asyncThunk (fn) {
     else return result
   }
 }
+
+function asyncThunky (fn) {
+  let thunk = thunky(fn)
+  return function (cb) {
+    if (cb) return thunk(cb)
+    if (!cb) {
+      return new Promise((resolve, reject) => {
+        thunk(err => {
+          if (err) reject(err)
+          else resolve()
+        })
+      })
+    }
+  }
+}
+
 
 function pifyObj (obj, opts) {
   opts = opts || {}

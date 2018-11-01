@@ -77,7 +77,6 @@ async function config (core, opts) {
 }
 
 function getCliConfig () {
-  console.log(process.cwd())
   let args = {}
   process.argv.slice(2).forEach(function (val, index, array) {
     let arg = val.split(/[=:]/)
