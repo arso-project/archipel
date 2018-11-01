@@ -18,8 +18,8 @@ module.exports = {
  * Usage:
  * let ready = asyncThunky(_ready)
  *
- * Where ready either returns a promise, or calls a callback that
- * it gets as first argument.
+ * Where _ready receives a callback as single argument
+ * which has to be called after being done.
  *
  * Then, either call ready with a callback
  *    ready(cb)
@@ -29,8 +29,8 @@ module.exports = {
 function asyncThunky (fn) {
   let thunk = thunky(fn)
   return function (cb) {
-    if (cb) return thunk(cb)
-    if (!cb) {
+    if (cb) thunk(cb)
+    else {
       return new Promise((resolve, reject) => {
         thunk(err => {
           if (err) reject(err)
