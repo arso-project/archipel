@@ -40,7 +40,9 @@ inherits(Archive, EventEmitter)
 Archive.prototype.makePersistentMount = async function (prefix, type) {
   await this.ready()
   if (!this.isAuthorized()) throw new Error('Archive is not writable.')
+
   const archive = await this.library.addMount(this.key, type, null)
+
   const mountInfo = { prefix, type, key: archive.key }
   await this.instance.addMount(mountInfo)
   this.pushMount(mountInfo)
@@ -91,7 +93,7 @@ Archive.prototype.getInfo = async function () {
 
 Archive.prototype.setInfo = async function (info) {
   if (!this.isLoaded()) return
-  if (this.instance.getInfo) return this.instance.setInfo(info)
+  if (this.instance.setInfo) return this.instance.setInfo(info)
   this.emit('set:info', info)
   return null
 }
@@ -132,25 +134,19 @@ Archive.prototype.startShare = function () {
 }
 
 Archive.prototype.authorizeWriter = function (key) {
+  const self = this
   const db = this.db
   return new Promise((resolve, reject) => {
-    debug('AUTH REQ: ', key)
-    key = Buffer.from(key)
+    key = Buffer.from(key, 'hex')
     db.authorized(key, (err, auth) => {
       if (err) return reject(err)
       if (auth === true) {
-        debug('Already authed.')
         resolve(true)
       }
-      db.authorize(key, (err, res) => {
+      db.authorize(key, async (err, res) => {
         if (err) return reject(err)
         if (res) {
-          debug('Auth successfull')
           resolve(true)
-          // db.authorized(key, (err, auth) => {
-          //   if (err) reject(err)
-          //   console.log('New key is authed? %o', auth)
-          // })
         }
       })
     })
