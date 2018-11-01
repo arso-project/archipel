@@ -1,37 +1,31 @@
-// const pify = require('pify')
 const path = require('path')
 const datenc = require('dat-encoding')
 const crypto = require('hypercore-crypto')
 const thunky = require('thunky')
-// const hexTo32 = require('hex-to-32')
 
 module.exports = {
-  promise,
   hex,
   chainStorage,
-  inParent,
   omit,
   discoveryKey,
-  pifi,
   keyToFolder,
-  asyncThunk,
-  asyncThunky,
-  pifyObj
+  asyncThunky
 }
 
-function asyncThunk (fn) {
-  let result
-  let run = false
-  return function (cb) {
-    if (!run) {
-      run = true
-      result = fn()
-    }
-    if (cb) result.then(res => cb(null, res)).catch(e => cb(e, null))
-    else return result
-  }
-}
-
+/**
+ * An async wrapper for thunky
+ *
+ * Usage:
+ * let ready = asyncThunky(_ready)
+ *
+ * Where ready either returns a promise, or calls a callback that
+ * it gets as first argument.
+ *
+ * Then, either call ready with a callback
+ *    ready(cb)
+ * or await it
+ *    await ready()
+ */
 function asyncThunky (fn) {
   let thunk = thunky(fn)
   return function (cb) {
@@ -47,47 +41,10 @@ function asyncThunky (fn) {
   }
 }
 
-
-function pifyObj (obj, opts) {
-  opts = opts || {}
- const ret = {}
-  for (key in obj) {
-    if (opts.include && opts.include.indexOf(key) === -1) continue
-    if (typeof obj[key] === 'function') {
-      ret[key] = function () {
-        const args = Array.from(arguments)
-        return new Promise((resolve, reject) => {
-          const cb = (err, res) => {
-            console.log('res', key, err, res)
-            if (err) reject(err)
-            else resolve(res)
-          }
-          args.push(cb)
-          obj[key].apply(obj[key], args)
-        })
-      }
-    }
-  }
-  return ret
-}
-
-function promise (fn) {
-  return new Promise(fn)
-}
-
 function keyToFolder (key) {
   const str = discoveryKey(key)
   return str
   // return str.substr(0, 40)
-}
-
-function pifi (fn, noError) {
-  return new Promise((resolve, reject) => {
-    fn.call(this, (err, result) => {
-      if (noError) resolve(err, result)
-      else err ? reject(err) : resolve(result)
-    })
-  })
 }
 
 function hex (buf) {
@@ -105,11 +62,6 @@ function chainStorage (parent) {
       return path.join(parent, prefix)
     }
   }
-}
-
-function inParent (parent, dir) {
-  const relative = path.relative(parent, dir)
-  return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative)
 }
 
 function omit (obj, keys) {

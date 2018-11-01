@@ -4,7 +4,7 @@ const inherits = require('inherits')
 const pify = require('pify')
 
 const library = require('./library')
-const { hex, chainStorage, asyncThunk } = require('./util')
+const { hex, chainStorage, asyncThunky } = require('./util')
 
 module.exports = Workspace
 
@@ -23,7 +23,7 @@ function Workspace (storage, key, opts) {
     valueEncoding: 'json'
   })
 
-  this.ready = asyncThunk(this._ready.bind(this))
+  this.ready = asyncThunky(this._ready.bind(this))
 
   this.library.on('archive', archive => {
     archive.on('set:state', () => self.saveArchive(archive.key))
@@ -33,16 +33,25 @@ inherits(Workspace, events.EventEmitter)
 
 Workspace.prototype._ready = function (done) {
   const self = this
-
-  this.db.get('info', (err, node) => {
-    if (err) done(err)
-    else if (node) this.info = node.value
-    openArchives(done)
+  const db = this.db
+  db.ready(() => {
+    // For empty databases, the get() method seems
+    // to not invoke the callback at all.
+    // @todo: I think this is a bug in hyperdb.
+    if (!db.source.length) return done()
+    loadInfo()
   })
 
-  function openArchives (done) {
-    const rs = self.db.createReadStream('archive')
+  function loadInfo () {
+    db.get('info', (err, node) => {
+      if (err) done(err)
+      else if (node) this.info = node.value
+      openArchives(done)
+    })
+  }
 
+  function openArchives (done) {
+    const rs = db.createReadStream('archive')
     let promises = []
     rs.on('data', (node) => {
       const { type, key, opts, status } = node.value
