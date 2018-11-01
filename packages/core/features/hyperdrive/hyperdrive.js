@@ -51,7 +51,9 @@ ArchipelHyperdrive.prototype.watch = function () {
 // Workspace interface.
 
 ArchipelHyperdrive.prototype.addMount = async function (mount) {
-  this.mounts.push(mount)
+  let existing = this.mounts.findIndex(({ key }) => key === mount.key)
+  if (existing !== undefined) this.mounts[existing] = mount
+  else this.mounts.push(mount)
   return this.setInfo()
 }
 
