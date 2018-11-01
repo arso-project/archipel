@@ -146,6 +146,10 @@ Archive.prototype.authorizeWriter = function (key) {
       db.authorize(key, async (err, res) => {
         if (err) return reject(err)
         if (res) {
+          // Hack: Do a write after the auth is complete.
+          // Without this, hyperdrive breaks when loading the stat
+          // for the root folder (/). I think this is a bug in hyperdb.
+          await self.setInfo({})
           resolve(true)
         }
       })
