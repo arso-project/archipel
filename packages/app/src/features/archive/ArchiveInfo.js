@@ -1,24 +1,94 @@
 import React from 'react'
 import { Consumer } from 'ucore/react'
-import { Heading } from '@archipel/ui'
+import { Heading, Button } from '@archipel/ui'
 import ToggleButton from 'react-toggle-button'
+import { MdCheck, MdCancel } from 'react-icons/md'
+
+const Item = ({ label, children }) => (
+  <div className='px-1 py-2 border-grey-light border-b flex'>
+    <div className='w-24'>
+      <strong>{label}: </strong>
+    </div>
+    <div className='flex-1'>
+      {children}
+    </div>
+  </div>
+)
+const copyToClipboard = str => {
+  const el = document.createElement('textarea')
+  el.value = str
+  document.body.appendChild(el)
+  el.select()
+  document.execCommand('copy')
+  document.body.removeChild(el)
+}
+
+const ClickToCopy = ({ children }) => {
+  const onClick = (e) => copyToClipboard(children)
+  return (
+    <span className='bg-grey-lightest rounded-sm p-1 max-w-md truncate cursor-pointer' onClick={onClick}>
+      {children}
+    </span>
+  )
+}
+
+const YesNo = ({ children }) => {
+  if (!children) return <span className='text-red'><MdCancel />No</span>
+  if (children) return <span className='text-green'><MdCheck />Yes</span>
+}
+
+class Authorize extends React.Component {
+  constructor (props) {
+    super(props)
+    this.inputRef = React.createRef()
+    this.onSubmit = this.onSubmit.bind(this)
+    this.state = { res: null }
+  }
+
+  async onSubmit (e) {
+    let val = this.inputRef.current.value
+    if (val) {
+      let res = await this.props.onSubmit({ key: this.props.archive, writerKey: val })
+      this.setState({ res })
+    }
+  }
+
+  render () {
+    const { res } = this.state
+    return (
+      <div>
+        <div className='flex'>
+          <input type='text' ref={this.inputRef} />
+          <Button onClick={this.onSubmit}>OK</Button>
+        </div>
+        { res && <div>{JSON.stringify(res)}</div>}
+      </div>
+    )
+  }
+}
 
 const ArchiveInfo = () => {
   return <Consumer store='archive' select={'selectedArchive'}>
-    {(archive, { shareArchive }) => {
-      console.log(archive)
+    {(archive, { shareArchive, authorizeWriter }) => {
       if (!archive) return null
-      let key = archive.key
+      let { key, status, info } = archive
       return (
         <div>
-          <Heading>Archive: {archive.title}</Heading>
-          <pre>Key: {archive.key}</pre>
-          <pre>Shared:
+          <Heading>{info.title}</Heading>
+          <Item label='Key'><ClickToCopy>{key}</ClickToCopy></Item>
+          <Item label='Share'>
             <ToggleButton inactiveLabel='NO' activeLabel='YES'
-              value={archive.status.share}
-              onToggle={() => shareArchive(key, !archive.status.share)}
+              value={status.share}
+              onToggle={() => shareArchive(key, !status.share)}
             />
-          </pre>
+          </Item>
+          <Item label='Authorized'><YesNo>{status.authorized}</YesNo></Item>
+          <Item label='Local key'><ClickToCopy>{status.localWriterKey}</ClickToCopy></Item>
+          {status.authorized && (
+            <Item label='Authorize'>
+              <Authorize archive={key} onSubmit={authorizeWriter} />
+            </Item>
+          )}
         </div>
       )
     }}

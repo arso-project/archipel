@@ -17,7 +17,7 @@ function ArchipelHyperdrive (storage, key, opts) {
   this.mounts = []
 
   // Copy functions from hyperdrive.
-  const asyncFuncs = ['ready', 'readFile', 'writeFile', 'readdir', 'mkdir', 'stat']
+  const asyncFuncs = ['ready', 'readFile', 'writeFile', 'readdir', 'mkdir', 'stat', 'authorize']
   asyncFuncs.forEach(func => {
     self[func] = pify(self.hyperdrive[func].bind(self.hyperdrive))
   })

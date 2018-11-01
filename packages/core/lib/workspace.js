@@ -95,6 +95,7 @@ Workspace.prototype.getStatusAndInfo = async function (key) {
   await archive.ready()
   let info = await archive.getInfo()
   let status = archive.getState()
+  status.localWriterKey = archive.instance.db.local.key.toString('hex')
   return { info, status, key: archive.key }
 }
 

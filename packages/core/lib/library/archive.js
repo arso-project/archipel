@@ -1,6 +1,7 @@
 const EventEmitter = require('events').EventEmitter
 const inherits = require('inherits')
 const hyperdiscovery = require('hyperdiscovery')
+const debug = require('debug')('archive')
 
 const { hex, asyncThunk } = require('../util')
 
@@ -25,6 +26,13 @@ function Archive (library, type, instance, state) {
     }
     self.loadMounts()
     self.db.once('remote-update', () => self.setState({ loaded: true }))
+
+    let db = this.getInstance().db
+    let localWriterKey = db.local.key
+    db.authorized(localWriterKey, (err, res) => {
+      if (err) throw err
+      if (res) self.setState({ authorized: true })
+    })
   })
 }
 inherits(Archive, EventEmitter)
@@ -121,4 +129,30 @@ Archive.prototype.startShare = function () {
   const network = hyperdiscovery(instance)
   this.network = network
   network.on('connection', (peer) => console.log('got peer!'))
+}
+
+Archive.prototype.authorizeWriter = function (key) {
+  const db = this.db
+  return new Promise((resolve, reject) => {
+    debug('AUTH REQ: ', key)
+    key = Buffer.from(key)
+    db.authorized(key, (err, auth) => {
+      if (err) return reject(err)
+      if (auth === true) {
+        debug('Already authed.')
+        resolve(true)
+      }
+      db.authorize(key, (err, res) => {
+        if (err) return reject(err)
+        if (res) {
+          debug('Auth successfull')
+          resolve(true)
+          // db.authorized(key, (err, auth) => {
+          //   if (err) reject(err)
+          //   console.log('New key is authed? %o', auth)
+          // })
+        }
+      })
+    })
+  })
 }

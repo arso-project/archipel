@@ -32,6 +32,12 @@ const shareArchive = (key, value) => async (set, { get, core, actions }) => {
   return res
 }
 
+const authorizeWriter = ({ key, writerKey }) => async (set, { get, core, actions }) => {
+  let res
+  res = await core.rpc.request('workspace/authorizeWriter', { key, writerKey })
+  return res
+}
+
 const selectArchive = (key) => (set) => {
   set(draft => { draft.selected = key })
 }
@@ -60,7 +66,8 @@ module.exports = {
     loadArchives,
     selectArchive,
     shareArchive,
-    addRemoteArchive
+    addRemoteArchive,
+    authorizeWriter
   },
   select: {
     sortedByName,

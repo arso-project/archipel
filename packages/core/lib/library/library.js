@@ -2,7 +2,6 @@ const inherits = require('inherits')
 const EventEmitter = require('events').EventEmitter
 const crypto = require('hypercore-crypto')
 const Archive = require('./archive')
-const debug = require('debug')('archipel-library')
 
 const { chainStorage, folderName } = require('./util')
 
@@ -61,7 +60,7 @@ Library.prototype.addMount = async function (parentKey, type, key, opts) {
 }
 
 Library.prototype.addArchive = async function (type, key, opts, status) {
-  const instance = this._makeInstance(type, key, opts)
+  const instance = this.makeInstance(type, key, opts)
   const archive = Archive(this, type, instance, status)
   await this.pushArchive(archive)
   this.emit('archive', archive)
@@ -92,7 +91,7 @@ Library.prototype.getPrimaryArchives = function () {
   return Object.values(this.archives).filter(a => a.getState().primary)
 }
 
-Library.prototype._makeInstance = function (type, key, opts) {
+Library.prototype.makeInstance = function (type, key, opts) {
   opts = opts || {}
   const constructor = this.getArchiveConstructor(type)
 
@@ -102,7 +101,7 @@ Library.prototype._makeInstance = function (type, key, opts) {
     opts.secretKey = keyPair.secretKey
   }
 
-  const storage = this.storage(folderName(type, key))
+  const storage = opts.storage || this.storage(folderName(type, key))
   const instance = constructor(storage, key, opts)
   return instance
 }

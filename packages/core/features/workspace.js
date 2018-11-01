@@ -3,8 +3,6 @@ module.exports = workspace
 const { hex } = require('../lib/util')
 
 async function workspace (core, opts) {
-  let mountTypes = []
-
   core.rpc.reply('workspace/list', async (req, reply) => {
     const data = await core.root.getWorkspaces()
     return { data }
@@ -50,6 +48,14 @@ async function workspace (core, opts) {
     if (!req.session.workspace) throw new Error('No workspace.')
     await req.session.workspace.setShare(req.key, req.share)
     let res = await req.session.workspace.getStatusAndInfo(req.key)
+    return { data: res }
+  })
+
+  core.rpc.reply('workspace/authorizeWriter', async (req) => {
+    if (!req.session.workspace) throw new Error('No workspace.')
+    const { key, writerKey } = req
+    const archive = await req.session.workspace.getArchive(key, 'hyperdrive')
+    let res = await archive.authorizeWriter(writerKey)
     return { data: res }
   })
 
