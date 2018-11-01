@@ -1,5 +1,5 @@
 import React from 'react'
-import { Consumer } from 'ucore/react'
+import { Consumer, WithCore } from 'ucore/react'
 import { Heading, Button } from '@archipel/ui'
 import ToggleButton from 'react-toggle-button'
 import { MdCheck, MdCancel } from 'react-icons/md'
@@ -89,6 +89,13 @@ const ArchiveInfo = () => {
               <Authorize archive={key} onSubmit={authorizeWriter} />
             </Item>
           )}
+          <Item label='Debug'>
+            <WithCore>
+              {core => (
+                <Button onClick={() => core.rpc.request('debug', { key })}>OK</Button>
+              )}
+            </WithCore>
+          </Item>
         </div>
       )
     }}

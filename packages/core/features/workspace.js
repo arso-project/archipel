@@ -1,6 +1,7 @@
 module.exports = workspace
 
 const { hex } = require('../lib/util')
+const { hyperDebug } = require('../lib/debug')
 
 async function workspace (core, opts) {
   core.rpc.reply('workspace/list', async (req, reply) => {
@@ -21,7 +22,7 @@ async function workspace (core, opts) {
       const info = req.info
       const workspace = await core.root.createWorkspace(info)
       await workspace.ready()
-      return { data: workspace.info }
+      return { data: { info: workspace.info, key: hex(workspace.key) } }
     } catch (e) {
       console.log('WORKSPACE CREATE', e)
     }
@@ -65,5 +66,14 @@ async function workspace (core, opts) {
     await req.session.workspace.addRemoteArchive('hyperdrive', key)
     let res = await req.session.workspace.getStatusAndInfo(key)
     return res
+  })
+
+  core.rpc.reply('debug', async (req) => {
+    if (!req.session.workspace) throw new Error('No workspace.')
+    let { key } = req
+    const archive = await req.session.workspace.getArchive(key, 'hyperdrive')
+    const instance = archive.getInstance()
+    const db = instance.db
+    hyperDebug(db)
   })
 }
