@@ -7,7 +7,7 @@
   "author": "Archipel:Somoco Team",
   "scripts": {
     "bootstrap": "lerna bootstrap --hoist",
-    "server": "cd packages/core; ARCHIPEL_STATIC_PATH=../app/dist/web npm run start",
+    "server": "cd packages/core; ARCHIPEL_STATIC_PATH=../app/dist npm run start",
     "start": "npm run server",
     "electron": "cd packages/electron; NODE_ENV=development npm run start",
     "watch": "cd packages/app; npm run watch",

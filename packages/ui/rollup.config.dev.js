@@ -1,4 +1,4 @@
-import babel from 'rollup-plugin-babel'
+import sucrase from 'rollup-plugin-sucrase'
 import resolve from 'rollup-plugin-node-resolve'
 import commonjs from 'rollup-plugin-commonjs'
 import replace from 'rollup-plugin-replace'
@@ -20,8 +20,9 @@ export default {
     postcss({
       extract: true
     }),
-    babel({
-      exclude: 'node_modules/**'
+    sucrase({
+      exclude: /node_modules/,
+      transforms: ['jsx']
     }),
     replace({ 'process.env.NODE_ENV': JSON.stringify('development') }),
     resolve({

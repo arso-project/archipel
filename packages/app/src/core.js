@@ -1,7 +1,7 @@
 // ucore
 import ucore from 'ucore'
-import ucoreRpc from 'ucore/rpc/client'
-import ucoreStore from 'ucore/store'
+import rpc from 'ucore/rpc/client'
+import store from 'ucore/store'
 
 // core
 import componentRegistry from './lib/component-registry'
@@ -10,19 +10,16 @@ import workspace from './features/workspace'
 import archive from './features/archive'
 import fs from './features/fs'
 
-// extensions
-import graph from '@archipel/graph'
-
 // settings
 const websocketUrl = window.ARCHIPEL_WEBSOCKET_URL
   ? window.ARCHIPEL_WEBSOCKET_URL
   : window.location.origin.replace(/^http/, 'ws') + '/ucore'
 
-function boot () {
+function boot (extensions) {
   // ucore
   const core = ucore()
-  core.register(ucoreRpc, { url: websocketUrl })
-  core.register(ucoreStore)
+  core.register(rpc, { url: websocketUrl })
+  core.register(store)
 
   // core libs
   core.use(componentRegistry)
@@ -33,19 +30,9 @@ function boot () {
   core.register(archive)
   core.register(fs)
 
-  // extensions
-  core.register(graph)
+  extensions.forEach(extension => core.register(extension))
 
   return core
 }
 
-function start (core) {
-  core.ready((err) => {
-    if (err) console.log('BOOT ERROR', err)
-  })
-}
-
-const core = boot()
-start(core)
-
-export default core
+export default boot

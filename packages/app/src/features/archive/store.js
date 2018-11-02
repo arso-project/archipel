@@ -59,7 +59,7 @@ const selectedArchive = state => {
   }
 }
 
-module.exports = {
+export default {
   initialState,
   actions: {
     createArchive,

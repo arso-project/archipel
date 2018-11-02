@@ -5,9 +5,10 @@ const server = require('./features/http-server')
 const rpc = require('ucore/rpc/server')
 const workspace = require('./features/workspace')
 const drive = require('./features/hyperdrive')
-const graph = require('@archipel/graph/backend')
 
 const Rootspace = require('./lib/rootspace')
+
+const extensions = require('../../extensions.js')
 
 module.exports = boot
 
@@ -35,7 +36,11 @@ async function boot (opts) {
     core.use(archipel, { dbPath: core.config('dbPath') })
     core.use(workspace)
     core.register(drive)
-    core.register(graph)
+
+    // extension
+    extensions.forEach(extension => {
+      core.register(extension)
+    })
   }
 }
 
@@ -58,7 +63,7 @@ async function config (core, opts) {
     httpPort: 8080,
     dbPath: p.join(__dirname, '../..', '.db'),
     cliConfig: true,
-    staticPath: process.env.ARCHIPEL_STATIC_PATH || p.join(__dirname, '../app/dist/web'),
+    staticPath: process.env.ARCHIPEL_STATIC_PATH || p.join(__dirname, '../app/dist/'),
     rpc: {
       websocket: true,
       prefix: '/ucore'

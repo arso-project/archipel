@@ -11,19 +11,17 @@
   "author": "Franz Heinzmann",
   "license": "GPL-3.0",
   "dependencies": {
+    "@blueprintjs/core": "^3.7.0",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
     "tailwindcss": "^0.6.4"
   },
   "devDependencies": {
-    "@babel/core": "^7",
-    "@babel/preset-env": "^7",
-    "@babel/preset-react": "^7",
     "autoprefixer": "^9.0.2",
     "postcss-import": "^11.1.0",
     "rollup": "^0.66.6",
-    "rollup-plugin-babel": "^4.0.0-beta.7",
     "rollup-plugin-commonjs": "^9.2.0",
+    "rollup-plugin-sucrase": "^2.0.0",
     "rollup-plugin-livereload": "^0.6.0",
     "rollup-plugin-multi-entry": "^2.0.2",
     "rollup-plugin-node-resolve": "^3.4.0",
