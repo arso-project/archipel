@@ -12,12 +12,10 @@ async function plugin (core, opts) {
     await archive.ready()
     let statusStream = new stream.Readable({ objectMode: true, read () {} })
 
-    downloadVideo(archive.getInstance, link, statusStream)
+    downloadVideo(archive.getInstance(), link, statusStream)
 
     return {
-      foo: 'bar',
-      stream: statusStream,
-      data: 'yeah'
+      stream: statusStream
     }
   })
 }
