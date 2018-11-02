@@ -67,6 +67,14 @@ async function fsPlugin (core, opts) {
     return { content: res }
   })
 
+  core.rpc.reply('fs/readFileStream', async (req) => {
+    const fs = await getHyperdrive(req)
+    const rs = fs.createReadStream(req.path)
+    return {
+      stream: rs
+    }
+  })
+
   core.rpc.reply('fs/writeFile', async (req) => {
     const fs = await getHyperdrive(req)
     return fs.asyncWriteStream(req.path, req.stream)

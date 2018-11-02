@@ -1,4 +1,3 @@
-import { createSelector } from 'reselect'
 import { sortByProps } from '../../lib/state-utils'
 
 const initialState = {

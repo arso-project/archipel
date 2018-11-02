@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Heading } from '@archipel/ui'
 import RpcQuery from '../util/RpcQuery'
+import { WithCore } from 'ucore/react'
 
 function matchComponent (file) {
   let { mimetype } = file
@@ -12,7 +13,7 @@ function matchComponent (file) {
 }
 
 const Image = ({ content, stat }) => {
-  let base64 = bufToBase64(content.data)
+  let base64 = bufToBase64(content)
   let src = 'data:image/png;base64,' + base64
   return <div className='p-4'>
     <img src={src} alt={stat.name} />
@@ -20,7 +21,7 @@ const Image = ({ content, stat }) => {
 }
 
 const FileContent = ({ content }) => {
-  content = butToUtf8String(content.data)
+  content = butToUtf8String(content)
   return (
     <div className='p-4 border-2 bg-grey-lighter'>
       <pre className='overflow-hidden max-w-xl'>
@@ -30,17 +31,83 @@ const FileContent = ({ content }) => {
   )
 }
 
+class Collect extends React.Component {
+  constructor (props) {
+    super(props)
+    this.content = null
+    this.state = { done: false }
+  }
+
+  componentDidMount () {
+    let parts = []
+    this.props.stream.on('data', data => {
+      parts.push(data)
+    })
+    this.props.stream.on('end', () => {
+      this.content = concatenate(parts)
+      this.setState({ done: true })
+    })
+  }
+
+  render () {
+    if (!this.state.done) return <div>Loading</div>
+    else return this.props.children(this.content)
+  }
+}
+
+const defaultViewers = [
+  {
+    component: Image,
+    opts: {
+      stream: false,
+      match: ({ mimetype }) => {
+        return mimetype.match(/image\/.*/)
+      }
+    }
+  },
+  {
+    component: FileContent,
+    opts: {
+      stream: false,
+      match: () => true
+    }
+  }
+]
+
+function selectViewer (viewers, file) {
+  return viewers.reduce((result, current) => {
+    if (result) return result
+    if (current.opts.match(file)) result = current
+    return result
+  }, null)
+}
+
 const ViewFile = (props) => {
   const { path, stat, archive } = props
   return (
     <div>
       <Heading>{path}</Heading>
-      <RpcQuery {...props} fetch={props => ['fs/readFile', { key: props.archive, path: props.path }]}>
-        {(data) => {
-          let ContentRender = matchComponent(stat)
-          return <ContentRender content={data.content} stat={stat} />
-        }}
-      </RpcQuery>
+      <WithCore>
+        {core => (
+          <RpcQuery {...props} fetch={props => ['fs/readFileStream', { key: props.archive, path: props.path }]}>
+            {(data) => {
+              let viewers = core.components.getAll('fileViewer')
+              viewers = viewers.concat(defaultViewers)
+              let viewer = selectViewer(viewers, stat)
+              let Viewer = viewer.component
+              if (viewer.opts.stream) {
+                return <Viewer stream={data.stream} stat={stat} />
+              } else {
+                return (
+                  <Collect stream={data.stream}>
+                    {content => <Viewer content={content} stat={stat} />}
+                  </Collect>
+                )
+              }
+            }}
+          </RpcQuery>
+        )}
+      </WithCore>
     </div>
   )
 }
@@ -82,4 +149,18 @@ function bufToBase64 (input) {
 
 function butToUtf8String (buf) {
   return String.fromCharCode.apply(null, new Uint16Array(buf))
+}
+
+function concatenate (bufs) {
+  let totalLength = 0
+  for (let buf of bufs) {
+    totalLength += buf.length
+  }
+  let result = new Uint8Array(totalLength)
+  let offset = 0
+  for (let buf of bufs) {
+    result.set(buf, offset)
+    offset += buf.length
+  }
+  return result
 }
