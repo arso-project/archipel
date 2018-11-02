@@ -20,7 +20,7 @@ class CreateDirWidget extends React.Component {
 
   render () {
     return (
-      <Foldable heading='Create dir'>
+      <Foldable heading='Create dir' open>
         <div className='flex mb-2'>
           <span>Title: </span>
           <input type='text'

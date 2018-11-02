@@ -102,9 +102,19 @@ class ListDir extends React.Component {
 
         {(dirs) => {
           return (
-            <List items={sort(filter(dirs, full))} onSelect={onSelect} grid={full} renderItem={item =>
-              <ListDirItem archive={archive} item={item} grid={full} toggled={toggled} onToggle={this.onToggle} childOnSelect={onSelect} />
-            } />
+            <React.Fragment>
+              {!full && dir === '/' && <div onClick={onSelect('/')} className='cursor-pointer'>[Root]</div>}
+              <List items={sort(filter(dirs, full))} onSelect={onSelect} grid={full} renderItem={item =>
+                <ListDirItem
+                  archive={archive}
+                  item={item}
+                  grid={full}
+                  toggled={toggled}
+                  onToggle={this.onToggle}
+                  childOnSelect={onSelect} />
+              } />
+
+            </React.Fragment>
           )
         }}
 

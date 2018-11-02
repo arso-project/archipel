@@ -116,7 +116,7 @@ class UploadFile extends React.Component {
 
   render () {
     return (
-      <Foldable heading='Upload file'>
+      <Foldable heading='Upload file' open>
         <div className='flex mb-2'>
           <input type='file' multiple
             onChange={this.onChange}

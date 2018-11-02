@@ -1,5 +1,5 @@
 import React from 'react'
-import { Heading, Foldable } from '@archipel/ui'
+import { Heading, Modal } from '@archipel/ui'
 
 import ListDir from './ListDir'
 import CreateDir from './CreateDir'
@@ -9,13 +9,13 @@ import { Consumer } from 'ucore/react'
 
 const Dir = ({ archive, dir, selected, full, onSelect }) => (
   <div className=''>
-    <Heading>{dir}</Heading>
     { full && (
       <React.Fragment>
-        <Foldable heading='Actions'>
+        <Heading>{dir}</Heading>
+        <Modal toggle='Actions'>
           <CreateDir archive={archive} dir={dir} />
           <UploadFile archive={archive} dir={dir} />
-        </Foldable>
+        </Modal>
       </React.Fragment>
     )}
     <ListDir archive={archive} dir={dir} selected={selected} onSelect={onSelect} full={full} />
@@ -67,10 +67,11 @@ class FsScreen extends React.PureComponent {
     return <div>
       <div className='flex mb-4 max-w-full'>
         {/* {dirs.map((dir, i) => <Dir archive={archive} key={i} dir={dir} depth={i} onSelect={this.selectFile(i)} />)} */}
-        <div className='w-1/4'>
+        <div className='w-1/4 flex-1'>
+          <Heading>Directories</Heading>
           {<Dir archive={archive} dir={'/'} selected={selected} onSelect={this.selectFile} />}
         </div>
-        <div className='w-3/4'>
+        <div className='w-3/4 flex-0'>
           {selected && <Content archive={archive} path={selected} onSelect={this.selectFile} />}
         </div>
       </div>
