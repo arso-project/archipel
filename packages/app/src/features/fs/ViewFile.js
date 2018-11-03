@@ -91,7 +91,7 @@ const ViewFile = (props) => {
         {core => (
           <RpcQuery {...props} fetch={props => ['fs/readFileStream', { key: props.archive, path: props.path }]}>
             {(data) => {
-              let viewers = core.components.getAll('fileViewer')
+              let viewers = core.components.getAll('fileViewer') || []
               viewers = viewers.concat(defaultViewers)
               let viewer = selectViewer(viewers, stat)
               let Viewer = viewer.component
