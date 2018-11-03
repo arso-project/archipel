@@ -6,6 +6,7 @@ import globals from 'rollup-plugin-node-globals'
 import commonjs from 'rollup-plugin-commonjs'
 import replace from 'rollup-plugin-replace'
 import copy from 'rollup-plugin-copy-glob'
+// import visualizer from 'rollup-plugin-visualizer'
 
 let isDev = process.env.NODE_ENV === 'development'
 
@@ -59,6 +60,7 @@ export default {
     }),
     globals(),
     builtins(),
+    // visualizer(),
     copy([
       { files: 'assets/**', dest: 'dist' }
     ], { watch: true })
