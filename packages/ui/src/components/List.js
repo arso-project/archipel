@@ -19,15 +19,17 @@ class List extends React.Component {
     const self = this
     let { items, renderItem, children, grid } = this.props
     if (!items) return <span>No items.</span>
-    const clsBase = 'p-2 m-1 cursor-pointer overflow-hidden '
+    const clsBase = 'px-4 py-3 leading-none m-0 cursor-pointer overflow-hidden '
     renderItem = renderItem || children || defaultRender
     return (
       <ul className='list-reset'>
         { items.map((item, i) => {
           // let cls = clsBase + (isSelected(item, i) ? 'bg-teal-dark hover:bg-teal-dark' : 'bg-bright hover:bg-teal')
-          let cls = clsBase + (isSelected(item, i) ? 'bg-grey-lightest' : 'hover:bg-grey-lightest')
+          let cls = clsBase
+          cls += ' truncate '
+          cls += (isSelected(item, i) ? 'bg-grey-light' : 'hover:bg-grey-lightest')
           let key = typeof item === 'object' && item.id ? item.id : i
-          if (grid) cls += ' float-left w-1/4 border-transparent border-8'
+          if (grid) cls += ' float-left border-transparent border-8'
           return (
             <li className={cls} key={key} onClick={this.onSelect(item, i)}>
               {renderItem(item, i)}

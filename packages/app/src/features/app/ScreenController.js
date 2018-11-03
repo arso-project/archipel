@@ -14,13 +14,6 @@ const Screen = (props) => {
   return <Render {...props} />
 }
 
-class ScreenController extends React.Component {
-  render () {
-    const { screen, setScreen } = this.props
-    return <Screen screen={screen} setScreen={setScreen} />
-  }
-}
-
 class ScreenSelect extends React.Component {
   render () {
     const { screen, setScreen } = this.props
@@ -30,9 +23,9 @@ class ScreenSelect extends React.Component {
   }
 }
 
-export const ScreenRender = () => (
-  <Consumer store='app'>
-    {({ screen }, { setScreen }) => <ScreenController screen={screen} setScreen={setScreen} />}
+export const ScreenRender = (props) => (
+  <Consumer store='app' chrome={props.chrome}>
+    {({ screen }, { setScreen }) => <Screen {...props} screen={screen} setScreen={setScreen} />}
   </Consumer>
 )
 

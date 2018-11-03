@@ -1,5 +1,5 @@
 import React from 'react'
-import { Tabs } from '@archipel/ui'
+import { Tabs, Heading } from '@archipel/ui'
 
 import ListArchives from './ListArchives'
 import CreateArchive from './CreateArchive'
@@ -9,26 +9,30 @@ import { Consumer } from 'ucore/react'
 
 class ArchiveScreen extends React.PureComponent {
   render () {
-    const { archives, selectedArchive, onSelect, tabs } = this.props
+    const { archives, selectedArchive, onSelect, tabs, chrome } = this.props
     const archive = selectedArchive ? selectedArchive.key : null
 
-    return <div className='ma-4'>
-      <div className='flex mb-4'>
-        <div className='p-2 w-64 flex-no-shrink'>
+    let sidebarCls = 'flex-no-shrink border-r-2 w-65 '
+    if (!chrome) sidebarCls += 'hidden'
+
+    return (
+      <div className='flex flex-1'>
+        <div className={sidebarCls} >
           <CreateArchive />
           <AddArchive />
           <ListArchives archives={archives} selected={archive} onSelect={(item, i) => (e) => { onSelect(item.key) }} />
         </div>
-        <div className='flex-1'>
+        <div className='flex-1 p-4'>
+          { selectedArchive && <Heading className='mt-0' size={8}>{selectedArchive.info.title}</Heading> }
           { archive && <Tabs tabs={tabs} archive={archive} /> }
         </div>
       </div>
-    </div>
+    )
   }
 }
 
 export default (props) => (
-  <Consumer store='archive' select={['sortedByName', 'selectedArchive']}>
+  <Consumer store='archive' select={['sortedByName', 'selectedArchive']} chrome={props.chrome}>
     {([archives, selectedArchive], store) => {
       let archiveTabs = store.core.components.getAll('archiveTabs').map(mapRegisteredToTabs)
       return <ArchiveScreen {...props}

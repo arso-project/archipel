@@ -5,11 +5,11 @@ import ToggleButton from 'react-toggle-button'
 import { MdCheck, MdCancel } from 'react-icons/md'
 
 const Item = ({ label, children }) => (
-  <div className='px-1 py-2 border-grey-light border-b flex'>
-    <div className='w-24'>
+  <div className='border-grey-light border-b flex'>
+    <div className='w-24 px-2 py-4 border-grey-lightest'>
       <strong>{label}: </strong>
     </div>
-    <div className='flex-1'>
+    <div className='flex-1 px-2 py-4'>
       {children}
     </div>
   </div>
@@ -74,7 +74,6 @@ const ArchiveInfo = () => {
       let { key, status, info } = archive
       return (
         <div>
-          <Heading>{info.title}</Heading>
           <Item label='Key'><ClickToCopy>{key}</ClickToCopy></Item>
           <Item label='Share'>
             <ToggleButton inactiveLabel='NO' activeLabel='YES'

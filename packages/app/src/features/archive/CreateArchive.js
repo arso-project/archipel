@@ -1,6 +1,6 @@
 import React from 'react'
 // import { connect } from 'react-redux'
-import { Button, Foldable } from '@archipel/ui'
+import { Button, Foldable, Input } from '@archipel/ui'
 import { Consumer } from 'ucore/react'
 
 // import { actions } from './duck'
@@ -22,14 +22,12 @@ class CreateArchiveWidget extends React.PureComponent {
   render () {
     return (
       <Foldable heading='Create archive'>
-        <div className='flex mb-2'>
-          <span>Title: </span>
-          <input type='text' placeholder='Title'
-            className='p-1 border-2'
+        <div className='flex mb-4'>
+          <Input placeholder='Title'
             onChange={(e) => this.setState({title: e.target.value})}
           />
         </div>
-        <Button onClick={this.onCreate}>Create Archive</Button>
+        <Button className='w-full' onClick={this.onCreate}>Create Archive</Button>
       </Foldable>
     )
   }

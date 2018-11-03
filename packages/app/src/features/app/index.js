@@ -7,9 +7,11 @@ export default {
 
 const store = {
   initialState: {
-    screen: 'archives'
+    screen: 'archives',
+    chrome: true
   },
   actions: {
-    setScreen: (screen) => { this.draft.screen = screen }
+    setScreen: (screen) => { this.draft.screen = screen },
+    setChrome: (chrome) => { this.draft.chrome = chrome }
   }
 }

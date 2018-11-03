@@ -1,6 +1,6 @@
 import React from 'react'
 import { Consumer } from 'ucore/react'
-import { Heading, Modal, Foldable, Button, List } from '@archipel/ui'
+import { Heading, Modal, Foldable, Button, List, Input } from '@archipel/ui'
 
 class CreateWorkspace extends React.Component {
   constructor () {
@@ -19,7 +19,7 @@ class CreateWorkspace extends React.Component {
   render () {
     return (
       <React.Fragment>
-        <input type='text' placeholder='Title' onChange={e => this.setState({title: e.target.value})} />
+        <Input placeholder='Title' onChange={e => this.setState({title: e.target.value})} />
         <Button onClick={this.onCreate}>Create Workspace</Button>
       </React.Fragment>
     )
@@ -27,10 +27,10 @@ class CreateWorkspace extends React.Component {
 }
 
 const SelectWorkspaceWidget = ({ workspaces, workspace, onSelect, onCreate }) => {
-  return <div className='flex text-xs'>
+  return <div className='flex'>
     { workspace && <span><em>{workspace.info.title}</em>&nbsp;</span> }
     <Modal toggle={props => <span {...props} className='cursor-pointer'>Change</span>}>
-      {({toggle}) => (
+      {({ toggle }) => (
         <React.Fragment>
           <Heading>Select Workspace</Heading>
           <List items={workspaces} onSelect={item => () => { onSelect(item.key); toggle() }}>

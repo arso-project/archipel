@@ -20,11 +20,11 @@ class CreateDirWidget extends React.Component {
 
   render () {
     return (
-      <Foldable heading='Create dir' open>
+      <Foldable heading='Create dir'>
         <div className='flex mb-2'>
-          <span>Title: </span>
           <input type='text'
             className='p-1 border-2'
+            placeholder='title'
             onChange={(e) => this.setState({ title: e.target.value })}
           />
           <Button onClick={this.onCreate}>Create Dir</Button>

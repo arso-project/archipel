@@ -32,7 +32,7 @@ class Tabs extends React.Component {
       <div>
         <div className='flex'>
           <TabHeader tabs={tabs} onSelect={this.onSelect} selected={selected} />
-          <div className='flex-1'>
+          <div className='ml-4 flex-1'>
             <TabContent tabs={tabs} selected={selected} props={props} />
           </div>
         </div>

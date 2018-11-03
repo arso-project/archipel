@@ -5,7 +5,7 @@ import Button from './Button'
 const ModalElement = ({ children, onClose }) => (
   <React.Fragment>
     <div className='z-40 fixed pin overflow-auto bg-smoke flex text-black'>
-      <div className='relative p-8 bg-white w-full max-w-md m-auto flex-col flex'>
+      <div className='relative p-4 bg-white w-full max-w-md m-auto flex-col flex'>
         <span className='absolute pin-r pin-t m-8 cursor-pointer' onClick={onClose}>Close</span>
         {children}
       </div>

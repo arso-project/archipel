@@ -2,7 +2,10 @@
 // import React from 'react'
 // export const Div = (props) => <div {...proplist(props)}>{props.children}</div>
 
+import './global.pcss'
+
 export { default as Button } from './components/Button'
+export { default as Input } from './components/Input'
 export { default as Box } from './components/Box'
 export { default as Card } from './components/Card'
 export { default as Heading } from './components/Heading'

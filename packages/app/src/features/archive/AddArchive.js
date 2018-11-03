@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button, List, Foldable } from '@archipel/ui'
+import { Button, Input, Foldable } from '@archipel/ui'
 import { Consumer } from 'ucore/react'
 
 // TODO: improve Feedback, set Title, set shared Flag, preserve shared State at Archive Info
@@ -21,14 +21,12 @@ class AddArchiveWidget extends React.PureComponent {
   render () {
     return (
       <Foldable heading='Add archive'>
-        <div className='flex mb-2'>
-          <span>Key: </span>
-          <input type='text' placeholder='Key'
-            className='p-1 border-2'
+        <div className='flex mb-4'>
+          <Input placeholder='Key'
             onChange={(e) => this.setState({ key: e.target.value })}
           />
         </div>
-        <Button onClick={this.onAdd}>Add Archive</Button>
+        <Button className='w-full' onClick={this.onAdd}>Add Archive</Button>
       </Foldable>
     )
   }
