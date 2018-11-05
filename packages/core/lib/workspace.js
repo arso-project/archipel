@@ -2,6 +2,7 @@ const hyperdb = require('hyperdb')
 const events = require('events')
 const inherits = require('inherits')
 const pify = require('pify')
+// const netspeed = require('hyperdrive-network-speed')
 
 const library = require('./library')
 const { hex, chainStorage, asyncThunky } = require('./util')
@@ -22,6 +23,8 @@ function Workspace (storage, key, opts) {
     reduce: (a, b) => a,
     valueEncoding: 'json'
   })
+
+  this.networkStats = []
 
   this.ready = asyncThunky(this._ready.bind(this))
 
@@ -120,6 +123,46 @@ Workspace.prototype.getStatusAndInfo = async function (key) {
   let status = archive.getState()
   status.localWriterKey = archive.instance.db.local.key.toString('hex')
   return { info, status, key: archive.key }
+}
+
+let timer = setInterval(() => (console.log('initiated NetworkStats timer')), 10000)
+Workspace.prototype.collectNetworkStats = async function () {
+  //let self = this
+
+  if (timer) clearInterval(timer)
+  let archives = this.library.getPrimaryArchives()
+  let oldStats = []
+
+  // await archives.forEach(p => (p.then(a => this.networkStats.push({ archive: a.key, stats: a.networkStats() }), null)))
+  timer = setInterval(async () => {
+    oldStats = this.networkStats
+    this.networkStats = await readNetStatsFromArchives()
+
+    if (!compArr(this.networkStats, oldStats)) {
+      this.emit('newNetStats')
+    }
+    // await archives.forEach(p => (p.then(a => this.networkStats.push({ archive: a.key, stats: a.networkStats() }), null)))
+    // console.log(this.networkStats)
+  }, 1000)
+  // return this.networkStats
+
+  async function readNetStatsFromArchives () {
+    let netStats = []
+    await archives.forEach(a => (netStats.push({ archive: a.key, stats: a.networkStats() })))
+    return netStats
+  }
+
+  function compArr (a, b) {
+    if (a.length !== b.length) return false
+    for (let i = 0; i <= a.length; i++) {
+      if (a[i] !== b[i]) return false
+    }
+    return true
+  }
+}
+
+Workspace.prototype.getNetStats = async function () {
+  return this.networkStats
 }
 
 Workspace.prototype.saveArchive = async function (key) {

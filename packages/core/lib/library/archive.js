@@ -153,6 +153,15 @@ Archive.prototype.startShare = async function () {
   })
 }
 
+Archive.prototype.networkStats = function () {
+  if (!this.network) return []
+  // return this.network.connections
+  // console.log(this.network.connections)
+  return [
+    this.network.connections.length
+  ]
+}
+
 Archive.prototype.authorizeWriter = function (key) {
   const self = this
   const db = this.db

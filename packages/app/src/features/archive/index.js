@@ -14,4 +14,8 @@ async function archivePlugin (core, opts) {
   function onWorkspaceChange (state, oldState) {
     store.loadArchives()
   }
+
+  core.rpc.reply('archive/collectNetworkStats', (req) => {
+    core.getStore('archive').collectNetworkStats(req)
+  })
 }

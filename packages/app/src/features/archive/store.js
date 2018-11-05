@@ -49,6 +49,11 @@ const addRemoteArchive = (key) => async (set, { get, core, actions }) => {
   return res
 }
 
+const collectNetworkStats = (key) => async (set, { get, core, actions }) => {
+  const res = await core.rpc.request('workspace/collectNetworkStats', { key })
+  set(draft => { draft.networkStats = res.data })
+}
+
 /* Selectors */
 
 const sortedByName = state => sortByProp(Object.values(state.archives), 'title')
@@ -59,6 +64,14 @@ const selectedArchive = state => {
   }
 }
 
+const getArchivePeers = state => {
+  if (!state.networkStats) return '/'
+  for (let i = 0; i <= state.networkStats.length; i++) {
+    if (state.networkStats[i].archive === state.selected) return state.networkStats[i].stats
+  }
+  return '/'
+}
+
 export default {
   initialState,
   actions: {
@@ -67,10 +80,12 @@ export default {
     selectArchive,
     shareArchive,
     addRemoteArchive,
+    collectNetworkStats,
     authorizeWriter
   },
   select: {
     sortedByName,
-    selectedArchive
+    selectedArchive,
+    getArchivePeers
   }
 }
