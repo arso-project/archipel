@@ -20,7 +20,11 @@ class ArchiveScreen extends React.PureComponent {
         <div className={sidebarCls} >
           <CreateArchive />
           <AddArchive />
-          <ListArchives archives={archives} selected={archive} onSelect={(item, i) => (e) => { onSelect(item.key) }} />
+          <ListArchives
+            archives={archives}
+            isSelected={item => item === selectedArchive}
+            onSelect={(item, i) => (e) => { onSelect(item.key) }}
+          />
         </div>
         <div className='flex-1 p-4'>
           { selectedArchive && <Heading className='mt-0' size={8}>{selectedArchive.info.title}</Heading> }

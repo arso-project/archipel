@@ -18,7 +18,7 @@ const Heading = ({ ...props }) => {
   if (!props.is) props.is = 'h2'
   props.cls = props.cls || []
   if (!props.noMy) props.cls.push('my-4')
-  if (!props.size) props.size = 2 
+  if (!props.size) props.size = 2
   if (props.truncate) props.cls.push('truncate')
   props.cls.push(sizes[props.size])
   return (

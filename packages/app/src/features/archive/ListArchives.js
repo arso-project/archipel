@@ -15,12 +15,13 @@ const Archive = ({ item, selected }) => {
     </span>
   )
 }
-const ListArchives = ({ archives, onSelect, selected }) => {
+const ListArchives = ({ archives, onSelect, isSelected }) => {
   return (
     <List
       items={archives}
       onSelect={onSelect}
-      selected={item => item.key === selected}
+      isSelected={isSelected}
+      focus
       renderItem={item => <Archive item={item} />} />
   )
 }

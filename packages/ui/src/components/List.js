@@ -5,18 +5,62 @@ const defaultRender = item => item
 class List extends React.Component {
   constructor (props) {
     super()
-    this.state = { selected: props.selected }
+    this.state = { selected: -1 }
+    this.onKeydown = this.onKeydown.bind(this)
   }
 
-  onSelect (item, i) {
+  onSelect (i) {
+    let item = this.props.items[i]
     return (e) => {
-      this.setState({ selected: i })
       if (this.props.onSelect) this.props.onSelect(item, i)(e)
+      else this.setState({ selected: i })
     }
   }
 
+  onKeydown (e) {
+    if (!this.props.focus) return
+
+    let i = this.getSelected()
+    if (this.props.focus && e.key === 'ArrowDown') {
+      if (i < this.props.items.length - 1) i++
+      else i = 0
+    }
+    if (this.props.focus && e.key === 'ArrowUp') {
+      if (i < 1) i = this.props.items.length - 1
+      else i--
+    }
+    if (i > -1) this.onSelect(i)(e)
+  }
+
+  componentDidMount () {
+    document.addEventListener('keydown', this.onKeydown, false)
+  }
+
+  componentWillUnmount () {
+    document.removeEventListener('keydown', this.onKeydown, false)
+  }
+
+  componentWillReceiveProps (newProps) {
+    if ('selected' in newProps && newProps.selected !== this.state.selected) {
+      this.setState({ selected: newProps.selected })
+    }
+  }
+
+  getSelected () {
+    let i = this.props.items.reduce((ret, item, i) => {
+      if (ret !== null) return ret
+      if (this.isSelected(item, i)) return i
+      return null
+    }, null)
+    return i
+  }
+
+  isSelected (item, i) {
+    if (this.props.isSelected) return this.props.isSelected(item, i)
+    else return this.state.selected === i
+  }
+
   render () {
-    const self = this
     let { items, renderItem, children, grid } = this.props
     if (!items) return <span>No items.</span>
     const clsBase = 'px-4 py-3 leading-none m-0 cursor-pointer overflow-hidden '
@@ -27,11 +71,11 @@ class List extends React.Component {
           // let cls = clsBase + (isSelected(item, i) ? 'bg-teal-dark hover:bg-teal-dark' : 'bg-bright hover:bg-teal')
           let cls = clsBase
           cls += ' truncate '
-          cls += (isSelected(item, i) ? 'bg-grey-light' : 'hover:bg-grey-lightest')
+          cls += (this.isSelected(item, i) ? 'bg-grey-light' : 'hover:bg-grey-lightest')
           let key = typeof item === 'object' && item.id ? item.id : i
           if (grid) cls += ' float-left border-transparent border-8'
           return (
-            <li className={cls} key={key} onClick={this.onSelect(item, i)}>
+            <li className={cls} key={key} onClick={this.onSelect(i)}>
               {renderItem(item, i)}
             </li>
           )
@@ -39,16 +83,6 @@ class List extends React.Component {
       </ul>
     )
 
-    function isSelected (item, i) {
-      if (self.props.selected) {
-        if (typeof self.props.selected === 'function') {
-          return self.props.selected(item)
-        } else return self.props.selected === i
-      } else if (self.state.selected === i) {
-        return true
-      }
-      return false
-    }
   }
 }
 
