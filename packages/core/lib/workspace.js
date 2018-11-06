@@ -1,9 +1,7 @@
 const hyperdb = require('hyperdb')
 const events = require('events')
 const inherits = require('inherits')
-const pify = require('pify')
-
-const library = require('./library')
+const library = require('hyperlib')
 const { hex, chainStorage, asyncThunky } = require('./util')
 
 module.exports = Workspace

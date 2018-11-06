@@ -11,7 +11,7 @@ async function plugin (core, opts) {
 
   core.on('workspace/createArchive', async ({ workspace, archive }) => {
     if (!(archive.isPrimary() && archive.getState().authorized && archive.type === 'hyperdrive')) return
-    const mount = await archive.makePersistentMount('graph', 'hypergraph')
+    const mount = await archive.makePersistentMount('hypergraph', 'graph')
     const graph = mount.getInstance()
     const key = mount.key
     await graph.put({ subject: key, predicate: 'archipel://parent', object: archive.key })
