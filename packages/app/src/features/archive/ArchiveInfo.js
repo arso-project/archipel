@@ -69,19 +69,22 @@ class Authorize extends React.Component {
 
 const ArchiveInfo = () => {
   return <Consumer store='archive' select={['selectedArchive', 'getArchivePeers']}>
-    {([archive, archivePeers], { shareArchive, authorizeWriter }) => {
+    {([archive, archivePeers], { shareArchive, authorizeWriter, collectNetworkStats }) => {
       if (!archive) return null
+      if (!archivePeers) collectNetworkStats()
       let { key, status, info } = archive
       return (
         <div>
           <Heading>{info.title}</Heading>
           <Item label='Key'><ClickToCopy>{key}</ClickToCopy></Item>
           <Item label='Share'>
-            <ToggleButton inactiveLabel='NO' activeLabel='YES'
-              value={status.share}
-              onToggle={() => shareArchive(key, !status.share)}
-            />
-            <span>Peers: {archivePeers}</span>
+            <div className='flex flex-row'>
+              <ToggleButton className='flex-1 px-2' inactiveLabel='NO' activeLabel='YES'
+                value={status.share}
+                onToggle={() => shareArchive(key, !status.share)}
+              />
+              <span className='flex-1 px-2'>Peers: {archivePeers}</span>
+            </div>
           </Item>
           <Item label='Authorized'><YesNo>{status.authorized}</YesNo></Item>
           <Item label='Local key'><ClickToCopy>{status.localWriterKey}</ClickToCopy></Item>

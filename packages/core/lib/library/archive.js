@@ -2,6 +2,7 @@ const EventEmitter = require('events').EventEmitter
 const inherits = require('inherits')
 const hyperdiscovery = require('hyperdiscovery')
 const debug = require('debug')('archive')
+// const netspeed = require('hyperdrive-network-speed')
 
 const { hex, asyncThunky } = require('../util')
 

@@ -2,6 +2,7 @@ const hyperdb = require('hyperdb')
 const events = require('events')
 const inherits = require('inherits')
 const pify = require('pify')
+const netspeed = require('@jimpick/hyperdrive-network-speed')
 // const netspeed = require('hyperdrive-network-speed')
 
 const library = require('./library')
@@ -133,11 +134,14 @@ Workspace.prototype.collectNetworkStats = async function () {
   let archives = this.library.getPrimaryArchives()
   let oldStats = []
 
+  const speed = netspeed(archives[0])
+  // console.log(this.archives[0])
+
+  console.log('wsCore:collectNetworkStats:', archives[0], speed)
   // await archives.forEach(p => (p.then(a => this.networkStats.push({ archive: a.key, stats: a.networkStats() }), null)))
   timer = setInterval(async () => {
     oldStats = this.networkStats
     this.networkStats = await readNetStatsFromArchives()
-
     if (!compArr(this.networkStats, oldStats)) {
       this.emit('newNetStats')
     }

@@ -65,7 +65,8 @@ const selectedArchive = state => {
 }
 
 const getArchivePeers = state => {
-  if (!state.networkStats) return '/'
+  if (!state.networkStats) return null
+  console.log(state.networkStats)
   for (let i = 0; i <= state.networkStats.length; i++) {
     if (state.networkStats[i].archive === state.selected) return state.networkStats[i].stats
   }
