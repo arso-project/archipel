@@ -48,7 +48,7 @@ class App extends React.Component {
             <div className='font-bold'>Archipel: Somoco</div>
             <div className=''><SelectWorkspace /></div>
           </Header>
-          <div className='flex-1 flex flex-col'>
+          <div className='flex-1 flex flex-col overflow-y-scroll'>
             <ScreenRender chrome={this.state.chrome} />
           </div>
           <Footer show={this.state.chrome}>Footer</Footer>

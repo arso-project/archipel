@@ -48,6 +48,20 @@ ArchipelHyperdrive.prototype.watch = function () {
   this.db.watch('/', () => self.emit('change'))
 }
 
+ArchipelHyperdrive.prototype.history = function (path) {
+  return new Promise((resolve, reject) => {
+    const stream = this.db.createKeyHistoryStream(path)
+    let items = []
+    stream.on('data', stat => {
+      items.push(stat)
+    })
+    stream.on('end', () => {
+      resolve(items)
+    })
+    stream.on('error', err => reject(err))
+  })
+}
+
 // Workspace interface.
 
 ArchipelHyperdrive.prototype.addMount = async function (mount) {

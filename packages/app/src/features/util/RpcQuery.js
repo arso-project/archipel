@@ -3,6 +3,11 @@ import Maybe from './Maybe'
 import { defaultAsyncState } from '../../lib/state-utils'
 import { WithCore } from 'ucore/react'
 
+const cleanProps = (props) => {
+  const { fetch, shouldRefetch, ...rest } = props
+  return rest
+}
+
 export const defaultShouldRefetch = (prevProps, props) => {
   const keys = Object.keys(props)
   for (let i = 0; i < keys.length; i++) {
@@ -27,7 +32,7 @@ class RpcQuery extends React.PureComponent {
   }
 
   componentDidUpdate (prevProps, prevState) {
-    if (this.shouldRefetch(prevProps, this.props)) {
+    if (this.shouldRefetch(cleanProps(prevProps), cleanProps(this.props))) {
       this.doFetch()
     }
   }

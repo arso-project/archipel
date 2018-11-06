@@ -1,6 +1,7 @@
 const p = require('path')
 const archipelHyperdrive = require('./hyperdrive')
 const mime = require('mime-types')
+let Stat = require('hyperdrive/lib/stat')
 
 module.exports = {
   name: 'Archipel Hyperdrive',
@@ -42,16 +43,6 @@ async function fsPlugin (core, opts) {
 
     return { stats }
 
-    function cleanStat (stat, path, key) {
-      return {
-        key,
-        path,
-        name: p.parse(path).base,
-        isDirectory: stat.isDirectory(),
-        mimetype: stat.isDirectory() ? 'archipel/directory' : mime.lookup(path),
-        children: undefined
-      }
-    }
   })
 
   core.rpc.reply('fs/mkdir', async (req) => {
@@ -73,6 +64,20 @@ async function fsPlugin (core, opts) {
     return {
       stream: rs
     }
+  })
+
+  core.rpc.reply('fs/history', async (req) => {
+    const fs = await getHyperdrive(req)
+    const { key, path } = req
+    let res = await fs.history(req.path)
+    res = res.map(nodes => {
+      let node = nodes[0]
+      let stat = cleanStat(Stat(node.value), path, key)
+      stat.seq = node.seq
+      stat.feed = node.feed
+      return stat
+    })
+    return { history: res }
   })
 
   core.rpc.reply('fs/writeFile', async (req) => {
@@ -104,4 +109,18 @@ function joinPath (prefix, suffix) {
   if (prefix.slice(-1) === '/') prefix = prefix.substring(0, prefix.length - 1)
   if (suffix[0] === '/') suffix = suffix.substring(1)
   return prefix + '/' + suffix
+}
+
+function cleanStat (stat, path, key) {
+  return {
+    key,
+    path,
+    name: p.parse(path).base,
+    isDirectory: stat.isDirectory(),
+    size: stat.size,
+    mtime: stat.mtime,
+    ctime: stat.ctime,
+    mimetype: stat.isDirectory() ? 'archipel/directory' : mime.lookup(path),
+    children: undefined
+  }
 }

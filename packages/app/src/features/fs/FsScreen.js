@@ -5,6 +5,7 @@ import ListDir from './ListDir'
 import CreateDir from './CreateDir'
 import UploadFile from './UploadFile'
 import ViewFile from './ViewFile'
+import Sidebar from './Sidebar'
 import { Consumer } from 'ucore/react'
 
 const Dir = ({ archive, dir, selected, full, onSelect }) => (
@@ -53,16 +54,16 @@ class FsScreen extends React.PureComponent {
 
   }
 
-  selectFile (fileOrPath) {
+  selectFile (fileOrPath, version) {
     const self = this
     return (e) => {
-      self.setState({ selected: typeof fileOrPath === 'object' ? fileOrPath.path : fileOrPath })
+      self.setState({ selected: typeof fileOrPath === 'object' ? fileOrPath.path : fileOrPath, version })
     }
   }
 
   render () {
     const { archive } = this.props
-    const { selected } = this.state
+    const { selected, version } = this.state
 
     return <div>
       <div className='flex mb-4 max-w-full'>
@@ -72,7 +73,10 @@ class FsScreen extends React.PureComponent {
           {<Dir archive={archive} dir={'/'} selected={selected} onSelect={this.selectFile} />}
         </div>
         <div className='flex-1'>
-          {selected && <Content archive={archive} path={selected} onSelect={this.selectFile} />}
+          {selected && <Content archive={archive} path={selected} version={version} onSelect={this.selectFile} />}
+        </div>
+        <div className='flex-0 w-64'>
+          {selected && <Sidebar archive={archive} path={selected} />}
         </div>
       </div>
     </div>
