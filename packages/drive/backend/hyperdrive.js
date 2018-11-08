@@ -1,7 +1,7 @@
 const hyperdrive = require('hyperdrive')
 const pify = require('pify')
 const pump = require('pump')
-const { hex } = require('../../lib/util')
+const { hex } = require('@archipel/core/lib/util.js')
 
 module.exports = ArchipelHyperdrive
 
@@ -45,7 +45,10 @@ function ArchipelHyperdrive (storage, key, opts) {
 
 ArchipelHyperdrive.prototype.watch = function () {
   const self = this
-  this.db.watch('/', () => self.emit('change'))
+  let watcher = this.db.watch('/', () => self.emit('change'))
+  watcher.on('error', (error) => {
+    console.log('WATCH ERROR', error)
+  })
 }
 
 ArchipelHyperdrive.prototype.history = function (path) {

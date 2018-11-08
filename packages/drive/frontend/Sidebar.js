@@ -46,17 +46,30 @@ const SidebarWidget = (props) => {
           ))
         }}
       </RpcQuery>
+      {props.children}
     </div>
   )
 }
 
 const Sidebar = (props) => {
-  const { archive, path } = props
+  const { archive, path, setVersion } = props
   return (
     <Consumer store='fs' select='getStat' archive={archive} path={path}>
-      {(stat) => {
+      {(stat, store) => {
         if (!stat || stat.isDirectory) return null
-        return <SidebarWidget {...props} stat={stat} />
+        let sidebarItems = store.core.components.getAll('fileSidebar')
+        return (
+          <div>
+            <SidebarWidget {...props} stat={stat}>
+              { sidebarItems && sidebarItems.map((item, i) => (
+                <div key={i}>
+                  <Heading>{item.opts.title}</Heading>
+                  <item.component stat={stat} archive={archive} path={path} />
+                </div>
+              ))}
+            </SidebarWidget>
+          </div>
+        )
       }}
     </Consumer>
   )

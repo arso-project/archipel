@@ -4,7 +4,6 @@ const ucore = require('ucore')
 const server = require('./features/http-server')
 const rpc = require('ucore/rpc/server')
 const workspace = require('./features/workspace')
-const drive = require('./features/hyperdrive')
 
 const Rootspace = require('./lib/rootspace')
 
@@ -35,7 +34,6 @@ async function boot (opts) {
     core.register(rpc, core.config('rpc'))
     core.use(archipel, { dbPath: core.config('dbPath') })
     core.use(workspace)
-    core.register(drive)
 
     // extension
     extensions.forEach(extension => {

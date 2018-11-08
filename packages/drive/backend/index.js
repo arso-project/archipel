@@ -19,7 +19,13 @@ async function fsPlugin (core, opts) {
     maybeWatch(req)
     const { key, path } = req
     const fs = await getHyperdrive(req)
-    const stat = await fs.stat(path)
+    let stat
+    try {
+      stat = await fs.stat(path)
+    } catch (e) {
+      console.log('STAT ERROR', e)
+      return []
+    }
     const parentStat = cleanStat(stat, path, key)
     const stats = []
 

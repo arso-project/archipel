@@ -1,0 +1,26 @@
+{
+  "name": "@archipel/drive",
+  "version": "0.1.0",
+  "description": "",
+  "scripts": {
+    "test": "tape test/*"
+  },
+  "author": "Franz Heinzmann",
+  "license": "MIT",
+  "browser": "frontend/index.js",
+  "main": "backend/index.js",
+  "peerDependencies": {
+    "react": "^16.5.2",
+    "react-dom": "^16.5.2",
+    "proptypes": "^1.1.0"
+  },
+  "dependencies": {
+    "@archipel/ui": "^1.0",
+    "@archipel/core": "^0.1.0",
+    "@archipel/app": "^0.1.0",
+    "hyperdrive": "github:Frando/hyperdrive#archipel-ev",
+    "ucore": "^0.4.0"
+  },
+  "devDependencies": {
+  }
+}
