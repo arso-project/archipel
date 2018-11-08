@@ -12,7 +12,7 @@ class List extends React.Component {
   onSelect (i) {
     let item = this.props.items[i]
     return (e) => {
-      if (this.props.onSelect) this.props.onSelect(item, i)(e)
+      if (item && this.props.onSelect) this.props.onSelect(item, i)(e)
       else this.setState({ selected: i })
     }
   }
@@ -61,15 +61,17 @@ class List extends React.Component {
   }
 
   render () {
-    let { items, renderItem, children, grid } = this.props
+    let { items, renderItem, children, grid, focus } = this.props
     if (!items) return <span>No items.</span>
-    const clsBase = 'px-4 py-3 leading-none m-0 cursor-pointer overflow-hidden '
+    const clsItem = 'px-4 py-3 leading-none m-0 cursor-pointer overflow-hidden '
+    let clsBase = 'list-reset '
+    // if (focus) clsBase += ' border border-teal'
     renderItem = renderItem || children || defaultRender
     return (
-      <ul className='list-reset'>
+      <ul className={clsBase}>
         { items.map((item, i) => {
           // let cls = clsBase + (isSelected(item, i) ? 'bg-teal-dark hover:bg-teal-dark' : 'bg-bright hover:bg-teal')
-          let cls = clsBase
+          let cls = clsItem
           cls += ' truncate '
           cls += (this.isSelected(item, i) ? 'bg-grey-light' : 'hover:bg-grey-lightest')
           let key = typeof item === 'object' && item.id ? item.id : i
