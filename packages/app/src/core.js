@@ -32,6 +32,8 @@ function boot (extensions) {
 
   extensions.forEach(extension => core.register(extension))
 
+  window.archipelCore = core
+
   return core
 }
 
