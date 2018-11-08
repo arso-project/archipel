@@ -3,6 +3,7 @@ import { Consumer, WithCore } from 'ucore/react'
 import { Heading, Button } from '@archipel/ui'
 import ToggleButton from 'react-toggle-button'
 import { MdCheck, MdCancel } from 'react-icons/md'
+import NetStats from './NetStats'
 
 const Item = ({ label, children }) => (
   <div className='px-1 py-2 border-grey-light border-b flex'>
@@ -68,10 +69,9 @@ class Authorize extends React.Component {
 }
 
 const ArchiveInfo = () => {
-  return <Consumer store='archive' select={['selectedArchive', 'getArchivePeers']}>
-    {([archive, archivePeers], { shareArchive, authorizeWriter, collectNetworkStats }) => {
+  return <Consumer store='archive' select={'selectedArchive'}>
+    {(archive, { shareArchive, authorizeWriter, getNetworkStats }) => {
       if (!archive) return null
-      if (!archivePeers) collectNetworkStats()
       let { key, status, info } = archive
       return (
         <div>
@@ -83,7 +83,7 @@ const ArchiveInfo = () => {
                 value={status.share}
                 onToggle={() => shareArchive(key, !status.share)}
               />
-              <span className='flex-1 px-2'>Peers: {archivePeers}</span>
+              <NetStats className='flex-1 px-2' />
             </div>
           </Item>
           <Item label='Authorized'><YesNo>{status.authorized}</YesNo></Item>

@@ -14,7 +14,7 @@ async function workspace (core, opts) {
     if (!workspace) throw new Error('Workspace not found.')
     await workspace.ready()
     req.session.workspace = workspace
-    watchNetstats(req)
+    watchNetStats(req)
     return { data: { key: hex(workspace.key) } }
   })
 
@@ -54,10 +54,11 @@ async function workspace (core, opts) {
     return { data: res }
   })
 
-  core.rpc.reply('workspace/collectNetworkStats', async (req) => {
+  core.rpc.reply('workspace/getNetworkStats', async (req) => {
     if (!req.session.workspace) throw new Error('No workspace.')
-    let stats = await req.session.workspace.getNetStats()
-    return { data: stats }
+    let res = await req.session.workspace.getNetworkStats()
+    console.log('workspace/getNetworkStats', res)
+    return { data: res }
   })
 
   core.rpc.reply('workspace/authorizeWriter', async (req) => {
@@ -85,9 +86,9 @@ async function workspace (core, opts) {
     hyperDebug(db)
   })
 
-  async function watchNetstats (req) {
+  async function watchNetStats (req) {
     req.session.workspace.on('newNetStats', () => {
-      core.rpc.request('archive/collectNetworkStats')
+      core.rpc.request('archive/loadNetworkStats')
     })
   }
 

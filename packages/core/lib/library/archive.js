@@ -2,7 +2,6 @@ const EventEmitter = require('events').EventEmitter
 const inherits = require('inherits')
 const hyperdiscovery = require('hyperdiscovery')
 const debug = require('debug')('archive')
-// const netspeed = require('hyperdrive-network-speed')
 
 const { hex, asyncThunky } = require('../util')
 
@@ -152,15 +151,6 @@ Archive.prototype.startShare = async function () {
   mounts.forEach(mount => {
     mount.startShare()
   })
-}
-
-Archive.prototype.networkStats = function () {
-  if (!this.network) return []
-  // return this.network.connections
-  // console.log(this.network.connections)
-  return [
-    this.network.connections.length
-  ]
 }
 
 Archive.prototype.authorizeWriter = function (key) {
