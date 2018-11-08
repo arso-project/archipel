@@ -55,7 +55,11 @@ Workspace.prototype._ready = function (done) {
     let promises = []
     rs.on('data', (node) => {
       const { type, key, opts, status } = node.value
-      return self.library.addArchive(type, key, opts, status)
+      try {
+        return self.library.addArchive(type, key, opts, status)
+      } catch (e) {
+        console.log('Could not add archive: ' + key)
+      }
     })
     rs.on('end', async () => {
       await Promise.all(promises)
