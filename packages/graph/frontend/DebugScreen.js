@@ -5,7 +5,6 @@ import { BooleanValue } from 'react-values'
 // import { makeSchema } from './store'
 import { isLiteral } from './util'
 
-
 class GraphTest extends React.Component {
   constructor () {
     super()
@@ -158,8 +157,8 @@ const SchemaClass = ({ id, schema, subjects, collapsed, level }) => {
 }
 
 const SchemaBrowserContainer = () => (
-  <Consumer store='graph' select={['all', 'schema']}>
-    {([subjects, schema]) => <SchemaBrowser subjects={subjects} schema={schema} roots={['bf:Work', 'bf:Item', 'bf:Instance', 'as:Object', 'oa:annotation']} />}
+  <Consumer store='graph' select={['all', 'schema']} fetch={'query'} fetchOnResult={() => true} query={{}}>
+    {([subjects, schema]) => <SchemaBrowser subjects={subjects} schema={schema} roots={['bf:Work', 'bf:Item', 'bf:Instance', 'as:Object', 'oa:Annotation']} />}
   </Consumer>
 )
 
@@ -172,9 +171,9 @@ const SchemaBrowser = ({ subjects, schema, roots }) => {
 const GraphScreen = () => (
   <div>
     <Heading>GRAPH</Heading>
-    <WithCore>{core => <GraphTest core={core} />}</WithCore>
+    {/* <WithStore store='graph'>{store => store.queryStream({})}</WithStore> */}
     <SchemaBrowserContainer />
-    <BigList />
+    {/* <BigList /> */}
   </div>
 )
 

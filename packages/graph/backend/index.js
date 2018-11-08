@@ -25,29 +25,54 @@ async function plugin (core, opts) {
     return { data: res }
   })
 
+  core.rpc.reply('graph/get', async req => {
+    const { query } = req
+    const archive = await req.session.workspace.getArchive(req.key)
+    if (!archive) return {}
+    let graph = await archive.getMountInstance('graph')
+    if (!graph) return {}
+    const triples = await graph.get(query)
+    return { triples }
+  })
+
+  core.rpc.reply('graph/put', async req => {
+    const archive = await req.session.workspace.getArchive(req.key)
+    let graph = await archive.getMountInstance('graph')
+    const { triples } = req
+    let promises = triples.map(triple => graph.put(triple))
+    await Promise.all(promises)
+    return { done: true }
+  })
+
   // core.rpc.reply('graph/get', async req => {
+  //   const hypergraph = require('./hypergraph')
+  //   const path = require('path')
+  //   let db = path.resolve(path.join(__dirname, '../../../../graph/db/owl'))
+  //   console.log(db)
+  //   const graph = hypergraph(db)
   //   const { query } = req
-  //   const triples = await graph.get(query)
+  //   const triples = await graph.get({})
   //   return { triples }
   // })
+
   // core.rpc.reply('graph/getStream', async req => {
   //   const { query } = req
-  //   const queryStream = graph.getStream(query)
+  //   const queryStream = graph.getStream({})
   //   const resultStream = makeBuffered(500)
   //   queryStream.pipe(resultStream)
   //   return { stream: resultStream }
   // })
 }
 
-// const through2 = require('through2')
-// const makeBuffered = (limit) => {
-//   let buf = []
-//   return through2.obj(function (chunk, enc, next) {
-//     buf.push(chunk)
-//     if (buf.length > limit) {
-//       this.push(buf)
-//       buf = []
-//     }
-//     next()
-//   })
-// }
+const through2 = require('through2')
+const makeBuffered = (limit) => {
+  let buf = []
+  return through2.obj(function (chunk, enc, next) {
+    buf.push(chunk)
+    if (buf.length > limit) {
+      this.push(buf)
+      buf = []
+    }
+    next()
+  })
+}

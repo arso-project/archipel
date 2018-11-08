@@ -12,15 +12,15 @@
   "peerDependencies": {
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
-    "proptypes": "^1.1.0",
-    "ucore": "^0.3.5"
+    "proptypes": "^1.1.0"
   },
   "dependencies": {
     "@archipel/ui": "^1.0",
     "@archipel/app": "^0.1.0",
     "hyper-readings": "0.0.15",
     "hypergraph": "^1.1.0",
-    "superstruct": "^0.6.0"
+    "superstruct": "^0.6.0",
+    "ucore": "^0.4.0"
   },
   "devDependencies": {
     "rollup-plugin-peer-deps-external": "^2.2.0",

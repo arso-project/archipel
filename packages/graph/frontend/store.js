@@ -5,14 +5,20 @@ const initialState = {
 }
 
 const actions = {
-  query: ({ query }) => async (set, { core }) => {
-    let { triples } = await core.rpc.request('graph/get', { query })
+  query: ({ query, archive }) => async (set, { core }) => {
+    let key = archive
+    let { triples } = await core.rpc.request('graph/get', { query, key })
     set(draft => { draft.subjects = triplesToThings(draft.subjects, triples) })
-  },
-  queryStream: ({ query }) => async (set, { core }) => {
-    let { stream } = await core.rpc.request('graph/getStream', { query })
-    stream.on('data', triples => set(draft => { draft.subjects = triplesToThings(draft.subjects, triples) }))
+    let related = []
+    triples.forEach(triple => {
+    })
   }
+  // queryStream: ({ query }) => async (set, { core }) => {
+  //   console.log('STRAT')
+  //   let { stream } = await core.rpc.request('graph/getStream', { query })
+  //   console.log('STREAM', stream)
+  //   stream.on('data', triples => set(draft => { draft.subjects = triplesToThings(draft.subjects, triples) }))
+  // }
 }
 
 const typeAliases = {
@@ -121,6 +127,7 @@ export function makeSchema (subjects) {
   if (!Object.keys(subjects).length) return null
   let byType = makeIndex(subjects, 'type', typeAliases, '__notype__')
   let idx = {}
+  console.log(byType)
 
   let classes = byType.Class.map(id => subjects[id])
   let props = byType.Property.map(id => subjects[id])
@@ -167,6 +174,7 @@ function makeIndex (subjects, prop, aliases, placeholder) {
 }
 
 function triplesToThings (state, triples) {
+  if (!triples || !triples.length) return state
   triples.forEach((triple) => {
     let { subject, predicate, object } = triple
     // object = fromRdfValue(object)

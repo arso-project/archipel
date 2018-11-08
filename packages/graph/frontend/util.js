@@ -20,6 +20,14 @@ export function fromRdfValue (value) {
   return JSON.parse(match[1])
 }
 
+export function literal (value) {
+  if (typeof value === 'number') {
+    return `"${value}"^^xsd:decimal`
+  } else {
+    return JSON.stringify(value)
+  }
+}
+
 export function toRdfValue (value) {
   if (isNode(value)) {
     return value.name
