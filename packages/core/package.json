@@ -27,6 +27,7 @@
     "hyperdb": "^3.5.0",
     "hyperdiscovery": "^8.0.0",
     "hyperdrive": "github:Frando/hyperdrive#archipel-dev",
+    "@jimpick/hyperdrive-network-speed": "github:jimpick/hyperdrive-network-speed#multiwriter-staging",
     "inherits": "^2.0.3",
     "lodash.pickby": "^4.6.0",
     "mime-types": "^2.1.21",

@@ -1,6 +1,7 @@
 const hyperdb = require('hyperdb')
 const events = require('events')
 const inherits = require('inherits')
+const netspeed = require('@jimpick/hyperdrive-network-speed')
 const library = require('hyperlib')
 const { hex, chainStorage, asyncThunky } = require('./util')
 
@@ -20,6 +21,8 @@ function Workspace (storage, key, opts) {
     reduce: (a, b) => a,
     valueEncoding: 'json'
   })
+
+  this.networkStats = {}
 
   this.ready = asyncThunky(this._ready.bind(this))
 
@@ -122,6 +125,37 @@ Workspace.prototype.getStatusAndInfo = async function (key) {
   let status = archive.getState()
   status.localWriterKey = archive.instance.db.local.key.toString('hex')
   return { info, status, key: archive.key }
+}
+
+let timer = setInterval(() => (''), 10000)
+Workspace.prototype.collectAndDistributeNetworkStats = async function () {
+  if (timer) clearInterval(timer)
+  let archives = this.library.getPrimaryArchives()
+  archives.forEach(function (a) { a.netspeed = netspeed(a) })
+
+  timer = setInterval(async () => {
+    this.networkStats = await collectNetworkStats()
+    this.emit('newNetStats', { data: this.networkStats })
+    console.log('emitted')
+  }, 1000)
+
+  async function collectNetworkStats () {
+    let netStats = {}
+    archives.forEach(a => {
+      netStats[a.key] = {
+        peers: a.network ? a.network.connections.length : '/',
+        downSpeed: a.netspeed.downloadSpeed,
+        upSpeed: a.netspeed.uploadSpeed,
+        downTotal: a.netspeed.downloadTotal,
+        upTotal: a.netspeed.uploadTotal
+      }
+    })
+    return netStats
+  }
+}
+
+Workspace.prototype.getNetworkStats = async function () {
+  return this.networkStats
 }
 
 Workspace.prototype.saveArchive = async function (key) {

@@ -3,6 +3,7 @@ import { Consumer, WithCore } from 'ucore/react'
 import { Heading, Button } from '@archipel/ui'
 import ToggleButton from 'react-toggle-button'
 import { MdCheck, MdCancel } from 'react-icons/md'
+import NetStats from './NetStats'
 
 const Item = ({ label, children }) => (
   <div className='border-grey-light border-b flex'>
@@ -69,17 +70,20 @@ class Authorize extends React.Component {
 
 const ArchiveInfo = () => {
   return <Consumer store='archive' select={'selectedArchive'}>
-    {(archive, { shareArchive, authorizeWriter }) => {
+    {(archive, { shareArchive, authorizeWriter, getNetworkStats }) => {
       if (!archive) return null
       let { key, status, info } = archive
       return (
         <div>
           <Item label='Key'><ClickToCopy>{key}</ClickToCopy></Item>
           <Item label='Share'>
-            <ToggleButton inactiveLabel='NO' activeLabel='YES'
-              value={status.share}
-              onToggle={() => shareArchive(key, !status.share)}
-            />
+            <div className='flex flex-row'>
+              <ToggleButton className='flex-1 px-2' inactiveLabel='NO' activeLabel='YES'
+                value={status.share}
+                onToggle={() => shareArchive(key, !status.share)}
+              />
+              <NetStats className='flex-1 px-2' />
+            </div>
           </Item>
           <Item label='Authorized'><YesNo>{status.authorized}</YesNo></Item>
           <Item label='Local key'><ClickToCopy>{status.localWriterKey}</ClickToCopy></Item>
@@ -102,3 +106,9 @@ const ArchiveInfo = () => {
 }
 
 export default ArchiveInfo
+
+/*
+, 'getNetworkStats'
+networkStats
+<div>Peers: {networkStats}</div>
+*/

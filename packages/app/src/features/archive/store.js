@@ -49,6 +49,11 @@ const addRemoteArchive = (key) => async (set, { get, core, actions }) => {
   return res
 }
 
+const writeNetworkStats = (req) => async (set, { get, core, actions }) => {
+  set(draft => { draft.networkStats = req.data })
+  console.log(get().networkStats)
+}
+
 /* Selectors */
 
 const sortedByName = state => sortByProp(Object.values(state.archives), 'title')
@@ -59,6 +64,11 @@ const selectedArchive = state => {
   }
 }
 
+const getNetworkStats = state => {
+  if (!state.networkStats) return null
+  return state.networkStats[state.selected]
+}
+
 export default {
   initialState,
   actions: {
@@ -67,10 +77,12 @@ export default {
     selectArchive,
     shareArchive,
     addRemoteArchive,
+    writeNetworkStats,
     authorizeWriter
   },
   select: {
     sortedByName,
-    selectedArchive
+    selectedArchive,
+    getNetworkStats
   }
 }

@@ -14,6 +14,7 @@ async function workspace (core, opts) {
     if (!workspace) throw new Error('Workspace not found.')
     await workspace.ready()
     req.session.workspace = workspace
+    watchNetworkStats(req)
     return { data: { key: hex(workspace.key) } }
   })
 
@@ -32,6 +33,7 @@ async function workspace (core, opts) {
     if (!req.session.workspace) throw new Error('No workspace.')
     const archives = await req.session.workspace.getPrimaryArchivesWithInfo()
     const data = archives.reduce((data, archive) => Object.assign(data, { [archive.key]: archive }), {})
+    req.session.workspace.collectAndDistributeNetworkStats()
     return { data }
   })
 
@@ -49,6 +51,13 @@ async function workspace (core, opts) {
     if (!req.session.workspace) throw new Error('No workspace.')
     await req.session.workspace.setShare(req.key, req.share)
     let res = await req.session.workspace.getStatusAndInfo(req.key)
+    return { data: res }
+  })
+
+  core.rpc.reply('workspace/getNetworkStats', async (req) => {
+    if (!req.session.workspace) throw new Error('No workspace.')
+    let res = await req.session.workspace.getNetworkStats()
+    console.log('workspace/getNetworkStats')
     return { data: res }
   })
 
@@ -76,4 +85,10 @@ async function workspace (core, opts) {
     const db = instance.db
     hyperDebug(db)
   })
+
+  async function watchNetworkStats (req) {
+    req.session.workspace.on('newNetStats', async (data) => {
+      core.rpc.request('archive/writeNetworkStats', data)
+    })
+  }
 }
