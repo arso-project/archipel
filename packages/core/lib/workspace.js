@@ -126,20 +126,18 @@ Workspace.prototype.getStatusAndInfo = async function (key) {
   return { info, status, key: archive.key }
 }
 
-let timer = setInterval(() => (console.log('initiated NetworkStats timer')), 10000)
-Workspace.prototype.collectNetworkStats = async function () {
-  // let self = this
-
+let timer = setInterval(() => (''), 10000)
+Workspace.prototype.collectAndDistributeNetworkStats = async function () {
   if (timer) clearInterval(timer)
   let archives = this.library.getPrimaryArchives()
   archives.forEach(function (a) { a.netspeed = netspeed(a) })
 
   timer = setInterval(async () => {
-    this.networkStats = await readNetStatsFromArchives()
-    this.emit('newNetStats')
+    this.networkStats = await collectNetworkStats()
+    this.emit('newNetStats', { data: this.networkStats })
   }, 1000)
 
-  async function readNetStatsFromArchives () {
+  async function collectNetworkStats () {
     let netStats = {}
     archives.forEach(a => {
       netStats[a.key] = {
@@ -155,7 +153,6 @@ Workspace.prototype.collectNetworkStats = async function () {
 }
 
 Workspace.prototype.getNetworkStats = async function () {
-  console.log(this.networkStats)
   return this.networkStats
 }
 

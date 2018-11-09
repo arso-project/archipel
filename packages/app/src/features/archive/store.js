@@ -49,9 +49,8 @@ const addRemoteArchive = (key) => async (set, { get, core, actions }) => {
   return res
 }
 
-const loadNetworkStats = (key) => async (set, { get, core, actions }) => {
-  const res = await core.rpc.request('workspace/getNetworkStats')
-  set(draft => { draft.networkStats = res.data })
+const writeNetworkStats = (req) => async (set, { get, core, actions }) => {
+  set(draft => { draft.networkStats = req.data })
 }
 
 /* Selectors */
@@ -66,7 +65,6 @@ const selectedArchive = state => {
 
 const getNetworkStats = state => {
   if (!state.networkStats) return null
-  console.log(state.networkStats)
   return state.networkStats[state.selected]
 }
 
@@ -78,7 +76,7 @@ export default {
     selectArchive,
     shareArchive,
     addRemoteArchive,
-    loadNetworkStats,
+    writeNetworkStats,
     authorizeWriter
   },
   select: {

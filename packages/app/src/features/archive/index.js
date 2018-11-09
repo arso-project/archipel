@@ -15,7 +15,7 @@ async function archivePlugin (core, opts) {
     store.loadArchives()
   }
 
-  core.rpc.reply('archive/loadNetworkStats', (req) => {
-    core.getStore('archive').loadNetworkStats(req)
+  core.rpc.reply('archive/writeNetworkStats', (req) => {
+    core.getStore('archive').writeNetworkStats(req)
   })
 }

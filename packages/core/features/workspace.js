@@ -14,7 +14,7 @@ async function workspace (core, opts) {
     if (!workspace) throw new Error('Workspace not found.')
     await workspace.ready()
     req.session.workspace = workspace
-    watchNetStats(req)
+    watchNetworkStats(req)
     return { data: { key: hex(workspace.key) } }
   })
 
@@ -33,7 +33,7 @@ async function workspace (core, opts) {
     if (!req.session.workspace) throw new Error('No workspace.')
     const archives = await req.session.workspace.getPrimaryArchivesWithInfo()
     const data = archives.reduce((data, archive) => Object.assign(data, { [archive.key]: archive }), {})
-    req.session.workspace.collectNetworkStats()
+    req.session.workspace.collectAndDistributeNetworkStats()
     return { data }
   })
 
@@ -57,7 +57,7 @@ async function workspace (core, opts) {
   core.rpc.reply('workspace/getNetworkStats', async (req) => {
     if (!req.session.workspace) throw new Error('No workspace.')
     let res = await req.session.workspace.getNetworkStats()
-    console.log('workspace/getNetworkStats', res)
+    console.log('workspace/getNetworkStats')
     return { data: res }
   })
 
@@ -86,28 +86,9 @@ async function workspace (core, opts) {
     hyperDebug(db)
   })
 
-  async function watchNetStats (req) {
-    req.session.workspace.on('newNetStats', () => {
-      core.rpc.request('archive/loadNetworkStats')
+  async function watchNetworkStats (req) {
+    req.session.workspace.on('newNetStats', async (data) => {
+      core.rpc.request('archive/writeNetworkStats', data)
     })
   }
-
-  /*
-  let watchlist = []
-  async function maybeWatch (req) {
-    const { key } = req
-    console.log(req, key)
-    if (watchlist.indexOf(key) > -1) return
-    watchlist.push(key)
-    /*
-    const archive = await req.session.workspace.getArchive(key, 'hyperdrive')
-    archive.getInstance().on('change', () => {
-      core.pc.request('workspace/collectNetworkStats', { archive: key })
-    })
-    * /
-    req.session.workspace.on('change', () => {
-      core.rpc.request('archive/collectNetworkStats', { archive: key })
-    })
-  }
-  */
 }
