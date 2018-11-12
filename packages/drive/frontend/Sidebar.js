@@ -1,8 +1,8 @@
 import React from 'react'
-import RpcQuery from '../util/RpcQuery'
+import RpcQuery from '@archipel/app/src/features/RpcQuery'
 import { Consumer } from 'ucore/react'
 import pretty from 'pretty-bytes'
-import { Heading, Foldable } from '@archipel/ui';
+import { Heading, Foldable } from '@archipel/ui'
 
 function date (ts) {
   return ts

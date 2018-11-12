@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Heading } from '@archipel/ui'
-import RpcQuery from '../util/RpcQuery'
+import RpcQuery from '@archipel/app/src/features/RpcQuery'
 import { WithCore } from 'ucore/react'
 
 function matchComponent (file) {

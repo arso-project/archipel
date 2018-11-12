@@ -8,7 +8,6 @@ import componentRegistry from './lib/component-registry'
 import app from './features/app'
 import workspace from './features/workspace'
 import archive from './features/archive'
-import fs from './features/fs'
 
 // settings
 const websocketUrl = window.ARCHIPEL_WEBSOCKET_URL
@@ -28,7 +27,6 @@ function boot (extensions) {
   core.register(app)
   core.register(workspace)
   core.register(archive)
-  core.register(fs)
 
   extensions.forEach(extension => core.register(extension))
 
