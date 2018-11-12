@@ -1,4 +1,4 @@
-import { sortByProps } from '@archipel/app/lib/state-utils'
+import { sortByProps } from '@archipel/app/src/lib/state-utils'
 
 const initialState = {
   stats: {},

@@ -1,5 +1,5 @@
 import React from 'react'
-import RpcQuery from '@archipel/app/src/features/RpcQuery'
+import RpcQuery from '@archipel/app/src/features/util/RpcQuery'
 import { Consumer } from 'ucore/react'
 import pretty from 'pretty-bytes'
 import { Heading, Foldable } from '@archipel/ui'

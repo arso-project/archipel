@@ -2,7 +2,7 @@ import React from 'react'
 import { List } from '@archipel/ui'
 import PropTypes from 'proptypes'
 import { Consumer } from 'ucore/react'
-import { propsDidChange, sortByProps } from '@archipel/app/lib/state-utils'
+import { propsDidChange, sortByProps } from '@archipel/app/src/lib/state-utils'
 
 import { MdChevronRight, MdExpandMore, MdFolder, MdInsertDriveFile } from 'react-icons/md'
 
