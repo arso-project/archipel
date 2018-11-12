@@ -6,12 +6,16 @@ import { App, makeCore } from './src/index.js'
 
 import extensions from '../../extensions'
 
-const core = makeCore(extensions)
-core.ready()
+run()
 
-render(
-  <Provider core={core}>
-    <App />
-  </Provider>,
-  document.querySelector('div')
-)
+function run () {
+  const core = makeCore(extensions)
+  core.ready()
+
+  render(
+    <Provider core={core}>
+      <App />
+    </Provider>,
+    document.querySelector('div')
+  )
+}
