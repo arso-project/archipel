@@ -32,10 +32,14 @@ function asyncThunky (fn) {
     if (cb) thunk(cb)
     else {
       return new Promise((resolve, reject) => {
-        thunk(err => {
-          if (err) reject(err)
-          else resolve()
-        })
+        try {
+          thunk(err => {
+            if (err) reject(err)
+            else resolve()
+          })
+        } catch (err) {
+          reject(err)
+        }
       })
     }
   }
