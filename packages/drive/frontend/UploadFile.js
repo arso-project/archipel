@@ -46,19 +46,31 @@ class UploadFile extends React.Component {
       pending: false,
       result: null,
       status: [],
-      files: []
+      files: [],
+      uploadDir: false
     }
     this.onUpload = this.onUpload.bind(this)
     this.onChange = this.onChange.bind(this)
+    this.setUploadDir = this.setUploadDir.bind(this)
+  }
+
+  async setUploadDir (e) {
+    this.setState({ uploadDir: e.target.checked })
   }
 
   async onChange (e) {
     const fileList = e.target.files
     const files = []
+    let name
     for (let i = 0; i < fileList.length; i++) {
+      if (this.state.uploadDir) {
+        name = fileList[i].webkitRelativePath
+      } else {
+        name = fileList[i].name
+      }
       files.push({
         idx: i,
-        name: fileList[i].name,
+        name: name,
         size: fileList[i].size,
         pending: false,
         done: false,
@@ -87,7 +99,9 @@ class UploadFile extends React.Component {
   async uploadFile (file, i) {
     this.setState({ files: updateAt(this.state.files, i, { pending: true }) })
     const { dir, core } = this.props
-    const { name } = file
+    let { name, webkitRelativePath } = file
+    if (this.state.uploadDir) name = webkitRelativePath
+
     const path = (dir === '/' ? '' : dir) + '/' + name
     const speedo = speedometer()
     let speed = 0
@@ -118,11 +132,18 @@ class UploadFile extends React.Component {
     return (
       <Foldable heading='Upload file'>
         <div className='flex mb-2'>
-          <input type='file' multiple
-            onChange={this.onChange}
-            ref={this.uploadRef}
-          />
+          <input type='checkbox' name='uploadDir' onChange={this.setUploadDir} />
+          <label htmlFor='uploadDir'>Upload Directory</label>
         </div>
+        { this.state.uploadDir ?
+          <div className='flex mb-2'>
+            <input type='file' webkitdirectory='foo' multiple
+              onChange={this.onChange} ref={this.uploadRef} />
+          </div> :
+          <div className='flex mb-2'>
+            <input type='file' multiple
+              onChange={this.onChange} ref={this.uploadRef} />
+          </div> }
         <Button onClick={this.onUpload}>Upload</Button>
         <div className='pt-1'>
           Status:

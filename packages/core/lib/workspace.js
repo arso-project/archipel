@@ -136,7 +136,6 @@ Workspace.prototype.collectAndDistributeNetworkStats = async function () {
   timer = setInterval(async () => {
     this.networkStats = await collectNetworkStats()
     this.emit('newNetStats', { data: this.networkStats })
-    console.log('emitted')
   }, 1000)
 
   async function collectNetworkStats () {
