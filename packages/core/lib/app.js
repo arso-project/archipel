@@ -1,10 +1,10 @@
 
 module.exports = ArchipelApp
 
-const plugin = {
-  mountTypes: () => {}
+//const plugin = {
+//  mountTypes: () => {}
   // fsExtract: (file, graph, next) =>
-}
+// }
 
 function ArchipelApp (opts) {
   if (!(this instanceof ArchipelApp)) return new ArchipelApp(opts)
@@ -64,5 +64,4 @@ ArchipelApp.prototype.runPipeline = async function (pipeline, object) {
       }
     })
   }
-
 }
