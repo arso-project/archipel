@@ -48,15 +48,15 @@ const object = {
 
 ArchipelApp.prototype.runPipeline = async function (pipeline, object) {
   pipeline.forEach(async stage => {
-    object = await runStage (stage, object)
+    object = await runStage(stage, object)
   })
 
   return object
 
   function runStage (stage, object) {
-    return new Promise ((resolve, reject) {
+    return new Promise((resolve, reject) => {
       const funcs = this.getProcessors(stage)
-      next (object)
+      next(object)
       function next (result) {
         const func = funcs.shift()
         if (func) func(result, next)
