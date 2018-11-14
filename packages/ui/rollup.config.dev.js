@@ -29,7 +29,11 @@ export default {
       browser: true
     }),
     commonjs({
-      include: 'node_modules/**'
+      namedExports: {
+        'react': ['Children', 'Component', 'PropTypes', 'createElement'],
+        'react-dom': ['render']
+      },
+      include: /.*/
     }),
     sourcemaps(),
     serve('example'),
