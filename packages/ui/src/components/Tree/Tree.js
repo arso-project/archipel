@@ -35,7 +35,7 @@ class Tooltip extends React.Component {
       width: 'auto',
       maxWidth: '200px',
       left: (bbox.left + (bbox.width / 2) - 50 / 2) + 'px',
-      top: (bbox.top - 40) + 'px'
+      top: (bbox.top - 30) + 'px'
     }
     return (
       <div className={classes} style={style}>
@@ -85,7 +85,7 @@ class TreeNode extends React.Component {
   }
 
   componentDidUpdate (prevProps) {
-    if (prevProps.state.focus && !this.props.state.focus) {
+    if (!prevProps.state.focus && this.props.state.focus) {
       scrollIntoView(this.el.current, {
         behavior: 'smooth',
         scrollMode: 'if-needed',
@@ -286,12 +286,13 @@ class TreeContainer extends React.Component {
   changeFocus (dir) {
     let { ui, data, focus, zoom } = this.state
     let { childProp } = this.props
-    console.log('changeFocus start', dir, this.state)
     if (focus.length < zoom.length) return
 
     focus = focus || []
 
     let focusKey = focus.length ? focus[focus.length - 1] : null
+    let nodeState = walkTree(ui, focus)
+    let node = walkTree(data, focus)
 
     if (dir === 'up' || dir === 'down') {
       let parentPath = focus.length ? focus.slice(0, -1) : []
@@ -301,9 +302,28 @@ class TreeContainer extends React.Component {
       if (dir === 'down') idx++
       if (dir === 'up') idx--
 
-      if (idx < 0 && parentPath.length) {
+      let found = false
+      if (dir === 'up' && idx < 0 && parentPath.length) {
         focus = parentPath.slice(0, -1)
-      } else {
+        found = true
+      } else if (dir === 'down' && nodeState.expand && node[childProp] && Object.keys(node[childProp]).length) {
+        focus = [...focus, childProp, Object.keys(node[childProp])[0]]
+        found = true
+      } else if (dir === 'down' && idx > siblings.length - 1) {
+        let cur = [...parentPath]
+        while (!found && cur.length) {
+          let key = cur[cur.length - 2]
+          cur = cur.slice(0, -2)
+          let siblings = Object.keys(walkTree(data, cur))
+          let idx = siblings.indexOf(key)
+          if (siblings[idx + 1]) {
+            found = true
+            focus = [...cur, siblings[idx + 1]]
+          }
+        }
+      }
+
+      if (!found) {
         if (idx < 0) {
           idx = 0
         } else if (idx > siblings.length - 1) {
@@ -330,6 +350,7 @@ class TreeContainer extends React.Component {
       }
     }
 
+    // console.log('setFocus', focus)
     this.setFocus(focus, ui)
   }
 
@@ -344,7 +365,7 @@ class TreeContainer extends React.Component {
     }
 
     ui = setAndCopy(ui, focus, { focus: true })
-    this.setState({ focus, ui }, () => console.log('setFocus done', this.state))
+    this.setState({ focus, ui })
   }
 
   onAction (path, op, opts) {
@@ -355,7 +376,7 @@ class TreeContainer extends React.Component {
       const { ui, data } = self.state
       const { childProp } = self.props
 
-      let node = walkTree(data, path)
+      const node = walkTree(data, path)
       if (!node) return
 
       let nodeState = walkTree(ui, path) || {}
@@ -364,8 +385,7 @@ class TreeContainer extends React.Component {
       if (op === 'expand') {
         let expand = opts.force ? true : !nodeState.expand
         state.ui = setAndCopy(ui, path, { expand })
-        self.setState({ state })
-        await fetch()
+        self.setState(state, fetch)
       }
 
       if (op === 'zoom') {
@@ -384,12 +404,10 @@ class TreeContainer extends React.Component {
       }
 
       if (op === 'fetch') {
-        await fetch(true)
-        self.setState(state)
+        fetch(true)
       }
 
       async function fetch (force) {
-        let nodeState = walkTree(ui, path) || {}
         if (force || !nodeState.fetch) {
           state.data = await self.fetchChildren(path, node, self.state.data)
           state.ui = setAndCopy(self.state.ui, path, node => ({ ...node, fetch: true }))
@@ -420,7 +438,6 @@ class TreeContainer extends React.Component {
     } else select = null
 
     let path
-    console.log('pre zoom', { data, ui, path })
     if (zoom.length) {
       let zoomData = walkTree(data, zoom)
       let zoomUi = walkTree(ui, zoom)
@@ -429,9 +446,7 @@ class TreeContainer extends React.Component {
       title = zoomData.title
       data = zoomData[childProp]
       ui = zoomUi[childProp]
-      // ui = walkTree(ui, zoom)[childProp]
     } else zoom = null
-    console.log('post zoom', { data, ui, path })
 
     return (
       <div>
