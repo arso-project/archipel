@@ -1,5 +1,6 @@
 import sucrase from 'rollup-plugin-sucrase'
 import postcss from 'rollup-plugin-postcss'
+import json from 'rollup-plugin-json'
 import resolve from 'rollup-plugin-node-resolve'
 import builtins from 'rollup-plugin-node-builtins'
 import globals from 'rollup-plugin-node-globals'
@@ -40,6 +41,7 @@ export default {
         'const cache = require.cache': 'const cache = require.cache || {}'
       }
     }),
+    json(),
     postcss({
       extract: true
     }),
