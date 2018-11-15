@@ -13,15 +13,13 @@ function matchComponent (file) {
 }
 
 const Image = ({ content, stat }) => {
-  let base64 = bufToBase64(content)
-  let src = 'data:image/png;base64,' + base64
+  let src = 'data:image/png;base64,' + content
   return <div className='p-4'>
     <img src={src} alt={stat.name} />
   </div>
 }
 
 const FileContent = ({ content }) => {
-  content = butToUtf8String(content)
   return (
     <div className='p-4 border-2 bg-grey-lighter'>
       <pre className='overflow-hidden max-w-xl'>
@@ -60,6 +58,7 @@ const defaultViewers = [
     component: Image,
     opts: {
       stream: false,
+      format: 'base64',
       match: ({ mimetype }) => {
         return mimetype.match(/image\/.*/)
       }
@@ -69,10 +68,16 @@ const defaultViewers = [
     component: FileContent,
     opts: {
       stream: false,
+      format: 'utf-8',
       match: () => true
     }
   }
 ]
+
+const formats = {
+  'utf-8': butToUtf8String,
+  'base64': bufToBase64
+}
 
 function selectViewer (viewers, file) {
   return viewers.reduce((result, current) => {
@@ -94,13 +99,18 @@ const ViewFile = (props) => {
               let viewers = core.components.getAll('fileViewer') || []
               viewers = viewers.concat(defaultViewers)
               let viewer = selectViewer(viewers, stat)
-              let Viewer = viewer.component
-              if (viewer.opts.stream) {
+              let { opts, component: Viewer } = viewer
+              if (opts.stream) {
                 return <Viewer stream={data.stream} stat={stat} />
               } else {
                 return (
                   <Collect stream={data.stream}>
-                    {content => <Viewer content={content} stat={stat} />}
+                    {content => {
+                      if (opts.format && formats[opts.format]) {
+                        content = formats[opts.format](content)
+                      }
+                      return <Viewer content={content} stat={stat} />
+                    }}
                   </Collect>
                 )
               }
