@@ -106,9 +106,3 @@ const ArchiveInfo = () => {
 }
 
 export default ArchiveInfo
-
-/*
-, 'getNetworkStats'
-networkStats
-<div>Peers: {networkStats}</div>
-*/
