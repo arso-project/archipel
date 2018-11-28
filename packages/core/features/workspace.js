@@ -71,8 +71,8 @@ async function workspace (core, opts) {
 
   core.rpc.reply('workspace/addRemoteArchive', async (req) => {
     if (!req.session.workspace) throw new Error('No workspace.')
-    let { key } = req
-    await req.session.workspace.addRemoteArchive('hyperdrive', key)
+    let { key, opts } = req
+    await req.session.workspace.addRemoteArchive('hyperdrive', key, opts)
     let res = await req.session.workspace.getStatusAndInfo(key)
     return res
   })

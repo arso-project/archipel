@@ -42,9 +42,9 @@ const selectArchive = (key) => (set) => {
   set(draft => { draft.selected = key })
 }
 
-const addRemoteArchive = (key) => async (set, { get, core, actions }) => {
+const addRemoteArchive = (key, opts) => async (set, { get, core, actions }) => {
   let res
-  res = await core.rpc.request('workspace/addRemoteArchive', { key: key })
+  res = await core.rpc.request('workspace/addRemoteArchive', { key: key, opts })
   actions.loadArchives()
   return res
 }

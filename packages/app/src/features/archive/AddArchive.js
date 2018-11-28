@@ -7,13 +7,19 @@ import { Consumer } from 'ucore/react'
 class AddArchiveWidget extends React.PureComponent {
   constructor () {
     super()
-    this.state = { key: '' }
+    this.state = {
+      key: '',
+      sparse: false
+    }
     this.onAdd = this.onAdd.bind(this)
   }
 
   onAdd (e) {
     if (this.state.key) {
-      this.props.onAdd(this.state.key)
+      this.props.onAdd(
+        this.state.key,
+        { sparse: this.state.sparse }
+      )
       this.setState({ key: '' })
     }
   }
@@ -21,6 +27,8 @@ class AddArchiveWidget extends React.PureComponent {
   render () {
     return (
       <Foldable heading='Add archive'>
+        <input type='checkbox' name='selectSparse' onChange={(e) => this.setState({ sparse: e.target.checked })} />
+        <label htmlFor='selectSparse'>Sparse mode</label>
         <div className='flex mb-4'>
           <Input placeholder='Key'
             onChange={(e) => this.setState({ key: e.target.value })}
@@ -35,7 +43,7 @@ class AddArchiveWidget extends React.PureComponent {
 const AddArchive = () => {
   return <Consumer store='archive' select={state => null}>
     {(state, { addRemoteArchive }) => {
-      return <AddArchiveWidget onAdd={title => addRemoteArchive(title)} />
+      return <AddArchiveWidget onAdd={(key, opts) => addRemoteArchive(key, opts)} />
     }}
   </Consumer>
 }
