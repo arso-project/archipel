@@ -27,7 +27,7 @@ class AddArchiveWidget extends React.PureComponent {
   render () {
     return (
       <Foldable heading='Add archive'>
-        <Checkbox id='selectSparse' label='Sparse' info='If an Archive is set to sparse mode it only downloads content on request'
+        <Checkbox id='selectSparse' label='Sparse' info='If an Archive is set to sparse mode it downloads content only on request'
           onChange={(e) => this.setState({ sparse: e.target.checked })} />
         <div className='flex mb-4'>
           <Input placeholder='Key'
