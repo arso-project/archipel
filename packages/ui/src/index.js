@@ -6,6 +6,7 @@ import './global.pcss'
 
 export { default as Button } from './components/Button'
 export { default as Input } from './components/Input'
+export { default as Checkbox} from './components/Checkbox'
 export { default as Box } from './components/Box'
 export { default as Card } from './components/Card'
 export { default as Heading } from './components/Heading'

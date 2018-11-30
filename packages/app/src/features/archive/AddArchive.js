@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button, Input, Foldable } from '@archipel/ui'
+import { Button, Input, Foldable, Checkbox } from '@archipel/ui'
 import { Consumer } from 'ucore/react'
 
 // TODO: improve Feedback, set Title, set shared Flag, preserve shared State at Archive Info
@@ -27,8 +27,7 @@ class AddArchiveWidget extends React.PureComponent {
   render () {
     return (
       <Foldable heading='Add archive'>
-        <input type='checkbox' name='selectSparse' onChange={(e) => this.setState({ sparse: e.target.checked })} />
-        <label htmlFor='selectSparse'>Sparse mode</label>
+        <Checkbox id='selectSparse' label='Sparse' onChange={(e) => this.setState({ sparse: e.target.checked })} />
         <div className='flex mb-4'>
           <Input placeholder='Key'
             onChange={(e) => this.setState({ key: e.target.value })}
@@ -49,3 +48,10 @@ const AddArchive = () => {
 }
 
 export default AddArchive
+
+/*
+  <Checkbox>Sparse
+    <input type='checkbox' value='1' id='selectSparse' onChange={(e) => this.setState({ sparse: e.target.checked })} />
+    <span className='checkmark' />
+  </Checkbox>
+*/

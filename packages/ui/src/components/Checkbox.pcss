@@ -1,0 +1,29 @@
+
+.chb {
+  @apply flex mt-2 mb-2 cursor-pointer text-grey-dark;
+}
+
+/* Hide the browser's default checkbox */
+.chb input {
+ position: absolute;
+ opacity: 0;
+ cursor: pointer;
+ height: 0;
+ width: 0;
+}
+
+.chb [size] {
+  @apply border-4 border-grey-light rounded w-5 h-5 text-transparent
+}
+
+.chb:hover > [size] {
+  @apply shadow border-indigo-lighter
+}
+
+.chb:hover > span {
+  @apply text-indigo-lighter
+}
+
+.chb input:checked + [size] {
+  @apply text-teal-light border-teal-light
+}
