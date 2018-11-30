@@ -1,0 +1,22 @@
+
+.tooltip {
+  @apply pl-2 text-lg;
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  @apply w-auto bg-white text-grey-dark shadow-lg border-4 border-white;
+    visibility: hidden;
+    text-align: left;
+    padding: 5px 0;
+    border-radius: 6px;
+
+    /* Position the tooltip text - see examples below! */
+    position: absolute;
+    z-index: 1;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
