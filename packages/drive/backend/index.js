@@ -68,7 +68,8 @@ async function fsPlugin (core, opts) {
     const fs = await getHyperdrive(req)
     const rs = fs.createReadStream(req.path)
     return {
-      stream: rs
+      stream: rs,
+      path: req.path
     }
   })
 

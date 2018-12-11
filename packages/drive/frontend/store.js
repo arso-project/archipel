@@ -53,6 +53,7 @@ const getChildren = (state, { archive, path }) => {
 
 const getChildrenSortedByName = (state, { archive, path }) => {
   const list = getChildren(state, { archive, path })
+  if (!list) return list
   return sortByProps(list, ['isDirectory:desc', 'name'])
 }
 

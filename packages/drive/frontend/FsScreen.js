@@ -68,7 +68,7 @@ class FsScreen extends React.PureComponent {
     return <div>
       <div className='flex mb-4 max-w-full'>
         {/* {dirs.map((dir, i) => <Dir archive={archive} key={i} dir={dir} depth={i} onSelect={this.selectFile(i)} />)} */}
-        <div className='flex-0 mr-4'>
+        <div className='flex-0 mr-4 w-64'>
           <Heading>Directories</Heading>
           {<Dir archive={archive} dir={'/'} selected={selected} onSelect={this.selectFile} />}
         </div>
