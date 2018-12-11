@@ -21,7 +21,7 @@ const ListArchives = ({ archives, onSelect, isSelected }) => {
       items={archives}
       onSelect={onSelect}
       isSelected={isSelected}
-      focus
+      // focus
       renderItem={item => <Archive item={item} />} />
   )
 }
