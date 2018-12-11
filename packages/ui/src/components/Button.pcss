@@ -1,14 +1,25 @@
 .btn {
-  @apply border-2 border-grey-darkest px-4 py-2 text-center bg-grey-darkest text-grey-lightest;
   line-height: 1rem;
 }
 
-.btn:hover {
+.btn-small {
+  @apply text-blue-dark border-blue-dark border-dotted;
+}
+
+.btn-small:hover {
+  @apply bg-grey-lighter;
+}
+
+.btn-normal {
+  @apply border-2 border-grey-darkest px-4 py-2 text-center bg-grey-darkest text-grey-lightest;
+}
+
+.btn-normal:hover {
   /* @apply text-red bg-grey-lighter; */
   box-shadow: 0 0 6px rgba(50,0,0,0.5);
   @apply text-red-lightest;
 }
 
-.btn:focus {
+.btn-normal:focus {
   @apply outline-none border-red;
 }

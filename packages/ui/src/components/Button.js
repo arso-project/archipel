@@ -4,8 +4,12 @@ import { cls, proplist } from '../util.js'
 import './Button.pcss'
 
 const Button = (props) => {
+  let cl
+  if (props.small) cl = cls(props, 'btn btn-small')
+  else cl = cls(props, 'btn btn-normal')
+  let { small, ...rest } = props
   return (
-    <button {...props} className={cls(props, 'btn')}>
+    <button {...rest} className={cl}>
       {props.children}
     </button>
   )
