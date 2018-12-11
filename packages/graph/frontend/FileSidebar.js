@@ -122,7 +122,6 @@ const Sidebar = (props) => {
     <div>
       <Consumer store='graph' select='byId' fetch='query' query={{ subject: id }} archive={archive} id={id}>
         {(subject, store) => {
-          console.log('CONSUMER sub', subject)
           if (!subject) return <InitSubject {...props} store={store} id={id} />
           else {
             let list = Object.keys(subject).reduce((res, cur) => {
