@@ -5,7 +5,7 @@ import { Button, Heading, Card } from '../src/index.js'
 
 import '../tailwind.pcss'
 
-import Tree from './Tree'
+// import Tree from './Tree'
 
 const lorem = 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.'
 
@@ -14,7 +14,7 @@ const Hr = () => <hr className='my-8 border-2 border-grey' />
 const App = () => (
   <div className='m-4'>
     <Heading>Styleguide</Heading>
-    <Tree />
+    {/* <Tree /> */}
     <Button>Hello, world!</Button>
     <Hr />
     <div className='flex flex-wrap'>
