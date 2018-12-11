@@ -32,24 +32,31 @@ const FileContent = ({ content }) => {
 class Collect extends React.Component {
   constructor (props) {
     super(props)
-    this.content = null
-    this.state = { done: false }
+    this.state = { done: false, content: null }
   }
 
   componentDidMount () {
+    this.collect()
+  }
+
+  componentDidUpdate (oldProps) {
+    if (this.props.stream !== oldProps.stream) this.collect()
+  }
+
+  collect () {
     let parts = []
     this.props.stream.on('data', data => {
       parts.push(data)
     })
     this.props.stream.on('end', () => {
-      this.content = concatenate(parts)
-      this.setState({ done: true })
+      let content = concatenate(parts)
+      this.setState({ done: true, content })
     })
   }
 
   render () {
     if (!this.state.done) return <div>Loading</div>
-    else return this.props.children(this.content)
+    else return this.props.children(this.state.content)
   }
 }
 
@@ -60,7 +67,7 @@ const defaultViewers = [
       stream: false,
       format: 'base64',
       match: ({ mimetype }) => {
-        return mimetype.match(/image\/.*/)
+        return mimetype && mimetype.match(/image\/.*/)
       }
     }
   },
@@ -87,39 +94,47 @@ function selectViewer (viewers, file) {
   }, null)
 }
 
-const ViewFile = (props) => {
-  const { path, stat, archive } = props
-  return (
-    <div>
-      <Heading>{path}</Heading>
-      <WithCore>
-        {core => (
-          <RpcQuery {...props} fetch={props => ['fs/readFileStream', { key: props.archive, path: props.path }]}>
-            {(data) => {
-              let viewers = core.components.getAll('fileViewer') || []
-              viewers = viewers.concat(defaultViewers)
-              let viewer = selectViewer(viewers, stat)
-              let { opts, component: Viewer } = viewer
-              if (opts.stream) {
-                return <Viewer stream={data.stream} stat={stat} />
-              } else {
-                return (
-                  <Collect stream={data.stream}>
-                    {content => {
-                      if (opts.format && formats[opts.format]) {
-                        content = formats[opts.format](content)
-                      }
-                      return <Viewer content={content} stat={stat} />
-                    }}
-                  </Collect>
-                )
-              }
-            }}
-          </RpcQuery>
-        )}
-      </WithCore>
-    </div>
-  )
+const FileViewer = (props) => {
+  const { stream, stat, viewers } = props
+  let viewer = selectViewer(viewers, stat)
+  let { opts, component: Viewer } = viewer
+  if (opts.stream) {
+    return <Viewer stream={stream} stat={stat} />
+  } else {
+    return (
+      <Collect stream={stream}>
+        {content => {
+          if (opts.format && formats[opts.format]) {
+            content = formats[opts.format](content)
+          }
+          return <Viewer content={content} stat={stat} />
+        }}
+      </Collect>
+    )
+  }
+}
+
+class ViewFile extends React.PureComponent {
+  render () {
+    const { archive, path, stat } = this.props
+    return (
+      <div>
+        <Heading>{path}</Heading>
+        <WithCore>
+          {core => (
+            <RpcQuery {...{ archive, path }} fetch={props => ['fs/readFileStream', { key: props.archive, path: props.path }]}>
+              {(data) => {
+                let viewers = core.components.getAll('fileViewer') || []
+                viewers = viewers.concat(defaultViewers)
+                let change = {}
+                return <FileViewer change={change} stream={data.stream} stat={stat} viewers={viewers} />
+              }}
+            </RpcQuery>
+          )}
+        </WithCore>
+      </div>
+    )
+  }
 }
 
 ViewFile.propTypes = {
