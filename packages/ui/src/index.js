@@ -4,17 +4,31 @@
 
 import './global.pcss'
 
-export { default as Button } from './components/Button'
-export { default as Input } from './components/Input'
-export { default as InfoPopup } from './components/InfoPopup'
-export { default as Checkbox } from './components/Checkbox'
+// Components
+// B
 export { default as Box } from './components/Box'
+export { default as Button } from './components/Button'
+// C
 export { default as Card } from './components/Card'
-export { default as Heading } from './components/Heading'
-export { default as List } from './components/List'
-export { default as Tabs } from './components/Tabs'
+export { default as Checkbox } from './components/Checkbox'
+// F
 export { default as Foldable } from './components/Foldable'
+// H
+export { default as Heading } from './components/Heading'
+// I
+export { default as InfoPopup } from './components/InfoPopup'
+export { default as Input } from './components/Input'
+// L
+export { default as List } from './components/List'
+// M
 export { default as Modal } from './components/Modal'
-export { default as Tree } from './components/Tree/index.js'
+// P
+export { default as PDFViewControl } from './components/PDFViewControl'
+// S
 export { default as StandardTree } from './components/Tree/StandardTree.js'
+// T
+export { default as Tabs } from './components/Tabs'
+export { default as Tree } from './components/Tree/index.js'
+
+// Other
 export { proplist } from './util.js'
