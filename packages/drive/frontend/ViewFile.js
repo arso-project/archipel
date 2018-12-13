@@ -24,8 +24,6 @@ const Image = ({ content, stat }) => {
 }
 
 const PDF = ({ content, stat }) => {
-  console.log('content', content)
-  console.log('stat', stat)
   return (
     <PDFViewer content={content} stat={stat} />
   )
