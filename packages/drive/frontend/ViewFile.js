@@ -88,7 +88,7 @@ const defaultViewers = [
       // format: 'uint8array', // or just don't set opts.format conversionless
       // format: 'base64',
       match: ({ mimetype }) => {
-        return mimetype.match(/application\/pdf/)
+        return mimetype && mimetype.match(/application\/pdf/)
       }
     }
   },
