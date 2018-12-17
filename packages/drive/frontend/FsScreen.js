@@ -8,18 +8,24 @@ import ViewFile from './ViewFile'
 import Sidebar from './Sidebar'
 import { Consumer } from 'ucore/react'
 
-const Dir = ({ archive, dir, selected, full, onSelect }) => (
+const DirTree = ({ archive, dir, selected, onSelect }) => (
+  <div>
+    <ListDir archive={archive} dir={dir} selected={selected} onSelect={onSelect} focus />
+  </div>
+)
+
+const DirGrid = ({ archive, dir, selected, onSelect }) => (
   <div className=''>
-    { full && (
-      <React.Fragment>
-        <Heading>{dir}</Heading>
-        <Modal toggle='Actions'>
-          <CreateDir archive={archive} dir={dir} />
-          <UploadFile archive={archive} dir={dir} />
-        </Modal>
-      </React.Fragment>
-    )}
-    <ListDir archive={archive} dir={dir} selected={selected} onSelect={onSelect} full={full} />
+    <div>
+      <Heading>{dir}</Heading>
+      <Modal toggle='Actions'>
+        <CreateDir archive={archive} dir={dir} />
+        <UploadFile archive={archive} dir={dir} />
+      </Modal>
+    </div>
+    <div>
+      <ListDir archive={archive} dir={dir} selected={selected} onSelect={onSelect} grid />
+    </div>
   </div>
 )
 
@@ -33,7 +39,7 @@ const Content = ({ archive, path, onSelect }) => (
   <Consumer store='fs' select='getStat' archive={archive} path={path}>
     {(stat) => {
       if (!stat) return null
-      if (stat.isDirectory) return <Dir archive={archive} dir={path} onSelect={onSelect} full />
+      if (stat.isDirectory) return <DirGrid archive={archive} dir={path} onSelect={onSelect} />
       else return <ViewFile archive={archive} path={path} stat={stat} />
     }}
   </Consumer>
@@ -70,7 +76,7 @@ class FsScreen extends React.PureComponent {
         {/* {dirs.map((dir, i) => <Dir archive={archive} key={i} dir={dir} depth={i} onSelect={this.selectFile(i)} />)} */}
         <div className='flex-0 mr-4 w-64'>
           <Heading>Directories</Heading>
-          {<Dir archive={archive} dir={'/'} selected={selected} onSelect={this.selectFile} />}
+          {<DirTree archive={archive} dir={'/'} selected={selected} onSelect={this.selectFile} />}
         </div>
         <div className='flex-1'>
           {selected && <Content archive={archive} path={selected} version={version} onSelect={this.selectFile} />}
