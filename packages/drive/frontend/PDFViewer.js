@@ -1,5 +1,7 @@
 'use strict'
 
+// TODO: Discard PDF at newload
+
 // Inspired by: https://github.com/javascriptiscoolpl/npm-simple-react-pdf/blob/master/src/index.js
 import React from 'react'
 // import ReactDOM from 'react-dom'
@@ -14,69 +16,121 @@ PDFjs.GlobalWorkerOptions.workerSrc = './pdf.worker.js'
 export class PDFViewer extends React.Component {
   constructor (props) {
     super(props)
-
     this.state = {
-      pdf: null,
-      numPages: 0,
+      pdf: null
+    }
+    this.loadingTask = null
+    this.loadPDF = this.loadPDF.bind(this)
+  }
+
+  componentDidMount () {
+    console.log('PDF/mount')
+    this.loadPDF()
+  }
+
+  componentDidUpdate (prevProps, prevState) {
+    if (!this.state.pdf) return
+    if (prevProps.content !== this.props.content) {
+      this.state.pdf.destroy()
+      this.loadPDF()
+    }
+    if (prevState.pdf) prevState.pdf.destroy()
+  }
+
+  componentWillUnmount () {
+    this.isUnmounting = true
+    if (this.state.pdf) this.state.pdf.destroy()
+  }
+
+  loadPDF () {
+    console.log('PDF/update')
+    this.loadingTask = PDFjs.getDocument({ data: this.props.content }).then((pdf) => {
+      if (this.isUnmounting) return
+      this.setState({ pdf })
+    })
+  }
+
+  render () {
+    let { pdf } = this.state
+    if (pdf && !this.isUnmounting) {
+      return (
+        <PDFPageViewer pdf={pdf} numPages={pdf.numPages} littlePageNum={this.littlePageNum || 3} />
+      )
+    }
+    return (
+      <span> Loading... </span>
+    )
+  }
+}
+
+class PDFPageViewer extends React.Component {
+  constructor (props) {
+    super(props)
+    this.state = {
       pageNum: 1
     }
-
-    this.littlePageNum = this.props.littlePageNum || 3
     this.pdfRef = React.createRef()
-
-    this.loadPDF = this.loadPDF.bind(this)
     this.loadPage = this.loadPage.bind(this)
     this.loadLittlePages = this.loadLittlePages.bind(this)
   }
 
   componentDidMount () {
-    this.loadPDF()
+    console.log('innerMount/pdf', this.props.pdf)
+    const { numPages, littlePageNum } = this.props
+    if (numPages <= littlePageNum) {
+      this.loadLittlePages()
+    } else {
+      this.loadPage()
+    }
   }
 
   componentDidUpdate () {
-    this.loadPage()
+    console.log('innerUpdate')
+    const { numPages, littlePageNum } = this.props
+    if (numPages <= littlePageNum) {
+      this.loadLittlePages()
+    } else {
+      this.loadPage()
+    }
   }
 
   onChangePage (e) {
-    this.setState({ pageNum: e.target.value })
+    this.setState({ pageNum: Number(e.target.value) })
     this.loadPage()
   }
 
-  loadPDF () {
+  loadNode () {
+    const { numPages, littlePageNum } = this.props
     // get node for this react component
     let node = this.pdfRef.current
-
-    // clean for update
-    // node.innerHTML = ''
 
     // set styles
     node.style.width = '100%'
     node.style.overflowX = 'hidden'
 
-    PDFjs.getDocument({ data: this.props.content }).then((pdf) => {
-      if (pdf.numPages <= this.littlePageNum) {
-        node.style.height = 'container'
-        node.style.overflowY = 'scroll'
-      } else {
-        node.style.height = '100%'
-        node.style.overflowY = 'hidden'
-      }
-      this.setState({ node: node, pdf: pdf, numPages: pdf.numPages, pageNum: 1 })
-      if (pdf.numPages <= this.littlePageNum) {
-        this.loadLittlePages()
-      } else {
-        this.loadPage()
-      }
-    })
+    if (numPages <= littlePageNum) {
+      node.style.height = 'container'
+      node.style.overflowY = 'scroll'
+    } else {
+      node.style.height = '100%'
+      node.style.overflowY = 'hidden'
+    }
   }
 
   loadPage () {
-    let { node, pdf, pageNum } = this.state
+    const { pdf } = this.props
+    let { pageNum } = this.state
+    this.loadNode()
+    let node = this.pdfRef.current
 
     pdf.getPage(Number(pageNum)).then((page) => {
-      let { viewport, canvas } = this.getViewportAndCanvas(node, page, pageNum)
+      console.log('page', page)
+      let { viewport, canvas } = this.getViewportAndCanvas(page, pageNum)
 
-      node.childNodes[0] ? node.replaceChild(canvas, node.childNodes[0]) : node.appendChild(canvas)
+      while (node.firstChild) {
+        node.removeChild(node.firstChild)
+      }
+      node.appendChild(canvas)
 
       // get context and render page
       let renderContext = {
@@ -88,11 +142,16 @@ export class PDFViewer extends React.Component {
   }
 
   loadLittlePages () {
-    let { node, pdf, numPages } = this.state
+    let { pdf, numPages } = this.props
+    let node = this.pdfRef.current
+
+    while (node.firstChild) {
+      node.removeChild(node.firstChild)
+    }
 
     for (let i = 1; i <= numPages; i++) {
       pdf.getPage(i).then((page) => {
-        let { viewport, canvas } = this.getViewportAndCanvas(node, page, i)
+        let { viewport, canvas } = this.getViewportAndCanvas(page, i)
 
         node.appendChild(canvas)
 
@@ -106,7 +165,8 @@ export class PDFViewer extends React.Component {
     }
   }
 
-  getViewportAndCanvas (node, page, pageNum) {
+  getViewportAndCanvas (page, pageIndex) {
+    let node = this.pdfRef.current
     // calculate scale according to the box size
     let boxWidth = node.clientWidth
     let pdfWidth = page.getViewport(1).width
@@ -115,7 +175,7 @@ export class PDFViewer extends React.Component {
 
     // set canvas for page
     let canvas = document.createElement('canvas')
-    canvas.id = 'page-' + pageNum
+    canvas.id = 'page-' + pageIndex
     canvas.width = viewport.width
     canvas.height = viewport.height
 
@@ -123,11 +183,13 @@ export class PDFViewer extends React.Component {
   }
 
   render () {
-    let { pageNum, numPages } = this.state
+    let { numPages, littlePageNum } = this.props
+    let { pageNum } = this.state
+    console.log('rerendered')
     return (
       <div>
         {
-          (numPages > this.littlePageNum)
+          (numPages > littlePageNum)
             ? <PDFViewControl
               onPageChange={(e) => this.onChangePage(e)}
               onPageDown={() => this.setState({ pageNum: --pageNum })}
