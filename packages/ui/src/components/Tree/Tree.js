@@ -1,12 +1,11 @@
 import React from 'react'
 import shallowEqual from 'shallowequal'
 
-const { Consumer: NodeConsumer, Provider: NodeProvider } = React.createContext([])
+// const { Consumer: NodeConsumer, Provider: NodeProvider } = React.createContext([])
 const { Consumer: TreeConsumer, Provider: TreeProvider } = React.createContext({})
 
-export { NodeConsumer, NodeProvider, TreeConsumer, TreeProvider }
-
-const isFn = (fn) => typeof fn === 'function'
+// export { NodeConsumer, NodeProvider, TreeConsumer, TreeProvider }
+export { TreeConsumer, TreeProvider }
 
 const actions = {
   init (state, path, props) {
@@ -15,8 +14,11 @@ const actions = {
   },
   expand (state, path, props) {
     state.tree = setAndCopy(state.tree, path, node => {
-      if (!node.expandable) return node
-      return Object.assign({}, node, { expand: !node.expand })
+      // if (!node.expandable) return node
+      let expand
+      if (props !== undefined) expand = props
+      else expand = !node.expand
+      return Object.assign({}, node, { expand })
     })
     return state
   },
@@ -25,6 +27,14 @@ const actions = {
   },
   select (state, path, props) {
     return toggle(state, path, 'select')
+  },
+  zoom (state, path) {
+    if (state.zoom === path || path === null || !path.length) {
+      state.zoom = null
+      state.tree = setAndCopy(state.tree, state.zoom, { zoom: null })
+    } else {
+      return toggle(state, path, 'zoom')
+    }
   }
 }
 
@@ -86,7 +96,8 @@ export class Tree extends React.Component {
       while (self.actionQueue.length) {
         let [name, path, props] = self.actionQueue.shift()
         let action = self.props.actions[name] || self.actions[name]
-        state = action(state, path, props)
+        let newState = action(state, path, props)
+        state = newState
         if (name === 'select' && self.props.onSelect) {
           self.props.onSelect(self.getPath(path))
         }
@@ -110,19 +121,35 @@ export class Tree extends React.Component {
   }
 
   render () {
-    const { children } = this.props
+    let { children, item, wrap, renderNode, nodeId, ...props } = this.props
+    renderNode = renderNode || children
 
-    const value = {
+    const treeState = {
       state: this.state,
       setState: this.setState,
       runAction: this.runAction,
       getPath: this.getPath,
-      setPath: this.setPath
+      setPath: this.setPath,
+      renderNode,
+      nodeId
+    }
+
+    let path = []
+    if (this.state.zoom && this.state.zoom.length) {
+      let zoomNode = walk(this.state.tree, this.state.zoom)
+      item = zoomNode.item
+      path = this.state.zoom.slice(0, -1)
+    }
+
+    let inner = <TreeNode item={item} parent={path} />
+
+    if (wrap) {
+      inner = wrap(treeState, inner)
     }
 
     return (
-      <TreeProvider value={value}>
-        {isFn(children) ? children(value) : children}
+      <TreeProvider value={treeState}>
+        {inner}
       </TreeProvider>
     )
   }
@@ -133,29 +160,26 @@ Tree.defaultProps = {
 }
 
 export const TreeNode = (props) => {
-  let { id, item, children, expandable } = props
   return (
     <TreeConsumer>
-      {(treeState) => (
-        <NodeConsumer>
-          {(path) => {
-            path = [...path, 'children', id]
-            let state = treeState.getPath(path)
-            let action = (name, props) => e => treeState.runAction(name, path, props)
-            return (
-              <NodeProvider value={path}>
-                <PureTreeNode children={children} id={id} item={item} state={state} action={action} expandable={expandable} />
-              </NodeProvider>
-            )
-          }}
-        </NodeConsumer>
-      )}
+      {(treeState) => {
+        let { id, item, parent, level } = props
+        const { nodeId, getPath, runAction, renderNode } = treeState
+        if (!id && nodeId) id = nodeId(item)
+        // if (level === undefined) level = 0
+        let path = [...parent, id]
+        let state = getPath(path)
+        return (
+          <PureTreeNode id={id} path={path} item={item} state={state} runAction={runAction} renderNode={renderNode} level={level} />
+        )
+      }}
     </TreeConsumer>
   )
 }
 
 TreeNode.defaultProps = {
-  expandable: true
+  parent: [],
+  level: 0
 }
 
 Tree.Node = TreeNode
@@ -164,24 +188,38 @@ class PureTreeNode extends React.Component {
   shouldComponentUpdate (prevProps) {
     if (!shallowEqual(prevProps.state, this.props.state) ||
       !shallowEqual(prevProps.path, this.props.path) ||
-      prevProps.item !== this.props.item) {
+      !shallowEqual(prevProps.item, this.props.item)) {
       return true
     }
     return false
   }
 
   componentDidMount () {
-    const { id, item, expandable, action } = this.props
-    action('init', { id, item, expandable })()
+    const { id, item, path, runAction } = this.props
+    runAction('init', path, { id, item })
   }
 
   render () {
-    const { children, id, item, path, state, action } = this.props
-    return children({ id, item, path, state, action })
+    const { id, item, path, state, runAction, renderNode, level } = this.props
+    let action = (name, props) => e => runAction(name, path, props)
+    const Node = props => <TreeNode {...props} parent={path} level={level + 1} />
+    return renderNode({ id, path, item, state, action, level, Node })
   }
 }
 
+function includeChildprop (path, childProp) {
+  path = path.reduce((ret, cur) => {
+    ret.push(childProp)
+    ret.push(cur)
+    return ret
+  }, [])
+  return path
+}
+
 export function walk (state, path) {
+  let childProp = 'children'
+  if (path.length) path = includeChildprop(path, childProp)
+  else path = [childProp]
   let cur = state
   path.forEach(key => {
     if (cur === undefined) return undefined
@@ -191,6 +229,16 @@ export function walk (state, path) {
   return cur
 }
 
+export function inBoundary (boundary, path) {
+  if (path.length < boundary.length) return false
+  let i = 0
+  while (i < boundary.length) {
+    if (boundary[i] !== path[i]) return false
+    i++
+  }
+  return true
+}
+
 export function setAndCopy (state, path, valueOrFunction) {
   let cb
   if (typeof valueOrFunction !== 'function') cb = old => Object.assign({}, old, valueOrFunction)
@@ -198,7 +246,8 @@ export function setAndCopy (state, path, valueOrFunction) {
 
   let nextState = { ...state }
 
-  if (!path.length) return cb(nextState)
+  if (!path || !path.length) return cb(nextState)
+  path = includeChildprop(path, 'children')
 
   let oldPos = state
   let newPos = nextState

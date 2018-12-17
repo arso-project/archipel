@@ -3,48 +3,92 @@ import scrollIntoView from 'scroll-into-view-if-needed'
 import { MdZoomIn, MdCloudDownload, MdSelectAll, MdExpandMore, MdExpandLess, MdCenterFocusStrong } from 'react-icons/md'
 
 // import Tree from './index.js'
-import { Tree, TreeNode } from './Tree.js'
+import { Tree } from './Tree.js'
 // import Tooltip from '../Tooltip'
 
 export class StandardTreeNode extends React.Component {
   render () {
-    const { children, label, icon, color, expandable, ...props } = this.props
+    if (this.props.grid) return <GridTreeNode {...this.props} />
+    else return <LineTreeNode {...this.props} />
+  }
+}
+
+const LineTreeNode = (props) => {
+  const { level, action, state, children, label, Icon, color, expandable, Node, renderChildren, grid } = props
+  let expand = (
+    <div className='inline-block w-8 mr-1'>
+      {expandable && state.expand && <MdExpandLess />}
+      {expandable && !state.expand && <MdExpandMore />}
+    </div>
+  )
+  let onClick = () => {
+    expandable
+      ? action('expand')()
+      : action('select')()
+  }
+
+  let cls = itemClass({ color, ...state })
+
+  let wrapCls = ''
+  if (grid) {
+    wrapCls += ' float-left w-36 '
+  }
+
+  let renderedChildren = null
+  if (state.expand) {
+    renderedChildren = renderChildren(props)
+  }
+
+  return (
+    <div className={wrapCls}>
+      <ScrollIntoView doScroll={state.focus} />
+      <div className={cls} onClick={onClick}>
+        {expand}<Icon /> {label}
+      </div>
+      {/* <DebugActions action={props.action} state={props.state} /> */}
+      { renderedChildren }
+    </div>
+  )
+}
+
+function itemClass ({ color, select, focus }) {
+  let cls = ' cursor-pointer p-1 '
+  cls += color ? 'text-' + color + ' ' : ''
+  if (select) {
+    cls += ' bg-blue-lighter '
+  } else if (focus) {
+    cls += ' bg-grey-lighter '
+  } else {
+    cls += ' bg-white '
+  }
+  return cls
+}
+
+const GridTreeNode = (props) => {
+  const { level, action, state, children, label, Icon, color, expandable, Node, renderChildren, grid } = props
+  let onClick = () => {
+    if (expandable) {
+      action('expand', true)()
+      action('zoom')()
+    } else action('select')()
+  }
+  let cls = itemClass({ color, ...state })
+  cls = 'w-32 h-24 rounded-sm border-grey-dark m-2 float-left hover:bg-grey-lightest rounded-lg flex flex-col ' + cls
+  if (level === 0) {
     return (
-      <Tree.Node {...props} expandable={expandable}>
-        {(props) => {
-          let { action, state, id } = props
-          let expand = (
-            <div className='inline-block w-8 mr-1'>
-              {expandable && state.expand && <MdExpandLess />}
-              {expandable && !state.expand && <MdExpandMore />}
-            </div>
-          )
-          let onClick = () => {
-            expandable ? action('expand')() : action('select')()
-          }
-
-          let cls = 'font-bold cursor-pointer p-1 '
-          cls += color ? 'text-' + color + ' ' : ''
-          if (state.select) {
-            cls += ' bg-blue-lighter '
-          } else if (state.focus) {
-            cls += ' bg-grey-lighter '
-          } else {
-            cls += ' bg-white '
-          }
-
-          return (
-            <div>
-              <ScrollIntoView doScroll={state.focus} />
-              <div className={cls} onClick={onClick}>
-                {expand}{icon()} {label}
-              </div>
-              {/* <DebugActions action={props.action} state={props.state} /> */}
-              { state.expand && children(props)}
-            </div>
-          )
-        }}
-      </Tree.Node>
+      <div>
+        <h3>{label}</h3>
+        <div>
+          {renderChildren(props)}
+        </div>
+      </div>
+    )
+  } else {
+    return (
+      <div className={cls} onClick={onClick}>
+        <div className='text-center'><Icon size={64} /></div>
+        <div className='text-center'>{label}</div>
+      </div>
     )
   }
 }
@@ -74,11 +118,7 @@ class ScrollIntoView extends React.Component {
 }
 
 export const StandardTree = (props) => {
-  return (
-    <Tree {...props}>
-      {(treeProps) => <StandardTreeInner {...props} {...treeProps} />}
-    </Tree>
-  )
+  return <Tree {...props} wrap={(tree, children) => <StandardTreeInner {...props} tree={tree} children={children} />} />
 }
 
 class StandardTreeInner extends React.Component {
@@ -88,9 +128,9 @@ class StandardTreeInner extends React.Component {
   }
 
   async onKeydown (e) {
-    const { state, keyboardFocus } = this.props
+    const { state, runAction } = this.props.tree
+    const { keyboardFocus } = this.props
     if (!keyboardFocus) return
-    let action = this.runAction.bind(this)
 
     if (e.key === 'ArrowDown') {
       this.changeFocus('down')
@@ -112,13 +152,13 @@ class StandardTreeInner extends React.Component {
 
     if (e.key === 'Enter') {
       if (!state.focus) return
-      action('select', state.focus)
+      runAction('select', state.focus)
       // this.onAction(state.focus, 'select')(e)
     }
 
     if (e.key === 'z') {
       if (!state.focus) return
-      action('zoom', state.focus)
+      runAction('zoom', state.focus)
     }
   }
 
@@ -131,7 +171,7 @@ class StandardTreeInner extends React.Component {
   }
 
   changeFocus (dir) {
-    const { state, runAction, getPath, setPath } = this.props
+    const { state, runAction, getPath, setPath } = this.props.tree
 
     let { tree, focus } = state
 
@@ -143,25 +183,26 @@ class StandardTreeInner extends React.Component {
     let node = getPath(focus)
 
     if (!focus.length) {
-      return runAction('focus', ['children', Object.keys(tree.children)[0]])
+      return runAction('focus', [Object.keys(tree.children)[0]])
     }
 
     function getChildren (path) {
       let node = getPath(path)
-      if (!node.expand || !node.children) return
+      if (!node.expand || !node.children) return []
+      // if (!node.children) return []
       let children = Object.keys(node.children)
-      if (!children.length) return
       return children
     }
 
     let parent = focus.slice(0, -1)
-    let siblings = Object.keys(getPath(parent))
+    let siblings = getChildren(parent)
     let idx = siblings.indexOf(id)
     let children = getChildren(focus)
+    // console.log('focus - cur %o, parent %o, siblings %o, idx %o, children %o', focus, parent, siblings, idx, children)
 
     if (dir === 'in') {
-      if (children) {
-        return runAction('focus', [...focus, 'children', children[0]])
+      if (children.length) {
+        return runAction('focus', [...focus, children[0]])
       }
       runAction('expand', focus)
       runAction('focus', focus)
@@ -172,7 +213,7 @@ class StandardTreeInner extends React.Component {
       if (node.expand) {
         runAction('expand', focus)
         return runAction('focus', focus)
-      } else if (parent.length > 2) {
+      } else if (parent.length > 1) {
         return runAction('focus', parent.slice(0, -1))
       }
     }
@@ -180,16 +221,16 @@ class StandardTreeInner extends React.Component {
     if (dir === 'up') {
       if (idx > 0) {
         let beforeChildren = getChildren([...parent, siblings[idx - 1]])
-        if (beforeChildren) return runAction('focus', [...parent, siblings[idx - 1], 'children', beforeChildren[beforeChildren.length - 1]])
+        if (beforeChildren.length) return runAction('focus', [...parent, siblings[idx - 1], beforeChildren[beforeChildren.length - 1]])
         return runAction('focus', [...parent, siblings[idx - 1]])
       }
-      if (parent.length > 2) return runAction('focus', parent.slice(0, -1))
+      if (parent.length) return runAction('focus', parent)
       return
     }
 
     if (dir === 'down') {
       if (node.expand && children) {
-        return runAction('focus', [...focus, 'children', children[0]])
+        return runAction('focus', [...focus, children[0]])
       }
       if (idx < siblings.length - 1) {
         return runAction('focus', [...parent, siblings[idx + 1]])
@@ -197,23 +238,41 @@ class StandardTreeInner extends React.Component {
       let cur = focus
       while (cur.length) {
         let id = cur[cur.length - 1]
-        cur = cur.slice(0, -2)
-        let siblings = Object.keys(getPath([...cur, 'children']))
+        cur = cur.slice(0, -1)
+        let siblings = getChildren(cur)
         let idx = siblings.indexOf(id)
         if (idx < siblings.length - 1) {
-          return runAction('focus', [...cur, 'children', siblings[idx + 1]])
+          return runAction('focus', [...cur, siblings[idx + 1]])
         }
       }
     }
   }
 
-  runAction (name, path, props) {
-    this.props.runAction(name, path, props)
-  }
-
   render () {
-    const { children } = this.props
-    return children
+    const { grid, tree } = this.props
+    const { state, runAction } = tree
+    let zoom = null
+    if (grid && state.zoom && state.zoom.length) {
+      zoom = (
+        <div className='flex'>
+          {state.zoom.map((id, i) => {
+            let onClick = () => {
+              let newZoom
+              if (i === 0) newZoom = []
+              else newZoom = state.zoom.slice(0, i + 1)
+              runAction('zoom', newZoom)
+            }
+            return <div key={i} className='p-1 mr-1 border-black border-2 cursor-pointer' onClick={onClick}>{id}</div>
+          })}
+        </div>
+      )
+    }
+    return (
+      <div>
+        {zoom}
+        {this.props.children}
+      </div>
+    )
   }
 }
 
