@@ -31,4 +31,4 @@ export { default as Tabs } from './components/Tabs'
 export { default as Tree } from './components/Tree/index.js'
 
 // Other
-export { proplist } from './util.js'
+export { proplist, cls } from './util.js'

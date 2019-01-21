@@ -1,0 +1,200 @@
+'use strict'
+import React from 'react'
+// import { AudioControls } from '@archipel/ui'
+import { cls, Button } from '@archipel/ui'
+import './AudioControls.pcss'
+
+export default {
+  name: 'audio-player',
+  plugin
+}
+
+async function plugin (core) {
+  core.components.add('fileViewer', AudioPlayer, {
+    stream: false,
+    match: ({ mimetype }) => {
+      return mimetype && mimetype.match(/audio\/.*/)
+    }
+  })
+}
+
+export class AudioPlayer extends React.Component {
+  constructor (props) {
+    super(props)
+    this.state = {
+      // content: this.props.content,
+      // stat: this.props.stat,
+      loaded: false,
+      duration: 0,
+      position: 0,
+      gainPPH: 100,
+      playing: false,
+      paused: true
+    }
+    this.playerRef = React.createRef()
+    this.playbackTimer = null
+    this.positionControl = this.positionControl.bind(this)
+    // this.onPlay = this.onPlay.bind(this)
+  }
+
+  componentDidMount () {
+    this.createAudioContext()
+  }
+
+  createAudioContext () {
+    const audioCtx = new AudioContext() || new webkitAudioContext()
+    audioCtx.suspend()
+    audioCtx.createMediaElementSource(this.playerRef.current)
+    let gainNode = audioCtx.createGain()
+    // let source = audioCtx.createBufferSource()
+    audioCtx.decodeAudioData(this.props.content.buffer, (buffer) => {
+      this.setState({ audioCtx, gainNode, buffer, duration: buffer.duration, loaded: true })
+      this.positionControl(0)
+    }, (err) => { console.log('Error decoding audio data:', err) })
+  }
+
+  componentDidUpdate (prevProps) {
+    if (prevProps.content !== this.props.content) {
+      console.log(prevProps)
+      console.log(this.props)
+      this.setState({ loaded: false })
+      this.onStop()
+      this.createAudioContext()
+    }
+  }
+
+  componentWillUnmount () {
+    let { source } = this.state
+    source.stop()
+  }
+
+  playSource (position) {
+    let { audioCtx, gainNode, source, buffer, playing } = this.state
+
+    if (playing) source.stop()
+
+    source = audioCtx.createBufferSource()
+    source.buffer = buffer
+    source.connect(gainNode)
+    gainNode.connect(audioCtx.destination)
+
+    source.start(audioCtx.currentTime, position)
+    this.positionControl(position)
+
+    this.setState({ source, playing: true, paused: false })
+  }
+
+  positionControl (pos) {
+    let { audioCtx } = this.state
+    pos = Number(pos)
+    if (this.playbackTimer) clearInterval(this.playbackTimer)
+
+    let lastCalled = audioCtx.currentTime
+    let position = 0
+
+    this.playbackTimer = setInterval(() => {
+      // console.log('lastCalled', lastCalled, 'currentTime', audioCtx.currentTime, 'pos', pos)
+      position = audioCtx.currentTime - lastCalled + pos
+      // console.log('position', position)
+      this.setState({ position })
+    }, 2000)
+  }
+
+  onPlay () {
+    let { audioCtx, playing, paused } = this.state
+
+    if (!playing) this.playSource(0)
+
+    if (paused) {
+      audioCtx.resume()
+      this.setState({ paused: false })
+    } else {
+      audioCtx.suspend()
+      this.setState({ paused: true })
+    }
+  }
+
+  onStop () {
+    let { audioCtx, source, playing } = this.state
+
+    if (playing) {
+      audioCtx.suspend()
+      source.stop()
+      this.setState({ position: 0 })
+    }
+
+    if (this.playbackTimer) clearInterval(this.playbackTimer)
+    this.setState({ playing: false, paused: true })
+  }
+
+  onPositionChange (e) {
+    this.playSource(e.target.value)
+    this.setState({ position: e.target.value })
+  }
+
+  onMute () {
+    this.state.gainNode.gain.value = 0
+    this.setState({ gainPPH: 0 })
+  }
+
+  onFullVol () {
+    this.state.gainNode.gain.value = 1
+    this.setState({ gainPPH: 100 })
+  }
+
+  onVolumeChange (e) {
+    let fraction = e.target.value / 100
+    this.state.gainNode.gain.value = fraction * fraction
+    this.setState({ gainPPH: e.target.value })
+  }
+
+  render () {
+    let { loaded, duration, position, gainPPH, paused } = this.state
+    return (
+      <div>
+        <audio ref={this.playerRef} />
+        { loaded ?
+          <div className={cls('ctrl')}>
+            <Button onClick={() => this.onPlay()}> {paused ? '\u23F5' : '\u23F8'} </Button>
+            <Button onClick={() => this.onStop()}> {'\u23F9'} </Button>
+            <input type='range'
+              min='0' max={duration} value={position} // step='0.05'
+              onChange={(e) => this.onPositionChange(e)}
+            />
+            <Button onClick={() => this.onMute()}> &#128266; </Button>
+            <Button onClick={() => this.onFullVol()}> &#128264; </Button>
+            <input type='range'
+              min='0' max='100' value={gainPPH}
+              default='100'
+              onChange={(e) => this.onVolumeChange(e)}
+            />
+          </div>
+          : <span>loading...</span> }
+      </div>
+    )
+  }
+}
+
+// pause symbol with blue bg '\u23F8'
+
+/*
+const AudioControls = (props) => {
+  let { onPlay, onStop, duration, onSliderMove, onPositionChange, onMute, onVolumeChange, onFullVol, ...rest } = props
+  return (
+    <div {...rest} className={cls(rest, 'ctrl')}>
+      <Button onClick={onPlay}> &#9654; </Button>
+      <Button onClick={onStop}> &#9632; </Button>
+      <input type='range'
+        min='0' max={duration}
+        onChange={onPositionChange}
+      />
+      <Button onClick={onMute}> &#128266; </Button>
+      <Button onClick={onFullVol}> &#128264; </Button>
+      <input type='range'
+        default='100'
+        onChange={onVolumeChange}
+      />
+    </div>
+  )
+}
+*/
