@@ -16,6 +16,7 @@
     "ucore": "^0.3.5"
   },
   "dependencies": {
-    "@archipel/ui": "^1.0"
+    "@archipel/ui": "^1.0",
+    "react-icons": "^3.2.2"
   }
 }

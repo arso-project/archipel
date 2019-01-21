@@ -1,8 +1,9 @@
 'use strict'
 import React from 'react'
 // import { AudioControls } from '@archipel/ui'
-import { cls, Button } from '@archipel/ui'
-import './AudioControls.pcss'
+import { Button } from '@archipel/ui'
+import './AudioControls.css'
+import { MdPause, MdPlayArrow, MdStop, MdVolumeUp, MdVolumeMute } from 'react-icons/md'
 
 export default {
   name: 'audio-player',
@@ -150,24 +151,41 @@ export class AudioPlayer extends React.Component {
 
   render () {
     let { loaded, duration, position, gainPPH, paused } = this.state
+    let symSize = 24
     return (
       <div>
         <audio ref={this.playerRef} />
         { loaded ?
-          <div className={cls('ctrl')}>
-            <Button onClick={() => this.onPlay()}> {paused ? '\u23F5' : '\u23F8'} </Button>
-            <Button onClick={() => this.onStop()}> {'\u23F9'} </Button>
-            <input type='range'
-              min='0' max={duration} value={position} // step='0.05'
-              onChange={(e) => this.onPositionChange(e)}
-            />
-            <Button onClick={() => this.onMute()}> &#128266; </Button>
-            <Button onClick={() => this.onFullVol()}> &#128264; </Button>
-            <input type='range'
-              min='0' max='100' value={gainPPH}
-              default='100'
-              onChange={(e) => this.onVolumeChange(e)}
-            />
+          <div className='ctrl'>
+            <Button className='ctrlBttn' onClick={() => this.onPlay()}> {paused ? <MdPlayArrow size={symSize} /> : <MdPause size={symSize} />} </Button>
+            <div className='sliderWrapper'>
+              <input type='range' list='posTickMarks'
+                min='0' max={duration} value={position} // step='0.05'
+                onChange={(e) => this.onPositionChange(e)}
+              />
+              <datalist id='posTickMarks'>
+                <option value={0} label='0:00' />
+                <option value={duration} label={duration} />
+              </datalist>
+            </div>
+            <Button className='ctrlBttn' onClick={() => this.onStop()}> <MdStop size={symSize} /> </Button>
+            <div className='verticalLine' />
+            <Button className='ctrlBttn' onClick={() => this.onMute()}> <MdVolumeMute size={symSize} /> </Button>
+            <div className='sliderWrapper'>
+              <input type='range' list='volTickMarks'
+                min='0' max='100' value={gainPPH}
+                default='100'
+                onChange={(e) => this.onVolumeChange(e)}
+              />
+              <datalist id='volTickMarks'>
+                <option value='0' label='0%'>0</option>
+                <option value='25'>25</option>
+                <option value='50'>50</option>
+                <option value='75'>75</option>
+                <option value='100' label='100%'>100</option>
+              </datalist>
+            </div>
+            <Button className='ctrlBttn' onClick={() => this.onFullVol()}> <MdVolumeUp size={symSize} /> </Button>
           </div>
           : <span>loading...</span> }
       </div>
