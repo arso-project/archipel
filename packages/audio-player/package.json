@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@archipel/ui": "^1.0",
-    "react-icons": "^3.2.2"
+    "react-icons": "^3.2.2",
+    "text-encoding": "^0.7.0"
   }
 }

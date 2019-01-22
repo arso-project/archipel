@@ -4,6 +4,7 @@ import React from 'react'
 import { Button } from '@archipel/ui'
 import './AudioControls.css'
 import { MdPause, MdPlayArrow, MdStop, MdVolumeUp, MdVolumeMute } from 'react-icons/md'
+import { TextDecoder } from 'text-encoding'
 
 export default {
   name: 'audio-player',
@@ -39,6 +40,8 @@ export class AudioPlayer extends React.Component {
   }
 
   componentDidMount () {
+    let metadata = extractMetadata(this.props.content.subarray(0, 200))
+    this.setState({ metadata })
     this.createAudioContext()
   }
 
@@ -71,6 +74,8 @@ export class AudioPlayer extends React.Component {
 
   playSource (position) {
     let { audioCtx, gainNode, source, buffer, playing } = this.state
+
+    console.log(this.props.content)
 
     if (playing) source.stop()
 
@@ -150,10 +155,19 @@ export class AudioPlayer extends React.Component {
   }
 
   render () {
-    let { loaded, duration, position, gainPPH, paused } = this.state
+    let { loaded, duration, position, gainPPH, paused, fileText, metadata } = this.state
     let symSize = 24
     return (
-      <div>
+      <div className='flex flex-col'>
+        { metadata ?
+          <div className='flex flex-col'>
+            <strong>{metadata.title}</strong>
+            <span>Interpreter: {metadata.interpreter}</span>
+            <span>Album: {metadata.album}</span>
+            <span>Year: {metadata.year}</span>
+          </div>
+          : 'no metadata'
+        }
         <audio ref={this.playerRef} />
         { loaded ?
           <div className='ctrl'>
@@ -188,9 +202,21 @@ export class AudioPlayer extends React.Component {
             <Button className='ctrlBttn' onClick={() => this.onFullVol()}> <MdVolumeUp size={symSize} /> </Button>
           </div>
           : <span>loading...</span> }
+        <div>
+          {fileText}
+        </div>
       </div>
     )
   }
+}
+
+const extractMetadata = function (uint8array) {
+  let rawText = new TextDecoder('utf-8').decode(uint8array)
+  let title = rawText.match(/TT2(.*)TP1/)[0].slice(3, -3).replace(/\u0000/g, '')
+  let interpreter = rawText.match(/TP1(.*)TAL/)[0].slice(3, -3).replace(/\u0000/g, '')
+  let album = rawText.match(/TAL(.*)TYE/)[0].slice(3, -3).replace(/\u0000/g, '')
+  let year = rawText.match(/TYE(.*)PIC/)[0].slice(3, -3).replace(/\u0000/g, '')
+  return { title, interpreter, album, year }
 }
 
 // pause symbol with blue bg '\u23F8'
