@@ -4,7 +4,7 @@ import React from 'react'
 import { Button } from '@archipel/ui'
 import './AudioControls.css'
 import { MdPause, MdPlayArrow, MdStop, MdVolumeUp, MdVolumeMute } from 'react-icons/md'
-import { TextDecoder } from 'text-encoding'
+import { metadataExtractor } from './metadataExtractor'
 
 export default {
   name: 'audio-player',
@@ -40,7 +40,7 @@ export class AudioPlayer extends React.Component {
   }
 
   componentDidMount () {
-    let metadata = extractMetadata(this.props.content.subarray(0, 200))
+    let metadata = metadataExtractor(this.props.content)
     this.setState({ metadata })
     this.createAudioContext()
   }
@@ -54,6 +54,7 @@ export class AudioPlayer extends React.Component {
     audioCtx.decodeAudioData(this.props.content.buffer, (buffer) => {
       this.setState({ audioCtx, gainNode, buffer, duration: buffer.duration, loaded: true })
       this.positionControl(0)
+      audioCtx.suspend()
     }, (err) => { console.log('Error decoding audio data:', err) })
   }
 
@@ -63,7 +64,7 @@ export class AudioPlayer extends React.Component {
       console.log(this.props)
       this.setState({ loaded: false })
       this.onStop()
-      let metadata = extractMetadata(this.props.content.subarray(0, 1000))
+      let metadata = metadataExtractor(this.props.content)
       this.setState({ metadata })
       this.createAudioContext()
     }
@@ -158,7 +159,6 @@ export class AudioPlayer extends React.Component {
 
   render () {
     let { loaded, duration, position, gainPPH, paused, fileText, metadata } = this.state
-    console.log(metadata)
     let symSize = 24
     return (
       <div className='flex flex-col'>
@@ -213,79 +213,6 @@ const MetadataList = ({ metadata }) => (
     { Object.keys(metadata).map(key => <li>{key}: {metadata[key]}</li>) }
   </ul>
 )
-
-const extractMetadata = function (uint8array) {
-  let formatIdentifier = uint8ToHex(uint8array.slice(0, 4))
-  if (formatIdentifier.slice(0, 6) === '494433') return extractID3v2Tags(uint8array)
-  if (formatIdentifier === '4F676753') return extractVorbisComments(uint8array)
-  if (formatIdentifier.slice(0, 4) === 'FFFB') return extractID3v1Tags(uint8array)
-  return null
-}
-
-const extractVorbisComments = function (uint8array) {
-  return null
-}
-
-const extractID3v1Tags = function (uint8array) {
-  return null
-}
-
-const extractID3v2Tags = function (uint8array) {
-  console.log(uint8array)
-  // let title = rawText.match(/TT2(.*)TP1/)[0].slice(3, -3).replace(/\u0000/g, '')
-  // let interpreter = rawText.match(/TP1(.*)TAL/)[0].slice(3, -3).replace(/\u0000/g, '')
-  // let album = rawText.match(/TAL(.*)TYE/)[0].slice(3, -3).replace(/\u0000/g, '')
-  // let year = rawText.match(/TYE(.*)PIC/)[0].slice(3, -3).replace(/\u0000/g, '')
-  // return { title, interpreter, album, year }
-  let latin1 = uint8ToLatin1(uint8array)
-  let frames = {
-    type:     { id: 'TT1', content: null },
-    title:    { id: 'TT2', content: null },
-    subtitle: { id: 'TT3', content: null },
-    lead:     { id: 'TP1', content: null },
-    band:     { id: 'TP2', content: null },
-    conductor: { id: 'TP3', content: null },
-    modifier: { id: 'TP4', content: null },
-    composer: { id: 'TCM', content: null },
-    lyricists: { id: 'TXT', content: null },
-    language: { id: 'TLA', content: null },
-    genre:    { id: 'TCO', content: null },
-    album:    { id: 'TAL', content: null },
-    part:     { id: 'TPA', content: null },
-    track:    { id: 'TRK', content: null },
-    isrc:     { id: 'TRC', content: null },
-    year:     { id: 'TYE', content: null },
-    date:     { id: 'TDA', content: null },
-    time:     { id: 'TIM', content: null },
-    recordDate: { id: 'TRD', content: null },
-    mediaType: { id: 'TMT', content: null },
-    origReleased: { id: 'TOR', content: null }
-  }
-  let metadata = {}
-  let length = 0
-  let match
-  let regExID
-  for (let key in frames) {
-    regExID = new RegExp(frames[key].id)
-    match = regExID.exec(latin1)
-    if (!match) continue
-    length = uint8array.slice(match.index + 5, match.index + 6)[0]
-    console.log(regExID, match, length)
-    frames[key].content = latin1.slice(match.index + 6, match.index + 6 + length).replace(/\0/g, '')
-    if (frames[key].content) metadata[key] = frames[key].content
-    console.log(frames[key].content)
-  }
-  return metadata
-}
-
-const uint8ToHex = function (byteArray) {
-  return byteArray.map(x => ('00' + x.toString(16)).slice(-2)).join('')
-}
-
-const uint8ToLatin1 = function (byteArray) {
-  let latin1 = new TextDecoder('iso-8859-2')
-  return latin1.decode(byteArray)
-}
 
 // pause symbol with blue bg '\u23F8'
 
