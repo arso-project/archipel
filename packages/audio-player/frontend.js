@@ -42,20 +42,23 @@ export class AudioPlayer extends React.Component {
   componentDidMount () {
     let metadata = metadataExtractor(this.props.content)
     this.setState({ metadata })
-    this.createAudioContext()
+    if (!this.audioContext) this.createAudioContext()
   }
 
   createAudioContext () {
+    if (this.audioContext) return
     const audioCtx = new AudioContext() || new webkitAudioContext()
     audioCtx.suspend()
     audioCtx.createMediaElementSource(this.playerRef.current)
     let gainNode = audioCtx.createGain()
     // let source = audioCtx.createBufferSource()
     audioCtx.decodeAudioData(this.props.content.buffer, (buffer) => {
+      if (this._willUnmount) return
       this.setState({ audioCtx, gainNode, buffer, duration: buffer.duration, loaded: true })
       this.positionControl(0)
       audioCtx.suspend()
     }, (err) => { console.log('Error decoding audio data:', err) })
+    this.audioContext = audioCtx
   }
 
   componentDidUpdate (prevProps) {
@@ -66,13 +69,15 @@ export class AudioPlayer extends React.Component {
       this.onStop()
       let metadata = metadataExtractor(this.props.content)
       this.setState({ metadata })
-      this.createAudioContext()
+      if (!this.audioContext) this.createAudioContext()
     }
   }
 
   componentWillUnmount () {
+    this._willUnmount = true
+    if (this.playbackTimer) clearInterval(this.playbackTimer)
     let { source } = this.state
-    source.stop()
+    if (source) source.stop()
   }
 
   playSource (position) {

@@ -126,6 +126,7 @@ const FileViewer = (props) => {
     return (
       <Collect stream={stream}>
         {content => {
+          if (!content.length) return null
           if (opts.format && formats[opts.format]) {
             content = formats[opts.format](content)
           }
