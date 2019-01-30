@@ -89,10 +89,26 @@ class UploadFile extends React.Component {
       for (let i = 0; i < fileList.length; i++) {
         files.push(fileList[i])
       }
-      const uploads = files.map((file, i) => this.uploadFile(file, i))
-      Promise.all(uploads)
-        .then(() => this.setState({ pending: false }))
-        .catch(e => this.setState({ error: e }))
+      // const uploads = files.map((file, i) => this.uploadFile(file, i))
+      // console.log('uploads', uploads)
+      // Promise.all(uploads)
+      //   .then(() => this.setState({ pending: false }))
+      //   .catch(e => this.setState({ error: e }))
+
+      this.seqRunUploads(files).then(
+        this.setState({ pending: false })
+      )
+    }
+  }
+
+  async seqRunUploads (files) {
+    for (let i = 0; i < files.length; i++) {
+      try {
+        await this.uploadFile(files[i], i)
+      } catch (e) {
+        this.setState({ error: e })
+        break
+      }
     }
   }
 
