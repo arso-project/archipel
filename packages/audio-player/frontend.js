@@ -1,7 +1,7 @@
 'use strict'
 import React from 'react'
 // import { AudioControls } from '@archipel/ui'
-import { Button } from '@archipel/ui'
+import { Button, List } from '@archipel/ui'
 import './AudioControls.css'
 import { MdPause, MdPlayArrow, MdStop, MdVolumeUp, MdVolumeMute } from 'react-icons/md'
 import { metadataExtractor } from './metadataExtractor'
@@ -167,13 +167,9 @@ export class AudioPlayer extends React.Component {
     let symSize = 24
     return (
       <div className='flex flex-col'>
-        { metadata ?
-          <MetadataList metadata={metadata} />
-          : 'no metadata'
-        }
         <audio ref={this.playerRef} />
-        { loaded ?
-          <div className='ctrl'>
+        { loaded
+          ? <div className='ctrl'>
             <Button className='ctrlBttn' onClick={() => this.onPlay()}> {paused ? <MdPlayArrow size={symSize} /> : <MdPause size={symSize} />} </Button>
             <div className='sliderWrapper'>
               <input type='range' list='posTickMarks'
@@ -204,7 +200,15 @@ export class AudioPlayer extends React.Component {
             </div>
             <Button className='ctrlBttn' onClick={() => this.onFullVol()}> <MdVolumeUp size={symSize} /> </Button>
           </div>
-          : <span>loading...</span> }
+          : <span>loading...</span>
+        }
+        { metadata
+          ? <div>
+            <MetadataList metadata={metadata} />
+            <MetadataToGraph metadata={metadata} />
+          </div>
+          : 'no metadata'
+        }
         <div>
           {fileText}
         </div>
@@ -213,11 +217,34 @@ export class AudioPlayer extends React.Component {
   }
 }
 
-const MetadataList = ({ metadata }) => (
-  <ul>
-    { Object.keys(metadata).map(key => <li>{key}: {metadata[key]}</li>) }
-  </ul>
-)
+class MetadataToGraph extends React.Component {
+  constructor (props) {
+    super(props)
+    this.state = {
+      graph: null
+    }
+  }
+
+  render () {
+    return (
+      <div> some content</div>
+    )
+  }
+}
+
+const MetadataList = function ({ metadata }) {
+  // <ul>
+  //   { Object.keys(metadata).map(key => <li key={key}>{key}: {metadata[key]}</li>) }
+  // </ul>
+  const { picture, ...rest } = metadata
+  console.log(picture)
+  return (
+    <div className='flex flex-column'>
+      <img src={picture} className='w-1/2' />
+      <List items={Object.keys(rest).map(key => <div><strong>{key}:</strong> {rest[key]}</div>)} />
+    </div>
+  )
+}
 
 // pause symbol with blue bg '\u23F8'
 

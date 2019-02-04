@@ -63,29 +63,33 @@ const extractID3v2Tags = function (uint8array) {
   let frameSize
   let here = 0
 
-  while (here < (100000 || tagSize)) {
+  while (here < (tagSize)) {
     frameSize = guessFrameSize(uint8array.slice(here + frameIDN, here + frameIDN + frameSizeN))
+    if (!frameSize) break
     id = latin1Decoder.decode(uint8array.slice(here, here + frameIDN))
-    console.log(id, frames[id])
-    if (id === 'PIC' || id === 'APIC') {
-      here += frameHeadN + frameSize
-      console.log('skipped pic')
-      continue
-    }
+    // if (id === 'PIC' || id === 'APIC') {
+    //   here += frameHeadN + frameSize
+    //   continue
+    // }
     if (!frames[id]) {
       here += frameHeadN + frameSize
-      console.log(frames[id])
-      console.log('skipped text')
       continue
     }
-
-    frames[id].content = readFrame(
-      uint8array.slice(here, here + frameHeadN), // frame head
-      uint8array.slice(here + frameHeadN, here + frameHeadN + frameSize) // frame content
-    )
+    if (id === 'PIC' || id === 'APIC')  {
+      frames[id].content = readPicFrame(
+        uint8array.slice(here, here + frameHeadN), // frame head
+        uint8array.slice(here + frameHeadN, here + frameHeadN + frameSize) // frame content
+      )
+    } else {
+      frames[id].content = readFrame(
+        uint8array.slice(here, here + frameHeadN), // frame head
+        uint8array.slice(here + frameHeadN, here + frameHeadN + frameSize) // frame content
+      )
+    }
     metadata[frames[id].id] = frames[id].content
     here += frameHeadN + frameSize
   }
+  return metadata
   /*
   for (let key in frames) {
     regExID = new RegExp(frames[key].id)
@@ -98,13 +102,10 @@ const extractID3v2Tags = function (uint8array) {
     )
 
     headUint8 = uint8array.slice(match.index, match.index + frameHeadN)
-    console.log(regExID, match, frameSize, frames[key])
 
     if (frames[key].content) metadata[key] = frames[key].content
   }
   */
-  console.log('metadata', metadata)
-  return metadata
 }
 
 const readFrame = function (head, frame) {
@@ -136,16 +137,40 @@ const readFrame = function (head, frame) {
 
   text = decoder.decode(frame)
   text.replace(/\0/g, '')
-  console.log('readFrame call:', head, latin1Decoder.decode(head), frame, text)
   return text
+}
+
+const readPicFrame = function (head, frame) {
+  // let decoder
+  // let frameEncodingBytes = [0]
+  let pic
+
+  // if (frame[1].toString(16) === 'ff' || frame[2].toString(16) === 'ff') {
+  //   frameEncodingBytes = frame.slice(0, 3)
+  //   frame = frame.slice(3, frame.length)
+  // }
+  let jpegHead = new Uint8Array([255, 216, 255])
+  let i = 0
+  for (i = 0; i < 25; i++) {
+    let test = true
+    for (let j = 0; j < 3; j++) {
+      if (frame[i + j] !== jpegHead[j]) test = false
+    }
+    // if (frame.slice(i, i + 4) == jpegHead) break
+    if (test) break
+  }
+  if (i === 25) i = 0
+  console.log('pic_offset', i)
+  pic = bufToBase64(frame.slice(i + 0, frame.length))
+  pic = 'data:image/png;base64,' + pic
+  return pic
 }
 
 const guessFrameSize = function (frameSizeBytes) {
   if (frameSizeBytes.length === 0) return Infinity
-  console.log('frameSizeBytes', frameSizeBytes)
   let frameSize = {}
   frameSize.reduced = frameSizeBytes.reduce((sum, x) => sum + x)
-  if (Math.max(...frameSizeBytes) === frameSize.reduced) return frameSize.reduced
+  if (Math.max(...frameSizeBytes) === frameSize.reduced) return Number(frameSize.reduced)
 
   if (frameSizeBytes.length < 4) {
     let tmp = frameSizeBytes
@@ -155,8 +180,7 @@ const guessFrameSize = function (frameSizeBytes) {
   // .slice(4 - tmp.length, tmp.length)
 
   let frameSizeView = new DataView(frameSizeBytes.buffer)
-
-  return frameSizeView.getUint32(0)
+  return Number(frameSizeView.getUint32(0))
 
   /*
   frameSize.long = frameSizeView.getUint32(0) || Infinity
@@ -196,6 +220,35 @@ const utf8Decoder = new TextDecoder('utf-8')
 const utf16LeDecoder = new TextDecoder('utf-16le')
 const utf16BeDecoder = new TextDecoder('utf-16be')
 const latin1Decoder = new TextDecoder('iso-8859-1')
+
+// Helper functions to convert a buffer to either a UTF8 string or a base64 array.
+function bufToBase64 (input) {
+  var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
+  var output = ''
+  var chr1, chr2, chr3, enc1, enc2, enc3, enc4
+  var i = 0
+
+  while (i < input.length) {
+    chr1 = input[i++]
+    chr2 = i < input.length ? input[i++] : Number.NaN // Not sure if the index
+    chr3 = i < input.length ? input[i++] : Number.NaN // checks are needed here
+
+    enc1 = chr1 >> 2
+    enc2 = ((chr1 & 3) << 4) | (chr2 >> 4)
+    enc3 = ((chr2 & 15) << 2) | (chr3 >> 6)
+    enc4 = chr3 & 63
+
+    if (isNaN(chr2)) {
+      enc3 = enc4 = 64
+    } else if (isNaN(chr3)) {
+      enc4 = 64
+    }
+    output += keyStr.charAt(enc1) + keyStr.charAt(enc2) +
+      keyStr.charAt(enc3) + keyStr.charAt(enc4)
+  }
+  return output
+}
+
 
 const id3v22Frames = {
   'TT1': { id: 'type', content: null },
