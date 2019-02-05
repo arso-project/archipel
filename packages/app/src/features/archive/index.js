@@ -1,5 +1,6 @@
 import storeConstructor from './store'
 import ArchiveInfo from './ArchiveInfo'
+import ArchiveSharing from './ArchiveSharing'
 
 export default {
   plugin: archivePlugin
@@ -7,6 +8,7 @@ export default {
 
 async function archivePlugin (core, opts) {
   core.components.add('archiveTabs', ArchiveInfo, { title: 'Info' })
+  core.components.add('archiveTabs', ArchiveSharing, { title: 'Sharing' })
 
   let store = core.makeStore('archive', storeConstructor)
 

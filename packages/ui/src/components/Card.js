@@ -10,10 +10,10 @@ const Footer = ({children}) => (
 
 const Card = (props) => {
   return (
-    <div {...classname(props, 'p-4 border-2 border-black')}>
-      { props.Title && <Heading className='mt-0'>{props.Title}</Heading> }
+    <div {...classname(props, 'p-4 m-4 border-2 border-black')}>
+      { props.title && <Heading className='mt-0'>{props.title}</Heading> }
       { props.children }
-      { props.Footer && <Footer>{props.Footer}</Footer> }
+      { props.footer && <Footer>{props.footer}</Footer> }
     </div>
   )
 }
