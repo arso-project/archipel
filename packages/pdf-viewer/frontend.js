@@ -38,7 +38,6 @@ export class PDFViewer extends React.Component {
   }
 
   componentDidMount () {
-    console.log('PDF/mount')
     this.loadPDF()
   }
 
@@ -57,7 +56,6 @@ export class PDFViewer extends React.Component {
   }
 
   loadPDF () {
-    console.log('PDF/update')
     this.loadingTask = PDFjs.getDocument({ data: this.props.content }).then((pdf) => {
       if (this.isUnmounting) return
       this.setState({ pdf })
@@ -89,7 +87,6 @@ class PDFPageViewer extends React.Component {
   }
 
   componentDidMount () {
-    console.log('innerMount/pdf', this.props.pdf)
     const { numPages, littlePageNum } = this.props
     if (numPages <= littlePageNum) {
       this.loadLittlePages()
@@ -99,7 +96,6 @@ class PDFPageViewer extends React.Component {
   }
 
   componentDidUpdate () {
-    console.log('innerUpdate')
     const { numPages, littlePageNum } = this.props
     if (numPages <= littlePageNum) {
       this.loadLittlePages()
@@ -138,7 +134,6 @@ class PDFPageViewer extends React.Component {
     let node = this.pdfRef.current
 
     pdf.getPage(Number(pageNum)).then((page) => {
-      console.log('page', page)
       let { viewport, canvas } = this.getViewportAndCanvas(page, pageNum)
 
       while (node.firstChild) {
@@ -199,7 +194,6 @@ class PDFPageViewer extends React.Component {
   render () {
     let { numPages, littlePageNum } = this.props
     let { pageNum } = this.state
-    console.log('rerendered')
     return (
       <div>
         {
