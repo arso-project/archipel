@@ -13,6 +13,20 @@ import PDFjs from 'pdfjs-dist'
 // packages/app/dist/
 PDFjs.GlobalWorkerOptions.workerSrc = './pdf.worker.js'
 
+export default {
+  name: 'pdf-viewer',
+  plugin
+}
+
+async function plugin (core) {
+  core.components.add('fileViewer', PDFViewer, {
+    stream: false,
+    match: ({ mimetype }) => {
+      return mimetype && mimetype.match(/application\/pdf/)
+    }
+  })
+}
+
 export class PDFViewer extends React.Component {
   constructor (props) {
     super(props)

@@ -19,8 +19,7 @@
     "@archipel/core": "^0.1.0",
     "@archipel/app": "^0.1.0",
     "hyperdrive": "github:Frando/hyperdrive#archipel-dev",
-    "ucore": "^0.4.0",
-    "pdfjs-dist": "^2.0.0"
+    "ucore": "^0.4.0"
   },
   "devDependencies": {
   }

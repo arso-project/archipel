@@ -3,15 +3,11 @@ import PropTypes from 'prop-types'
 import { Heading } from '@archipel/ui'
 import RpcQuery from '@archipel/app/src/features/util/RpcQuery'
 import { WithCore } from 'ucore/react'
-import { PDFViewer } from './PDFViewer'
 
 function matchComponent (file) {
   let { mimetype } = file
   if (mimetype.match(/image\/.*/)) {
     return Image
-  }
-  if (mimetype.match(/application\/.*/)) {
-    return PDF
   }
   return FileContent
 }
@@ -21,12 +17,6 @@ const Image = ({ content, stat }) => {
   return <div className='p-4'>
     <img src={src} alt={stat.name} />
   </div>
-}
-
-const PDF = ({ content, stat }) => {
-  return (
-    <PDFViewer content={content} stat={stat} />
-  )
 }
 
 const FileContent = ({ content }) => {
@@ -78,17 +68,6 @@ const defaultViewers = [
       format: 'base64',
       match: ({ mimetype }) => {
         return mimetype && mimetype.match(/image\/.*/)
-      }
-    }
-  },
-  {
-    component: PDF,
-    opts: {
-      stream: false,
-      // format: 'uint8array', // or just don't set opts.format conversionless
-      // format: 'base64',
-      match: ({ mimetype }) => {
-        return mimetype && mimetype.match(/application\/pdf/)
       }
     }
   },
