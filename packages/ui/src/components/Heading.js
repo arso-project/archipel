@@ -20,7 +20,7 @@ const Heading = ({ ...props }) => {
   if (!props.noMy) props.cls.push('my-4')
   if (!props.size) props.size = 2
   if (props.truncate) props.cls.push('truncate')
-  props.cls.push(sizes[props.size])
+  props.cls.push(sizes[Number(props.size)])
   return (
     <Tag {...proplist(props, null, ['size', 'noMy', 'truncate'])}>
       {props.children}
