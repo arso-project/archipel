@@ -25,6 +25,7 @@ export { default as Modal } from './components/Modal'
 // P
 export { default as PDFViewControl } from './components/PDFViewControl'
 // S
+export { default as SettingsCard } from './components/SettingsCard'
 export { default as StandardTree } from './components/Tree/StandardTree.js'
 // T
 export { default as Tabs } from './components/Tabs'
