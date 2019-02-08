@@ -1,6 +1,9 @@
 const p = require('path')
-const archipelHyperdrive = require('./hyperdrive')
 const mime = require('mime-types')
+const hyperdrive = require('hyperdrive')
+const pify = require('pify')
+const { prom } = require('../util/async')
+
 let Stat = require('hyperdrive/lib/stat')
 
 // exports.name = 'hyperdrive'
@@ -29,10 +32,10 @@ exports.rpc = (api, session) => {
         children = children.filter(c => c)
         if (!children.length) return []
         children = await Promise.all(children.map(async name => {
-          let stat = cleanStat(await drive.stat(joinPath(path, name))
+          let stat = cleanStat(await drive.stat(joinPath(path, name)))
           if (stat.isDirectory && currentDepth < depth) {
             stat.children = await getChildren(path, currentDepth + 1)
-          })
+          }
         }))
         return children
       }
@@ -101,7 +104,7 @@ exports.rpc = (api, session) => {
 
 // hyperdrive structure
 // -
-exports.structure = (opts, api) {
+exports.structure = (opts, api) => {
   const key = opts.key
   // const storage = nestStorage(api.storage, 'hyperdrive', key)
   const drive = hyperdrive(api.storage, key, opts)
@@ -109,7 +112,7 @@ exports.structure = (opts, api) {
   let changeEmitter = null
 
   const structure = {
-    async ready (done) {
+    async ready () {
       const [promise, done] = prom()
       drive.ready(done)
       return promise
@@ -117,7 +120,14 @@ exports.structure = (opts, api) {
 
     replicate (opts) {
       return drive.replicate(opts)
-    }
+    },
+
+    getState () {
+      return {
+        type: 'hyperdrive',
+        key: drive.key
+      }
+    },
 
     async storeInfo (info) {
       await structure.api.writeFile('hyperlib.json', JSON.stringify(info, null, 2))

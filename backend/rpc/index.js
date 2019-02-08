@@ -3,11 +3,15 @@ const nolookalikes = require('nanoid-dictionary/nolookalikes');
 
 // const EventEmitter = require('events').EventEmitter
 
-const { MapOfMaps } = require('@archipel/util/map')
-const { prom, isPromise } = require('@archipel/util/async')
+const { MapOfMaps } = require('../util/map')
+const { prom, isPromise } = require('../util/async')
 
 const nanoid = () => generate(nolookalikes, 8)
-const setImmediate = setImmediate || fn => setTimeout(fn, 0)
+if (!setImmediate) {
+  const setImmediate = fn => setTimeout(fn, 0)
+}
+
+module.exports = id => new RpcApi(id)
 
 class RpcApi {
   constructor (id) {
@@ -21,6 +25,7 @@ class RpcApi {
   }
 
   addPeer (bus, initialState) {
+    initialState = initialState || {}
     const [promise, done] = prom()
     let timeout = setTimeout(() => done(new Error('Timeout.')), 5000)
 
@@ -34,9 +39,9 @@ class RpcApi {
 
     bus.onmessage(msg => {
       if (msg.type === 'hello') {
-        let { id, functions } = msg
+        let { id, methods } = msg
         peer.id = id
-        peer.api = this._makeRemoteApi(id, bus)
+        peer.api = this._makeRemoteApi(id, bus, methods)
 
         this.peers.set(id, peer)
 
@@ -61,6 +66,7 @@ class RpcApi {
   }
 
   localCall (msg) {
+    const self = this
     let { from, to, args } = msg
 
     if (!this.peers.has(from.peer)) throw new Error('Unknown peer: ' + from.peer)
@@ -69,26 +75,45 @@ class RpcApi {
 
     let fn
     if (to.method) {
-      fn = method.split('.').reduce((ret, key) => {
+      fn = to.method.split('.').reduce((ret, key) => {
         if (ret && ret[key]) return ret[key]
         else return null
-      }, peer.localApi)
-    } else if (to.callback) {
-      fn = peer.callbacks[callback]
+      }, peer.localApi.api)
+    } else if (to.callback !== undefined) {
+      fn = peer.callbacks[to.callback]
     }
 
-    if (!fn || typeof fn !== 'function') throw new Error('Target not found: ' + to)
+    if (!fn || typeof fn !== 'function') {
+      // todo: Error handling.
+      return console.error('Cannot handle call: ', to)
+    }
 
     args = this.decodeArgs(peer, args)
 
-    let ret = fn.apply(fn, args)
+    let ret, res, err
+    try {
+      ret = fn.apply(fn, args)
+      if (isPromise(ret)) {
+        ret
+          .then(r => (res = r), e => (err = e))
+          .finally(done)
+      } else {
+        res = ret
+        done()
+      }
+    } catch (e) {
+      err = e
+      done()
+    }
 
-    if (from.callback) {
-      Promise.resolve(ret).then(res => {
-        this.pushCall(from, [undefined, res], false)
-      }).catch(err => {
-        this.pushCall(from, [err, undefined], false)
-      })
+    function done () {
+      if (err) {
+        console.error(`ERROR for call ${to.method} from peer ${from.peer}:`, err)
+        if (err instanceof Error) err = err.message
+      }
+      if (from.callback !== undefined) {
+        self.pushCall(from, [err, res], false)
+      }
     }
   }
 
@@ -112,6 +137,7 @@ class RpcApi {
     }
 
     msg.args = this.encodeArgs(peer, args)
+    console.log('PUSH', msg)
     peer.bus.postMessage(msg)
     return promise
   }
@@ -121,9 +147,9 @@ class RpcApi {
     return idx - 1
   }
 
-  _makeRemoteApi (peer) {
-    let { id, bus, methods } = peer
+  _makeRemoteApi (id, bus, methods) {
     let api = {}
+    if (!methods) return api
     methods.map(name => {
       let cur = api
       let path = name.split('.')

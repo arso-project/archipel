@@ -1,3 +1,5 @@
+const thunky = require('thunky')
+
 module.exports = {
   asyncThunky,
   prom,

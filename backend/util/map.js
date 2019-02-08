@@ -98,6 +98,10 @@ class IndexedMap {
     }, {})
   }
 
+  values () {
+    return Array.from(this.store.values())
+  }
+
   set (id, obj) {
     if (this.store.has(id)) this._clear(id)
     this.store.set(id, obj)
@@ -121,7 +125,9 @@ class IndexedMap {
   }
 
   map (fn) {
-    this.store.entries().map(([key, value]) => fn(value))
+    let entries = this.store.entries()
+    if (!entries || !entries.length) return []
+    else return entries.map((key, value) => fn(value))
   }
 
   _clear (id) {
