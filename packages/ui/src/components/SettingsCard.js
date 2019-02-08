@@ -10,14 +10,19 @@ const Footer = ({children}) => (
 )
 
 const SettingsCard = (props) => {
+  let textprops = {}
+  textprops.className = props.textprops || ''
+  let settingsprops = {}
+  settingsprops.className = props.settingsprops || ''
+
   return (
-    <div {...classname(props, 'p-4 m-4 border-2 border-black bg-white')}>
+    <div {...classname(props, 'md:w-2/3 sm:full p-4 m-4 border-2 border-black bg-white')}>
       { props.title && <Heading className='mt-0' size='4' >{props.title}</Heading> }
-      <div className='p-2 flex flex-row'>
-        <div className='max-w-sm w-auto m-2'>
+      <div className='p-2 flex flex-row md:flex-nowrap sm:flex-wrap'>
+        <div {...classname(textprops, 'm-2')}>
           { props.children }
         </div>
-        <div className='max-w-lg w-auto p-2 m-2 bg-grey-lighter flex flex-col items-baseline justify-end'>
+        <div {...classname(settingsprops, 'sm:w-full p-2 m-2 bg-grey-lighter flex flex-col items-baseline justify-end')}>
           { props.explanation && <Explanation> { props.explanation } </Explanation>}
           { props.setting && <Setting> { props.setting } </Setting>}
           { props.warning && <Warning> { props.warning } </Warning> }

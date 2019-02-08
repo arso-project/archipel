@@ -114,7 +114,7 @@ class Authorize extends React.Component {
 const Sharing = ({ archive, onShare, authorizeWriter }) => {
   let { key, status } = archive
   return (
-    <div className='flex flex-col justify-between w-1/2'>
+    <div className='flex flex-col justify-between'>
 
       <SettingsCard
         title='1. Make your archive available to others'
@@ -138,6 +138,7 @@ const Sharing = ({ archive, onShare, authorizeWriter }) => {
       {status.share
         ? <SettingsCard
           title='2. Send your ArchiveKey to trustwothy others'
+          settingsprops='w-40 md:w-40'
           explanation='click to copy:'
           setting={
             <ClickToCopy archiveKey={key} />
