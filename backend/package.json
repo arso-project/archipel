@@ -4,11 +4,15 @@
   "license": "GPL-3.0",
   "description": "Archipel backend",
   "author": "arso team",
-  "scripts": {},
+  "scripts": {
+    "test": "tape test/*.js"
+  },
   "standard": {
     "ignore": []
   },
   "dependencies": {
+    "@hyperswarm/guts": "0.0.0",
+    "debug": "^4.1.1",
     "ecstatic": "^3.3.0",
     "hypercore-crypto": "^1.0.0",
     "hyperdb": "^3.5.0",
@@ -24,7 +28,8 @@
     "websocket-stream": "^5.1.2"
   },
   "devDependencies": {
+    "random-access-memory": "^3.1.1",
     "standard": "^12.0.1",
-    "tape": "^4.9.1"
+    "tape": "^4.10.0"
   }
 }

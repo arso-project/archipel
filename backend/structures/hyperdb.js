@@ -2,6 +2,7 @@ const p = require('path')
 const hyperdb = require('hyperdb')
 const pify = require('pify')
 const { prom } = require('../util/async')
+const { hex } = require('../util/hyperstack')
 
 // exports.name = 'hyperdb'
 // exports.label = 'Hyperdb'
@@ -10,7 +11,7 @@ exports.needs = ['hyperlib']
 
 // hyperdb rpc
 // -
-exports.rpc = (api, session) => {
+exports.rpc = (api, rpc, session) => {
   return {
     async list (key, prefix) {
       const db = await getHyperdb(key)
@@ -60,7 +61,7 @@ exports.structure = (opts, api) => {
     getState () {
       return {
         type: 'hyperdb',
-        key: this.db.key
+        key: hex(this.db.key)
       }
     },
 

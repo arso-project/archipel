@@ -1,43 +1,71 @@
 const generate = require('nanoid/generate')
 const nolookalikes = require('nanoid-dictionary/nolookalikes');
+const debug = require('debug')('rpc')
 
 // const EventEmitter = require('events').EventEmitter
 
 const { MapOfMaps } = require('../util/map')
-const { prom, isPromise } = require('../util/async')
+const { prom, isPromise, withTimeout } = require('../util/async')
 
 const nanoid = () => generate(nolookalikes, 8)
 if (!setImmediate) {
   const setImmediate = fn => setTimeout(fn, 0)
 }
 
-module.exports = id => new RpcApi(id)
+module.exports = opts => new RpcApi(opts)
+
+class Peer {
+  constructor (opts) {
+    opts = opts || {}
+    this.id = opts.id || null
+    this.session = opts.session || {}
+    this.api = opts.api || {}
+    this.bus = opts.bus || {}
+
+    this._callbacks = []
+  }
+
+  getCallback (id) {
+    return this._callbacks[id - 1]
+  }
+
+  saveCallback (fn) {
+    let idx = this._callbacks.push(fn)
+    return idx
+  }
+}
 
 class RpcApi {
-  constructor (id) {
-    this.api = {}
+  constructor (opts) {
+    opts = opts || {}
+    this.api = opts.api || {}
+    // this.rpcApi = opts.rpc || {}
+    this.id = opts.id || nanoid()
+
+    this.exposedApi = this._makeLocalApi(opts.rpc)
+    // const localApi = this._makeLocalApi(initialState)
+    this.timeout = opts.timeout || 2000 // todo: increase
+
     this.peers = new Map()
-    this.id = id || nanoid()
   }
 
-  use (name, create, opts) {
-    this.api[name] = { create, opts }
-  }
+  // use (name, create, opts) {
+    // this.api[name] = { create, opts }
+  // }
 
   addPeer (bus, initialState) {
     initialState = initialState || {}
     const [promise, done] = prom()
     let timeout = setTimeout(() => done(new Error('Timeout.')), 5000)
 
-    const localApi = this._makeLocalApi(initialState)
+    // const localApi = this._makeLocalApi(initialState)
 
-    const peer = {
-      bus,
-      localApi,
-      callbacks: []
-    }
+    const peer = new Peer({
+      bus
+    })
 
     bus.onmessage(msg => {
+      debug(`receive msg from peer ${peer.id ? peer.id : msg.id}:`, msg)
       if (msg.type === 'hello') {
         let { id, methods } = msg
         peer.id = id
@@ -54,7 +82,7 @@ class RpcApi {
     })
 
     setImmediate(() => {
-      bus.postMessage({ type: 'hello', id: this.id, methods: localApi.methods })
+      bus.postMessage({ type: 'hello', id: this.id, methods: this.exposedApi.methods })
     })
 
     return promise
@@ -62,7 +90,10 @@ class RpcApi {
 
   postMessage (msg) {
     if (msg.type === 'call' && msg.to.peer === this.id) return this.localCall(msg)
-    else console.log('Unhandled message', msg)
+    else {
+      // todo: handle?
+      debug('Unhandled message', msg)
+    }
   }
 
   localCall (msg) {
@@ -78,9 +109,9 @@ class RpcApi {
       fn = to.method.split('.').reduce((ret, key) => {
         if (ret && ret[key]) return ret[key]
         else return null
-      }, peer.localApi.api)
+      }, this.exposedApi.api)
     } else if (to.callback !== undefined) {
-      fn = peer.callbacks[to.callback]
+      fn = peer.getCallback(to.callback)
     }
 
     if (!fn || typeof fn !== 'function') {
@@ -92,8 +123,10 @@ class RpcApi {
 
     let ret, res, err
     try {
-      ret = fn.apply(fn, args)
+      ret = fn.apply(peer, args)
+      // console.log('RET', to, ret)
       if (isPromise(ret)) {
+        if (this.timeout) ret = withTimeout(ret, this.timeout)
         ret
           .then(r => (res = r), e => (err = e))
           .finally(done)
@@ -108,7 +141,7 @@ class RpcApi {
 
     function done () {
       if (err) {
-        console.error(`ERROR for call ${to.method} from peer ${from.peer}:`, err)
+        debug(`ERROR for call ${to.method} from peer ${from.peer}:`, err)
         if (err instanceof Error) err = err.message
       }
       if (from.callback !== undefined) {
@@ -127,7 +160,7 @@ class RpcApi {
 
     if (returnPromise) {
       [promise, done] = prom()
-      from.callback = this.saveCallback(peer, done)
+      from.callback = peer.saveCallback(done)
     }
 
     let msg = {
@@ -137,14 +170,9 @@ class RpcApi {
     }
 
     msg.args = this.encodeArgs(peer, args)
-    console.log('PUSH', msg)
+    debug(`send msg to ${peer.id}:`, msg)
     peer.bus.postMessage(msg)
     return promise
-  }
-
-  saveCallback (peer, cb) {
-    let idx = peer.callbacks.push(cb)
-    return idx - 1
   }
 
   _makeRemoteApi (id, bus, methods) {
@@ -165,17 +193,22 @@ class RpcApi {
     return api
   }
 
-  _makeLocalApi (initialState) {
-    let state = initialState || {}
-    let api = {}
-    Object.entries(this.api).forEach(([name, { create, opts }]) => {
-      api[name] = create(api, state, opts)
+  _makeLocalApi (rpcApi) {
+    rpcApi = rpcApi || {}
+    let build = {}
+    Object.entries(rpcApi).forEach(([name, fn]) => {
+      let opts = {}
+      if (typeof fn === 'object' && fn.create) {
+        opts = fn.opts
+        fn = fn.create
+      }
+      build[name] = fn(this.api, opts)
     })
 
     let methods = []
-    reduce(api, [])
+    reduce(build, [])
 
-    return { api, methods, state }
+    return { api: build, methods }
 
     function reduce (obj, path) {
       Object.entries(obj).forEach(([name, value]) => {
@@ -191,9 +224,8 @@ class RpcApi {
   encodeArgs (peer, args) {
     if (!args || !args.length) return []
     return args.map(arg => {
-      if (arg instanceof Error) throw arg // todo: how to deal with errors?
-      // if (hasRef(arg)) return { type: 'ref', ref: getRef(arg) }
-      if (typeof arg === 'function') return { type: 'callback', value: this.saveCallback(peer, arg) }
+      if (arg instanceof Error) throw arg // todo: how to deal with errors as args?
+      if (typeof arg === 'function') return { type: 'callback', value: peer.saveCallback(arg) }
       return { type: 'value', value: arg }
     })
   }

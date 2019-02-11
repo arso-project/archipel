@@ -3,6 +3,7 @@ const mime = require('mime-types')
 const hyperdrive = require('hyperdrive')
 const pify = require('pify')
 const { prom } = require('../util/async')
+const { hex } = require('../util/hyperstack')
 
 let Stat = require('hyperdrive/lib/stat')
 
@@ -13,14 +14,13 @@ exports.needs = ['hyperlib']
 
 // hyperdrive rpc
 // -
-exports.rpc = (api, session) => {
+exports.rpc = (api, opts) => {
   return {
     async stat (key, path, depth) {
       // maybeWatch(api, session, req)
-      const drive = await getHyperdrive(key)
+      const drive = await getHyperdrive(this.session, key)
       let stat = await drive.stat(path)
       stat = cleanStat(stat, path, key)
-
       if (stat.isDirectory && depth && depth > 1) {
         stat.children = await statChildren(stat.path, 0)
       }
@@ -42,19 +42,19 @@ exports.rpc = (api, session) => {
     },
 
     async mkdir (key, path) {
-      const drive = await getHyperdrive(key)
+      const drive = await getHyperdrive(this.session, key)
       const res = await drive.mkdir(path)
       return res
     },
 
     async readFile (key, path) {
-      const drive = await getHyperdrive(key)
+      const drive = await getHyperdrive(this.session, key)
       const res = await drive.readFile(path)
-      return { content: res }
+      return res
     },
 
     async readFileStream (key, path) {
-      const drive = await getHyperdrive(key)
+      const drive = await getHyperdrive(this.session, key)
       const rs = drive.createReadStream(path)
       return {
         stream: rs,
@@ -63,7 +63,7 @@ exports.rpc = (api, session) => {
     },
 
     async history (key, path) {
-      const drive = await getHyperdrive(key)
+      const drive = await getHyperdrive(this.session, key)
       let res = await drive.history(path)
       res = res.map(nodes => {
         let node = nodes[0]
@@ -76,16 +76,21 @@ exports.rpc = (api, session) => {
     },
 
     async writeFile (key, path, stream) {
-      const drive = await getHyperdrive(key)
-      return drive.asyncWriteStream(path, stream)
+      const drive = await getHyperdrive(this.session, key)
+      if (Buffer.isBuffer(stream)) {
+        return drive.writeFile(path, stream)
+      } else {
+        return drive.asyncWriteStream(path, stream)
+      }
     }
   }
 
-  async function getHyperdrive (key) {
+  async function getHyperdrive (session, key) {
     if (!session.library) throw new Error('No library open.')
     const library = await api.hyperlib.get(session.library)
     const archive = await library.getArchive(key)
-    return archive.getStructure('hyperdrive')
+    let drive = archive.getStructure({ type: 'hyperdrive' })
+    return drive.api
   }
 
 
@@ -106,7 +111,6 @@ exports.rpc = (api, session) => {
 // -
 exports.structure = (opts, api) => {
   const key = opts.key
-  // const storage = nestStorage(api.storage, 'hyperdrive', key)
   const drive = hyperdrive(api.storage, key, opts)
 
   let changeEmitter = null
@@ -125,7 +129,7 @@ exports.structure = (opts, api) => {
     getState () {
       return {
         type: 'hyperdrive',
-        key: drive.key
+        key: hex(drive.key)
       }
     },
 
@@ -145,6 +149,7 @@ exports.structure = (opts, api) => {
   }
 
   structure.api = {
+    drive: drive,
     asyncWriteStream (path, stream) {
       return new Promise((resolve, reject) => {
         const ws = drive.createWriteStream(path)

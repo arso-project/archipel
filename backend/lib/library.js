@@ -1,66 +1,74 @@
 const EventEmitter = require('events').EventEmitter
 
-const { IndexedMap } = require('./util/map')
-const { asyncThunky, prom, withTimeout } = require('./util/async')
-const { nestStorage, keyPair, hex } = require('./util/hyperstack')
+const hyperdb = require('../structures/hyperdb')
 
-const libraries = {}
-const apis = {}
-const handlers = {}
+const { IndexedMap } = require('../util/map')
+const { asyncThunky, prom, withTimeout } = require('../util/async')
+const { nestStorage, keyPair, hex } = require('../util/hyperstack')
 
-const api = exports.api = {
-  useHandler (name, handler) {
-    handlers[name] = handler
-  },
-
-  useApi (name, api) {
-    apis[name] = api
-  },
-
-  get (name) {
-    if (libraries[name]) return libraries[name]
-    else {
-      libraries[name] = new Library(name, handlers, apis)
+function make (api, handlers) {
+  api = api || {}
+  handlers = handlers || {}
+  const libraries = {}
+  return {
+    get (name) {
+      if (libraries[name]) return libraries[name]
+      else {
+        libraries[name] = new Library(api, handlers)
+      }
+      return libraries[name]
     }
-    return libraries[name]
   }
 }
 
-const rpc = exports.rpc = (rpc, session) => ({
-  async open (name) {
-    let library = api.get(name)
-    await library.ready()
-    session.library = name
-    console.log('yay!')
-    // return library.getState()
-    return true
-  },
-  async openArchive (opts) {
-    if (!session.library) throw new Error('No library open.')
-    let library = api.get(session.library)
-    await library.ready()
-    let archive = await library.openArchive(opts)
-    console.log('made archive', archive)
-    let ret = await archive.serialize()
-    return ret
+
+function rpc (api, opts) {
+  return {
+    async open (name) {
+      let library = api.hyperlib.get(name)
+      await library.ready()
+      this.session.library = name
+      // return library.getState()
+      return true
+    },
+    async openArchive (opts) {
+      if (!this.session.library) throw new Error('No library open.')
+      let library = api.hyperlib.get(this.session.library)
+      await library.ready()
+      let archive = await library.openArchive(opts)
+      let ret = await archive.serialize()
+      return ret
+    },
+    async listArchives (opts) {
+      if (!this.session.library) throw new Error('No library open.')
+      let library = api.hyperlib.get(this.session.library)
+      let archives = await library.listArchives()
+      return Promise.all(archives.map(a => a.serialize()))
+    }
   }
-})
+}
 
 class Library extends EventEmitter {
-  constructor (name, handlers, api) {
+  constructor (api, handlers) {
     super()
-    this.name = name
 
     this.archives = new IndexedMap(['key', 'type'])
     this.structures = new IndexedMap(['key', 'type', 'archive'])
 
     this.handlers = handlers || {}
-    this.api = api || {}
+
+    this.storage = api.storage
+
+    this._init = false
 
     // this.state = new Map()
-     console.log('API', this.api)
-    let rootStorage = nestStorage(this.api.storage, 'root')
-    this.root = new Archive('hyperdb', {}, this.handlers, { storage: rootStorage })
+    
+    let rootStorage = nestStorage(this.storage, 'root')
+    this.root = hyperdb.structure({ valueEncoding: 'json' }, { storage: rootStorage })
+
+    // this.root = new Archive()
+    // this.root.setPrimary({ type: 'hyperdb', storage: rootStorage, handler: this.handlers.hyperdb)
+    // this.root = new Archive('hyperdb', {}, { storage: rootStorage }, this.handlers)
     
     this.ready = asyncThunky(this._ready.bind(this))
   }
@@ -71,11 +79,12 @@ class Library extends EventEmitter {
 
   async loadArchives () {
     await this.root.ready()
-    let archives = await this.root.primary.api.list('archives')
+    this._loading = true
+    let archives = await this.root.api.list('archive')
 
     if (!archives) return
 
-    let promises = archives.map(info => {
+    let promises = archives.map(a => a[0].value).map(info => {
       let worker = this.openArchive(info)
       let [promise, done] = prom()
       worker
@@ -86,57 +95,69 @@ class Library extends EventEmitter {
 
     let results = await Promise.all(promises)
     results.forEach(r => {
-      if (r.error) console.err(`Opening archive ${info.type} ${info.key} failed:`, r.error)
+      if (r.error) console.error(`Opening archive ${r.info.type} ${r.info.key} failed:`, r.error)
     })
+    this._loading = false
   }
 
   async storeInfo () {
+    if (this._loading) return
     await this.ready()
-    const promises = this.archives.map(a => {
-      return this.root.put('archive/' + a.key, {
-        key: a.key,
+    const promises = this.archives.values().map(a => {
+      let key = hex(a.key)
+      return this.root.api.put('archive/' + key, {
+        key: key,
         type: a.type
       })
     })
-    return Promise.all(promises)
+    let res = await Promise.all(promises)
+    return res
   }
 
-  useHandler (name, handler) {
-    this.handlers[name] = handler
-  }
+  // useHandler (name, handler) {
+    // this.handlers[name] = handler
+  // }
 
-  useApi (name, api) {
-    this.api[name] = api
-  }
+  // useApi (name, api) {
+    // this.api[name] = api
+  // }
 
   getArchive (key) {
+    key = hex(key)
     if (this.archives.has(key)) return this.archives.get(key)
   }
 
   async openArchive (opts) {
     const self = this
     const { key, type } = opts
-    if (key && this.archives.has(key)) return this.archive.get(key)
+    if (key && this.archives.has(key)) return this.archives.get(key)
     if (!type) throw new Error('Type for primary structure is required.')
 
     try {
       const archive = await withTimeout(open(), 1000)
+      await self.storeInfo()
       return archive
     } catch (e) { 
+      console.error(e)
       throw new Error(`Cannot open archive: ${type} ${key}. Reason: ${e.message}`)
     }
 
     async function open () {
-      const archive = new Archive(type, opts, self.handlers, self.api)
+      const archive = new Archive(type, opts, self.handlers, { storage: self.storage })
 
       archive.on('structure', s => self.structures.add(s.key, s))
 
       await archive.ready()
 
-      self.archives.set(archive.key, archive)
+      self.archives.set(hex(archive.key), archive)
       return archive
     }
   }
+
+  async listArchives () {
+    await this.ready()
+    return this.archives.values()
+  } 
 }
 
 class Archive extends EventEmitter {
@@ -145,6 +166,7 @@ class Archive extends EventEmitter {
     this.handlers = handlers
     this.api = api
     this.opts = opts
+    this.type = type
 
     this.structures = new IndexedMap(['type'])
     this._addStructure(type, opts, true)
@@ -153,6 +175,7 @@ class Archive extends EventEmitter {
   async ready () {
     await this.primary.ready()
     await this.loadStructures()
+    this.key = this.primary.key
 
     let promises = this.structures.map(structure => structure.ready())
     return Promise.all(promises)
@@ -162,12 +185,9 @@ class Archive extends EventEmitter {
     await this.ready()
     let structures = this.structures.values() || []
     return {
-      key: this.key,
-      primary: this.primary.key,
-      structures: structures.reduce((ret, s) => {
-        ret[s.key] = s.getState()
-        return ret
-      }, {})
+      key: hex(this.key),
+      primary: hex(this.primary.key),
+      structures: structures.map(s => s.getState())
     }
   }
 
@@ -210,7 +230,7 @@ class Archive extends EventEmitter {
 
     if (!opts.key) {
       let keys = keyPair()
-      opts.secretKey = keys.seretKey
+      opts.secretKey = keys.secretKey
       opts.key = keys.publicKey
     }
     const key = opts.key
@@ -230,13 +250,22 @@ class Archive extends EventEmitter {
     // structure.discoveryKey = discoveryKey(key)
 
     if (primary) this.primary = structure
-    this.structures.set(key, structure)
+    this.structures.set(hex(key), structure)
   }
 
   getStructure (opts) {
-    if (opts.key) return this.structures.get(opts.key)
-    if (opts.type) return this.structures.by('type', opts.type)
-    return null
+    let structure = null
+    if (!opts || opts.primary) structure = this.primary
+    if (opts.key) structure = this.structures.get(hex(opts.key))
+    if (opts.type) structure = this.structures.by('type', opts.type, true)
+    return structure
   }
+}
+
+module.exports = {
+  make,
+  rpc,
+  Library,
+  Archive
 }
 

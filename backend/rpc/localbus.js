@@ -13,10 +13,12 @@ module.exports = function localBus (peer1, peer2) {
     onmessage: fn => qb.take(fn)
   }
 
+  let promises = []
   if (peer1 && peer2) {
-    peer1.addPeer(a)
-    peer2.addPeer(b)
+    promises[0] = peer1.addPeer(a)
+    promises[1] = peer2.addPeer(b)
   }
 
-  return [a, b]
+  return Promise.all(promises)
+  // return [a, b]
 }

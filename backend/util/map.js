@@ -112,16 +112,21 @@ class IndexedMap {
     return this.store.get(id)
   }
 
+  has (id) {
+    return this.store.has(id)
+  }
+
   delete (id) {
     this._clear(id)
     this.store.delete(id)
   }
 
-  by (key, value) {
+  by (key, value, single) {
     if (!this.index[key]) return null
-    // if (!this.index[key]) this._buildIndex(key)
     if (!this.index[key].has(value)) return null
-    return this.index[key].get(value).map(id => this.store.get(id))
+    let ids = this.index[key].get(value)
+    if (single) return this.store.get(ids.values().next().value)
+    else return ids.map(id => this.store.get(id))
   }
 
   map (fn) {
