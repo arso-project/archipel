@@ -28,7 +28,7 @@ function boot (extensions) {
   core.register(workspace)
   core.register(archive)
 
-  extensions.forEach(extension => core.register(extension))
+  extensions.forEach(extension => core.register(extension.default ? extension.default : extension))
 
   window.archipelCore = core
 

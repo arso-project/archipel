@@ -1,4 +1,16 @@
+import React from 'react'
+import AppComponent from './features/app/App'
+import ApiTest from './features/app/ApiTest'
+
 import '@archipel/ui/tailwind.pcss'
 
-export { default as App } from './features/app/App'
+export const App = props => {
+  return (
+    <div>
+      <ApiTest />
+      <AppComponent />
+    </div>
+  )
+}
+
 export { default as makeCore } from './core'
