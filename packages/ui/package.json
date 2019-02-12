@@ -12,8 +12,8 @@
   "license": "GPL-3.0",
   "dependencies": {
     "@blueprintjs/core": "^3.7.0",
-    "react": "^16.6.3",
-    "react-dom": "^16.6.3",
+    "react": "^16.8.1",
+    "react-dom": "^16.8.1",
     "react-icons": "^3.2.2",
     "scroll-into-view-if-needed": "^2.2.20",
     "shallowequal": "^1.1.0",
