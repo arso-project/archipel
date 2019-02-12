@@ -27,9 +27,12 @@ export { default as PDFViewControl } from './components/PDFViewControl'
 // S
 export { default as SettingsCard } from './components/SettingsCard'
 export { default as StandardTree } from './components/Tree/StandardTree.js'
+export { default as Status } from './components/Status'
+
 // T
 export { default as Tabs } from './components/Tabs'
 export { default as Tree } from './components/Tree/index.js'
+
 
 // Other
 export { proplist, cls } from './util.js'
