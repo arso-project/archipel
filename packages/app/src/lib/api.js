@@ -10,7 +10,7 @@ export function useApi (fn, inputs) {
   inputs = inputs || []
   const state = useAsyncEffect(async () => {
     const api = await getApi()
-    if (!fn) return [api]
+    if (!fn) return api
     let res = fn(api)
     res = await Promise.resolve(res)
     return [api, res]
@@ -19,7 +19,8 @@ export function useApi (fn, inputs) {
 }
 
 export function withApi (Component, props) {
-  return (
+  props = props || {}
+  return () => (
     <WithApi>
       {(api) => <Component {...props} api={api} />}
     </WithApi>

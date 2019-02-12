@@ -172,7 +172,7 @@ class Library extends EventEmitter {
 
     async function open () {
       const archive = new Archive(type, opts, self.handlers, { storage: self.storage })
-      archive.on('structure', s => self.structures.add(s.key, s))
+      archive.on('structure', s => self.structures.set(s.key, s))
       await archive.ready()
       const key = hex(archive.key)
 
@@ -215,8 +215,10 @@ class Archive extends EventEmitter {
     this.opts = opts
     this.type = type
 
+    this.info = opts.info || {}
+
     this.structures = new IndexedMap(['type'])
-    this._addStructure(type, opts, true)
+    this.addStructure(type, { ...opts, primary: true }, true)
   }
 
   async ready () {
@@ -234,6 +236,7 @@ class Archive extends EventEmitter {
     return {
       key: hex(this.key),
       primary: hex(this.primary.key),
+      info: this.info,
       structures: structures.map(s => s.getState())
     }
   }
@@ -246,7 +249,7 @@ class Archive extends EventEmitter {
   }
 
   async storeStructures () {
-    let structureInfo = this.itructures.filter(s => !s.primary).map(s => {
+    let structureInfo = this.structures.values().filter(s => !s.primary).map(s => {
       let optsToStore = ['key', 'type'].reduce((r, k) => {
         r[k] = s[k]
         return r
@@ -254,13 +257,15 @@ class Archive extends EventEmitter {
     })
 
     await this.primary.storeInfo({
-      structures: structureInfo
+      structures: structureInfo,
+      info: this.info
     })
   }
 
   async loadStructures () {
     try {
       let info = await withTimeout(this.primary.fetchInfo(), 200)
+      if (info.info) this.info = info.info
       if (!info.structures) return
       info.structures.map(async s => {
         let structure = this._addStructure(s)
@@ -269,11 +274,12 @@ class Archive extends EventEmitter {
     } catch (e) {}
   }
 
-  _addStructure (type, opts, primary) {
+  _addStructure (type, opts) {
     if (!this.handlers[type]) throw new Error('Unknown type: ' + type)
     if (this.structures.by('type', type)) throw new Error('Multiple structures of the same type are not allowed.')
 
     const handler = this.handlers[type]
+    const primary = opts.primary
 
     if (!opts.key) {
       let keys = keyPair()
@@ -293,11 +299,13 @@ class Archive extends EventEmitter {
     structure.type = opts.type
     structure.key = key
 
+    if (opts.info) structure.info = opts.info
 
     // structure.discoveryKey = discoveryKey(key)
 
     if (primary) this.primary = structure
     this.structures.set(hex(key), structure)
+    return structure
   }
 
   getStructure (opts) {
