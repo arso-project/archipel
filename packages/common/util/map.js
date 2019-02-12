@@ -102,6 +102,10 @@ class IndexedMap {
     return Array.from(this.store.values())
   }
 
+  forEach (fn) {
+    this.store.values().forEach(fn)
+  }
+
   set (id, obj) {
     if (this.store.has(id)) this._clear(id)
     this.store.set(id, obj)
@@ -160,3 +164,4 @@ module.exports = {
   MapOfMapOfSets,
   IndexedMap
 }
+

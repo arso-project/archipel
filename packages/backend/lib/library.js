@@ -1,10 +1,11 @@
 const EventEmitter = require('events').EventEmitter
 
 const hyperdb = require('../structures/hyperdb')
+const network = require('./network')
 
-const { IndexedMap } = require('../util/map')
-const { asyncThunky, prom, withTimeout } = require('../util/async')
-const { nestStorage, keyPair, hex } = require('../util/hyperstack')
+const { IndexedMap } = require('@archipel/common/util/map')
+const { asyncThunky, prom, withTimeout } = require('@archipel/common/util/async')
+const { nestStorage, keyPair, hex } = require('@archipel/common/util/hyperstack')
 
 function make (api, handlers) {
   api = api || {}
@@ -14,7 +15,8 @@ function make (api, handlers) {
     get (name) {
       if (libraries[name]) return libraries[name]
       else {
-        libraries[name] = new Library(api, handlers)
+        let storage = nestStorage(api.storage, name)
+        libraries[name] = new Library({ ...api, storage }, handlers)
       }
       return libraries[name]
     }
@@ -32,20 +34,42 @@ function rpc (api, opts) {
       return true
     },
     async openArchive (opts) {
-      if (!this.session.library) throw new Error('No library open.')
-      let library = api.hyperlib.get(this.session.library)
-      await library.ready()
+      let library = await getLibrary(this.session)
       let archive = await library.openArchive(opts)
       let ret = await archive.serialize()
       return ret
     },
+
     async listArchives (opts) {
-      if (!this.session.library) throw new Error('No library open.')
-      let library = api.hyperlib.get(this.session.library)
+      let library = await getLibrary(this.session)
       let archives = await library.listArchives()
-      return Promise.all(archives.map(a => a.serialize()))
+      archives = await Promise.all(archives.map(a => a.serialize()))
+      return archives
+    },
+
+    async share (key) {
+      let library = await getLibrary(this.session)
+      library.share(key)
+    },
+
+    async unshare (key) {
+      let library = await getLibrary(this.session)
+      library.unshare(key)
+    },
+
+    async statsStream () {
+      let library = await getLibrary(this.session)
+      return library.network.createStatsStream()
     }
   }
+
+  async function getLibrary (session) {
+    if (!session.library) throw new Error('No library open.')
+    let library = api.hyperlib.get(session.library)
+    await library.ready()
+    return library
+  }
+
 }
 
 class Library extends EventEmitter {
@@ -54,6 +78,9 @@ class Library extends EventEmitter {
 
     this.archives = new IndexedMap(['key', 'type'])
     this.structures = new IndexedMap(['key', 'type', 'archive'])
+    this.network = network()
+
+    this.state = {}
 
     this.handlers = handlers || {}
 
@@ -107,7 +134,8 @@ class Library extends EventEmitter {
       let key = hex(a.key)
       return this.root.api.put('archive/' + key, {
         key: key,
-        type: a.type
+        type: a.type,
+        state: this.state[key]
       })
     })
     let res = await Promise.all(promises)
@@ -144,12 +172,17 @@ class Library extends EventEmitter {
 
     async function open () {
       const archive = new Archive(type, opts, self.handlers, { storage: self.storage })
-
       archive.on('structure', s => self.structures.add(s.key, s))
-
       await archive.ready()
+      const key = hex(archive.key)
 
-      self.archives.set(hex(archive.key), archive)
+      self.archives.set(key, archive)
+      self.state[key] = {}
+
+      if (opts.share) {
+        self.share(key)
+      }
+
       return archive
     }
   }
@@ -158,6 +191,20 @@ class Library extends EventEmitter {
     await this.ready()
     return this.archives.values()
   } 
+
+  async share (key) {
+    if (!this.archives.has(key)) return
+    this.state[key].share = true
+    this.network.share(this.archives.get(key))
+    await this.storeInfo()
+  }
+
+  async unshare (key) {
+    if (!this.archives.has(key)) return
+    this.state[key].share = false 
+    this.network.unshare(this.archives.get(key))
+    await this.storeInfo()
+  }
 }
 
 class Archive extends EventEmitter {

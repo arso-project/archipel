@@ -31,8 +31,8 @@ class StreamBus extends EventEmitter {
     const rpc = this.stream.createSharedStream('rpc')
 
     const mapArgs = (msg, fn) => {
-      if (!msg.opts || !msg.opts.args) return msg
-      msg.opts.args = msg.opts.args.map(arg => arg ? fn(arg) : arg)
+      if (!msg.args) return msg
+      msg.args = msg.args.map(arg => arg ? fn(arg) : arg)
       return msg
     }
 

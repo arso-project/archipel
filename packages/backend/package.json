@@ -11,21 +11,20 @@
     "ignore": []
   },
   "dependencies": {
+    "@archipel/common": "0.1.0",
     "@hyperswarm/guts": "0.0.0",
+    "@hyperswarm/network": "0.0.4",
     "debug": "^4.1.1",
     "ecstatic": "^3.3.0",
     "hypercore-crypto": "^1.0.0",
     "hyperdb": "^3.5.0",
+    "hyperdiscovery": "^8.0.0",
     "hyperdrive": "github:Frando/hyperdrive#archipel-dev",
     "mime-types": "^2.1.21",
-    "msgpack-lite": "^0.1.26",
-    "nanoid": "^2.0.1",
-    "nanoid-dictionary": "^2.0.0",
-    "pify": "^4.0.1",
     "pump": "^3.0.0",
     "random-access-file": "^2.1.0",
-    "thunky": "^1.0.3",
-    "websocket-stream": "^5.1.2"
+    "speedometer": "^1.1.0",
+    "thunky": "^1.0.3"
   },
   "devDependencies": {
     "random-access-memory": "^3.1.1",

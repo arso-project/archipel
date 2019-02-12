@@ -1,8 +1,8 @@
 const p = require('path')
 const hyperdb = require('hyperdb')
 const pify = require('pify')
-const { prom } = require('../util/async')
-const { hex } = require('../util/hyperstack')
+const { prom } = require('@archipel/common/util/async')
+const { hex } = require('@archipel/common/util/hyperstack')
 
 // exports.name = 'hyperdb'
 // exports.label = 'Hyperdb'
@@ -54,8 +54,16 @@ exports.structure = (opts, api) => {
       return promise
     },
 
+    structure () {
+      return db
+    },
+
     replicate (opts) {
       return db.replicate(opts)
+    },
+
+    feeds () {
+      return [...db.feeds, db.contentFeeds]
     },
 
     getState () {

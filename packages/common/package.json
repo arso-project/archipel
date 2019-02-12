@@ -1,0 +1,29 @@
+{
+  "name": "@archipel/common",
+  "version": "0.1.0",
+  "license": "GPL-3.0",
+  "description": "Archipel shared code",
+  "author": "arso team",
+  "scripts": {
+    "test": "tape test/*.js"
+  },
+  "standard": {
+    "ignore": []
+  },
+  "dependencies": {
+    "debug": "^4.1.1",
+    "hypercore-crypto": "^1.0.0",
+    "msgpack-lite": "0.1.26",
+    "nanoid": "^2.0.1",
+    "nanoid-dictionary": "^2.0.0",
+    "pify": "^4.0.1",
+    "pump": "^3.0.0",
+    "thunky": "^1.0.3",
+    "websocket-stream": "^5.1.2"
+  },
+  "devDependencies": {
+    "random-access-memory": "^3.1.1",
+    "standard": "^12.0.1",
+    "tape": "^4.10.0"
+  }
+}

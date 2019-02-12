@@ -65,7 +65,7 @@ class RpcApi {
     })
 
     bus.onmessage(msg => {
-      debug(`receive msg from peer ${peer.id ? peer.id : msg.id}:`, msg)
+      debug('receive: %O', msg)
       if (msg.type === 'hello') {
         let { id, methods } = msg
         peer.id = id
@@ -100,7 +100,7 @@ class RpcApi {
     const self = this
     let { from, to, args } = msg
 
-    if (!this.peers.has(from.peer)) throw new Error('Unknown peer: ' + from.peer)
+    if (!this.peers.has(from.peer)) return console.error('Unknown peer: ' + from.peer)
 
     let peer = this.peers.get(from.peer)
 
@@ -170,7 +170,7 @@ class RpcApi {
     }
 
     msg.args = this.encodeArgs(peer, args)
-    debug(`send msg to ${peer.id}:`, msg)
+    debug(`send (${peer.id}): %O`, msg)
     peer.bus.postMessage(msg)
     return promise
   }

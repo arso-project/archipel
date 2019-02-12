@@ -1,8 +1,8 @@
 const tape = require('tape')
 const ram = require('random-access-memory')
 
-const rpc = require('../rpc')
-const localbus = require('../rpc/localbus')
+const rpc = require('@archipel/common/rpc')
+const localbus = require('@archipel/common/rpc/localbus')
 
 const libraries = require('../lib/library')
 const hyperdrive = require('../structures/hyperdrive')

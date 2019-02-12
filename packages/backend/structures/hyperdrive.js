@@ -2,8 +2,8 @@ const p = require('path')
 const mime = require('mime-types')
 const hyperdrive = require('hyperdrive')
 const pify = require('pify')
-const { prom } = require('../util/async')
-const { hex } = require('../util/hyperstack')
+const { prom } = require('@archipel/common/util/async')
+const { hex } = require('@archipel/common/util/hyperstack')
 
 let Stat = require('hyperdrive/lib/stat')
 
@@ -131,6 +131,15 @@ exports.structure = (opts, api) => {
         type: 'hyperdrive',
         key: hex(drive.key)
       }
+    },
+
+    structure () {
+      return drive.db
+    },
+
+    feeds () {
+      const feeds = [...drive.db.feeds, ...drive.db.contentFeeds]
+      return feeds
     },
 
     async storeInfo (info) {

@@ -54,6 +54,15 @@ function isPromise (obj) {
   return !!obj && (typeof obj === 'object' || typeof obj === 'function') && typeof obj.then === 'function'
 }
 
+class TimeoutError extends Error {
+    constructor() {
+        const err = super('Timeout');
+        this.name = err.name = 'TimeoutError';
+        this.stack = err.stack;
+        this.message = err.message;
+    }
+}
+
 let timerResult = Symbol('timer')
 async function withTimeout (promise, time) {
   time = time || 1000
@@ -66,7 +75,7 @@ async function withTimeout (promise, time) {
     clearTimeout(clear)
     return res
   } catch (e) { 
-    if (e === timerResult) throw new Error('Timeout')
+    if (e === timerResult) throw new TimeoutError('Timeout')
     else throw e 
   }
 }
