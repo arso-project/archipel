@@ -6,6 +6,8 @@ import { Status } from '@archipel/ui'
 
 export { Status as Status } from '@archipel/ui'
 
+export { getApi } from './rpc-client'
+
 export function useApi (fn, inputs) {
   inputs = inputs || []
   const state = useAsyncEffect(async () => {

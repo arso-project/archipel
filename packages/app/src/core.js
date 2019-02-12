@@ -3,6 +3,9 @@ import ucore from 'ucore'
 import rpc from 'ucore/rpc/client'
 import store from 'ucore/store'
 
+// new api
+import { getApi } from './lib/rpc-client.js'
+
 // core
 import componentRegistry from './lib/component-registry'
 import app from './features/app'
@@ -27,6 +30,12 @@ function boot (extensions) {
   core.register(app)
   core.register(workspace)
   core.register(archive)
+
+  // new api
+  core.use(async (core) => {
+    const api = await getApi()
+    core.decorate('api', api)
+  })
 
   extensions.forEach(extension => core.register(extension.default ? extension.default : extension))
 
