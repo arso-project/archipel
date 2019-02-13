@@ -35,7 +35,7 @@ class Network {
   }
 
   unshare (archive) {
-    archive.structures.forEach(structure => {
+    archive.structures.values().forEach(structure => {
       const key = structure.key
       if (!this.networks[key]) return
       this.networks[key].network.once('close', () => {

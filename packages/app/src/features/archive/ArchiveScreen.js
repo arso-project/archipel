@@ -38,6 +38,9 @@ class ArchiveScreen extends React.PureComponent {
 export default (props) => (
   <Consumer store='archive' select={['sortedByName', 'selectedArchive']} chrome={props.chrome}>
     {([archives, selectedArchive], store) => {
+      /* Workaround, find better:
+      Following line replaces onWorkspaceChange from ./index.js */
+      if (archives.length === 0) store.loadArchives()
       let archiveTabs = store.core.components.getAll('archiveTabs').map(mapRegisteredToTabs)
       return <ArchiveScreen {...props}
         archives={archives}

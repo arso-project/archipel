@@ -44,17 +44,21 @@ function rpc (api, opts) {
       let library = await getLibrary(this.session)
       let archives = await library.listArchives()
       archives = await Promise.all(archives.map(a => a.serialize()))
-      return archives
+      let ret = {}
+      for (let i of archives) {
+        ret[i.key] = i
+      }
+      return ret
     },
 
     async share (key) {
       let library = await getLibrary(this.session)
-      library.share(key)
+      return library.share(key)
     },
 
     async unshare (key) {
       let library = await getLibrary(this.session)
-      library.unshare(key)
+      return library.unshare(key)
     },
 
     async statsStream () {
@@ -69,7 +73,6 @@ function rpc (api, opts) {
     await library.ready()
     return library
   }
-
 }
 
 class Library extends EventEmitter {
@@ -89,14 +92,14 @@ class Library extends EventEmitter {
     this._init = false
 
     // this.state = new Map()
-    
+
     let rootStorage = nestStorage(this.storage, 'root')
     this.root = hyperdb.structure({ valueEncoding: 'json' }, { storage: rootStorage })
 
     // this.root = new Archive()
     // this.root.setPrimary({ type: 'hyperdb', storage: rootStorage, handler: this.handlers.hyperdb)
     // this.root = new Archive('hyperdb', {}, { storage: rootStorage }, this.handlers)
-    
+
     this.ready = asyncThunky(this._ready.bind(this))
   }
 
@@ -190,32 +193,38 @@ class Library extends EventEmitter {
   async listArchives () {
     await this.ready()
     return this.archives.values()
-  } 
+  }
 
+  // Make sharing session persistent
   async share (key) {
     if (!this.archives.has(key)) return
-    this.state[key].share = true
+    // this.state[key].share = true
     this.network.share(this.archives.get(key))
     await this.storeInfo()
+    this.archives.get(key).status.share = true
+    return this.archives.get(key).serialize()
   }
 
   async unshare (key) {
     if (!this.archives.has(key)) return
-    this.state[key].share = false 
+    // this.state[key].share = false 
     this.network.unshare(this.archives.get(key))
     await this.storeInfo()
+    this.archives.get(key).status.share = false
+    return this.archives.get(key).serialize()
   }
 }
 
 class Archive extends EventEmitter {
   constructor (type, opts, handlers, api) {
+    console.log('Archive Constructor called')
     super()
     this.handlers = handlers
     this.api = api
     this.opts = opts
     this.type = type
-
     this.info = opts.info || {}
+    this.status = {}
 
     this.structures = new IndexedMap(['type'])
     this.addStructure(type, { ...opts, primary: true }, true)
@@ -237,6 +246,7 @@ class Archive extends EventEmitter {
       key: hex(this.key),
       primary: hex(this.primary.key),
       info: this.info,
+      status: this.status,
       structures: structures.map(s => s.getState())
     }
   }

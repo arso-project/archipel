@@ -9,16 +9,17 @@ const initialState = {
 /* Actions */
 
 const createArchive = (title) => async (set, { get, core, actions }) => {
-  let info = { title }
-  await core.rpc.request('workspace/createArchive', { info })
+  let info = { type: 'hyperdrive', info: { title } }
+  const res = await core.api.hyperlib.openArchive(info)
+  console.log(res)
   actions.loadArchives()
 }
 
 const loadArchives = () => async (set, { get, core }) => {
-  set(draft => { draft.started = true; draft.archives = [] })
-  const res = await core.rpc.request('workspace/listArchives')
+  // set(draft => { draft.started = true; draft.archives = [] })
+  const res = await core.api.hyperlib.listArchives()
   set(draft => {
-    draft.archives = res.data
+    draft.archives = res
     if (draft.selected && !draft.archives[draft.selected]) {
       draft.selected = null
     }
@@ -26,9 +27,11 @@ const loadArchives = () => async (set, { get, core }) => {
 }
 
 const shareArchive = (key, value) => async (set, { get, core, actions }) => {
+  // const res = await core.rpc.request('workspace/shareArchive', { key: key, share: value })
   let res
-  res = await core.rpc.request('workspace/shareArchive', { key: key, share: value })
-  set(draft => { draft.archives[key] = res.data })
+  if (value) res = await core.api.hyperlib.share(key)
+  if (!value) res = await core.api.hyperlib.unshare(key)
+  await set(draft => { draft.archives[key] = res })
   return res
 }
 
@@ -51,7 +54,6 @@ const addRemoteArchive = (key, opts) => async (set, { get, core, actions }) => {
 
 const writeNetworkStats = (req) => async (set, { get, core, actions }) => {
   set(draft => { draft.networkStats = req.data })
-  console.log(get().networkStats)
 }
 
 /* Selectors */
@@ -59,15 +61,18 @@ const writeNetworkStats = (req) => async (set, { get, core, actions }) => {
 const sortedByName = state => sortByProp(Object.values(state.archives), 'title')
 
 const selectedArchive = state => {
-  for (let i in state.archives) {
-    if (state.archives[i].key === state.selected) return state.archives[i]
-  }
+  // for (let i in state.archives) {
+  //   if (state.archives[i].key === state.selected) return state.archives[i]
+  // }
+  return state.archives[state.selected]
 }
 
 const getNetworkStats = state => {
   if (!state.networkStats) return null
   return state.networkStats[state.selected]
 }
+
+loadArchives()
 
 export default {
   initialState,
