@@ -11,6 +11,7 @@ import componentRegistry from './lib/component-registry'
 import app from './features/app'
 import workspace from './features/workspace'
 import archive from './features/archive'
+import drive from './features/drive'
 
 // settings
 const websocketUrl = window.ARCHIPEL_WEBSOCKET_URL
@@ -30,6 +31,7 @@ function boot (extensions) {
   core.register(app)
   core.register(workspace)
   core.register(archive)
+  core.register(drive)
 
   // new api
   core.use(async (core) => {
