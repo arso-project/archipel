@@ -17,8 +17,7 @@ class AddArchiveWidget extends React.PureComponent {
   onAdd (e) {
     if (this.state.key) {
       this.props.onAdd(
-        this.state.key,
-        { sparse: this.state.sparse }
+        { key: this.state.key, sparse: this.state.sparse, type: 'hyperdrive' }
       )
       this.setState({ key: '' })
     }

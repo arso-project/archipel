@@ -9,8 +9,8 @@ const initialState = {
 /* Actions */
 
 const createArchive = (title) => async (set, { get, core, actions }) => {
-  let info = { type: 'hyperdrive', info: { title } }
-  const res = await core.api.hyperlib.openArchive(info)
+  let opts = { type: 'hyperdrive', info: { title } }
+  const res = await core.api.hyperlib.openArchive(opts)
   console.log(res)
   actions.loadArchives()
 }
@@ -18,6 +18,7 @@ const createArchive = (title) => async (set, { get, core, actions }) => {
 const loadArchives = () => async (set, { get, core }) => {
   // set(draft => { draft.started = true; draft.archives = [] })
   const res = await core.api.hyperlib.listArchives()
+  console.log(res)
   set(draft => {
     draft.archives = res
     if (draft.selected && !draft.archives[draft.selected]) {
@@ -45,11 +46,11 @@ const selectArchive = (key) => (set) => {
   set(draft => { draft.selected = key })
 }
 
-const addRemoteArchive = (key, opts) => async (set, { get, core, actions }) => {
-  let res
-  res = await core.rpc.request('workspace/addRemoteArchive', { key: key, opts })
-  actions.loadArchives()
-  return res
+const addRemoteArchive = (opts) => async (set, { get, core, actions }) => {
+  const res = await core.api.hyperlib.openArchive(opts)
+  if (res) set(draft => { draft.archives[res.key] = res })
+  // Or better:?
+  // actions.loadArchives()
 }
 
 const writeNetworkStats = (req) => async (set, { get, core, actions }) => {
