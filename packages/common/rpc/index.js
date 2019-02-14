@@ -64,6 +64,7 @@ class RpcApi {
       bus
     })
 
+    bus.postMessage({ type: 'hello', id: this.id, methods: this.exposedApi.methods })
     bus.onmessage(msg => {
       debug('receive: %O', msg)
       if (msg.type === 'hello') {
@@ -76,13 +77,12 @@ class RpcApi {
         clearTimeout(timeout)
         done(null, peer)
 
-      } else {
+      } else if (peer.id === msg.from.peer) {
         this.postMessage(msg)
+      } else {
+        // this should never happen.
+        console.error('Received message from unknown peer: ', msg)
       }
-    })
-
-    setImmediate(() => {
-      bus.postMessage({ type: 'hello', id: this.id, methods: this.exposedApi.methods })
     })
 
     return promise
