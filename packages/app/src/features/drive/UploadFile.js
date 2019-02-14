@@ -8,7 +8,9 @@ import through from 'through2'
 import pump from 'pump'
 
 import { Button, Foldable, List } from '@archipel/ui'
-import { WithCore } from 'ucore/react'
+
+// import { withCore } from 'ucore/react'
+import { withApi } from '../../lib/api.js'
 
 function updateAt (arr, i, put) {
   return arr.map((item, j) => j === i ? Object.assign({}, item, put) : item)
@@ -96,7 +98,7 @@ class UploadFile extends React.Component {
       //   .catch(e => this.setState({ error: e }))
 
       this.seqRunUploads(files).then(
-        this.setState({ pending: false })
+        this.setState({ pending: false, done: true })
       )
     }
   }
@@ -113,8 +115,15 @@ class UploadFile extends React.Component {
   }
 
   async uploadFile (file, i) {
-    this.setState({ files: updateAt(this.state.files, i, { pending: true }) })
-    const { dir, core } = this.props
+    const updateState = newState => this.setState(state => (
+      { files: updateAt(state.files, i, newState) }
+    ))
+
+    updateState({ pending: true })
+
+    const { dir, api, archive } = this.props
+    const key = archive
+
     let { name, webkitRelativePath } = file
     if (this.state.uploadDir) name = webkitRelativePath
 
@@ -122,29 +131,40 @@ class UploadFile extends React.Component {
     const speedo = speedometer()
     let speed = 0
     let written = 0
-    const update = () => {
-      // todo: rerender only if state acually changed.
-      this.setState({ files: updateAt(this.state.files, i, { written, speed }) })
-    }
-    let debounce = setInterval(update, 200)
-    const passthrough = through((chunk, enc, next) => {
+
+    // Set up a passthrough stream to track stats.
+    const passthrough = through(function (chunk, enc, next) {
       written += chunk.length
       speed = speedo(chunk.length)
+      this.push(chunk)
       next()
     })
-    const reader = fileReader(file)
-    pump(reader, passthrough)
 
-    const key = this.props.archive
-    const res = await core.rpc.request('fs/writeFile', { key, path, stream: reader })
-    clearInterval(debounce)
-    this.setState({ files: updateAt(this.state.files, i, { pending: false, done: true, written, speed }), pending: false, done: true })
+    // The actual streaming file reader.
+    const reader = fileReader(file)
+
+    // The write stream to the backend.
+    const ws = await api.hyperdrive.createWriteStream(key, path)
+
+    // Pump it all toghether.
+    pump(reader, passthrough, ws)
+
+    // Update the state every 200ms.
+    const update = () => updateState({ written, speed })
+    const debounce = setInterval(update, 200)
+
+    // Cleanup when done.
+    ws.on('finish', () => {
+      clearInterval(debounce)
+      updateState({ pending: false, done: true, written, speed })
+    })
 
     // todo: is this clean enough?
-    core.getStore('fs').fetchStats({ archive: key, path: this.props.dir })
+    // core.getStore('fs').fetchStats({ archive: key, path: this.props.dir })
   }
 
   render () {
+    console.log('render', this.state, this.props)
     return (
       <Foldable heading='Upload file'>
         <div className='flex mb-2'>
@@ -178,4 +198,5 @@ UploadFile.propTypes = {
   dir: PropTypes.string
 }
 
-export default (props) => <WithCore>{core => <UploadFile {...props} core={core} />}</WithCore>
+export default withApi(UploadFile)
+

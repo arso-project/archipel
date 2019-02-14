@@ -20,9 +20,8 @@ export function useApi (fn, inputs) {
   return state
 }
 
-export function withApi (Component, props) {
-  props = props || {}
-  return () => (
+export function withApi (Component) {
+  return props => (
     <WithApi>
       {(api) => <Component {...props} api={api} />}
     </WithApi>

@@ -46,7 +46,7 @@ const ListDirChildren = ({ item, Node }) => (
     select={'getChildrenSortedByName'}
     fetch={'fetchStats'}
     fetchOnChange={[item.archive, item.stat.path]}
-    fetchOnResult={sel => item.stat.isDirectory && sel === undefined}
+    fetchOnResult={sel => item.stat.isDirectory && !sel}
 
     archive={item.archive}
     path={item.stat.path}

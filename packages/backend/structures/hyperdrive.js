@@ -72,13 +72,17 @@ exports.rpc = (api, opts) => {
       return res
     },
 
-    async writeFile (key, path, stream) {
+    async createWriteStream (key, path) {
       const drive = await getHyperdrive(this.session, key)
-      if (Buffer.isBuffer(stream)) {
-        return drive.writeFile(path, stream)
-      } else {
-        return drive.asyncWriteStream(path, stream)
-      }
+      const stream = drive.createWriteStream(path)
+      console.log('start write')
+      stream.on('finish', () => console.log('finish write'))
+      return stream
+    },
+
+    async writeFile (key, path, buf) {
+      const drive = await getHyperdrive(this.session, key)
+      return drive.writeFile(path, buf)
     }
   }
 

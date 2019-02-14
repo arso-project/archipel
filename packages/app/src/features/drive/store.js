@@ -33,10 +33,7 @@ const clearStats = ({ archive }) => async (set, { core }) => {
 const createDir = ({ archive, parent, name }) => async (set, { core, actions }) => {
   try {
     let path = joinPath(parent, name)
-    console.log('createDir', parent, name)
-    // await core.rpc.request('fs/mkdir', { key: archive, path })
     let res = await core.api.hyperdrive.mkdir(archive, path)
-    console.log('createDir', res)
     actions.fetchStats({ archive, path: parent })
   } catch (err) {
     console.log('createDir error', err)
