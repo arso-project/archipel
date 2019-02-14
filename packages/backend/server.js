@@ -14,8 +14,18 @@ const libraries = require('./lib/library')
 const hyperdrive = require('./structures/hyperdrive')
 const hyperdb = require('./structures/hyperdb')
 
+// Read out shell parameter variables.
+let matchPort = new RegExp('^port[=:]', 'i')
+let matchDBPath = new RegExp('^dbpath[=:]', 'i')
+let port = config.server.port
+let dbPath = config.library.path
+for (let i of process.argv.slice(2)) {
+  if (matchPort.test(i)) port = i.split(matchPort)[1]
+  if (matchDBPath.test(i)) dbPath = i.split(matchDBPath)[1] 
+}
 
-const storage = name => raf(p.join(config.library.path, name))
+console.log('libraries are stored at:', dbPath)
+const storage = name => raf(p.join('../..', dbPath, name))
 
 // library
 // const libraries = {}
@@ -25,6 +35,7 @@ const storage = name => raf(p.join(config.library.path, name))
     
   // }
 // }
+
 
 const hyperlib = libraries.make({ storage }, {
   hyperdrive: hyperdrive.structure,
@@ -65,9 +76,8 @@ const wss = websocket.createServer({ server }, (stream, request) => {
   })
   
 })
-
 // start
-server.listen(config.server.port, () => {
-  console.log(`server listening on port ${config.server.port}`)
+server.listen(port, () => {
+  console.log(`server listening on port ${port}`)
 })
 
