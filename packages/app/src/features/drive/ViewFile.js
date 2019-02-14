@@ -4,6 +4,8 @@ import { Heading } from '@archipel/ui'
 import RpcQuery from '../util/RpcQuery'
 import { WithCore } from 'ucore/react'
 
+import { useApi, Status } from '../../lib/api.js'
+
 function matchComponent (file) {
   let { mimetype } = file
   if (mimetype.match(/image\/.*/)) {
@@ -116,35 +118,50 @@ const FileViewer = (props) => {
   }
 }
 
-class ViewFile extends React.PureComponent {
-  render () {
-    const { archive, path, stat } = this.props
-    return (
-      <div>
-        <Heading>{path}</Heading>
-        <WithCore>
-          {core => (
-            <RpcQuery {...{ archive, path }} fetch={props => ['fs/readFileStream', { key: props.archive, path: props.path }]}>
-              {(data) => {
-                let viewers = core.components.getAll('fileViewer') || []
-                viewers = viewers.concat(defaultViewers)
-                let change = {}
-                return <FileViewer change={change} stream={data.stream} stat={stat} viewers={viewers} />
-              }}
-            </RpcQuery>
-          )}
-        </WithCore>
-      </div>
-    )
-  }
-}
+function ViewFile (props) {
+  const { archive, path, stat} = props
 
-ViewFile.propTypes = {
-  archive: PropTypes.string,
-  file: PropTypes.string
+  const state = useApi(async api => api.hyperdrive.readFileStream(archive, path), [archive, path])
+  if (!state.data) return <Status {...state} />
+  const [api, stream] = state.data
+
+  return (
+    <WithCore>
+      {core => {
+        let viewers = core.components.getAll('fileViewer') || []
+        viewers = viewers.concat(defaultViewers)
+        let change = {}
+        return <FileViewer change={change} stream={stream} stat={stat} viewers={viewers} />
+      }}
+    </WithCore>
+  )
 }
 
 export default ViewFile
+
+// class ViewFile extends React.PureComponent {
+  // render () {
+    // const { archive, path, stat } = this.props
+    // return (
+      // <div>
+        // <Heading>{path}</Heading>
+        // <WithApi>
+          // {api=> (
+            // <RpcQuery {...{ archive, path }} fetch={props => ['fs/readFileStream', { key: props.archive, path: props.path }]}>
+              // {(data) => {
+                // let viewers = core.components.getAll('fileViewer') || []
+                // viewers = viewers.concat(defaultViewers)
+                // let change = {}
+                // return <FileViewer change={change} stream={data.stream} stat={stat} viewers={viewers} />
+              // }}
+            // </RpcQuery>
+          // )}
+        // </WithCore>
+      // </div>
+    // )
+  // }
+// }
+
 
 // Helper functions to convert a buffer to either a UTF8 string or a base64 array.
 function bufToBase64 (input) {

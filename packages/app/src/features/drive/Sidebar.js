@@ -4,10 +4,10 @@ import { Consumer } from 'ucore/react'
 import pretty from 'pretty-bytes'
 import { Heading, Foldable } from '@archipel/ui'
 
-function date (ts) {
-  return ts
-  let date = new Date(ts * 1000)
-  return date.toISOString()
+import { useApi, Status } from '../../lib/api.js'
+
+function date (isostring) {
+  return isostring
 }
 
 const Item = ({ name, children }) => (
@@ -30,6 +30,20 @@ const Stat = (props) => {
   )
 }
 
+const History = props => {
+  const state = useApi(async api => api.hyperdrive.history(props.archive, props.path))
+  if (!state.data) return <Status {...state} />
+  const [api, history] = state.data
+
+  const items = history.map((stat, i) => (
+    <Foldable key={i} heading={'(' + stat.feed + ') ' + stat.seq}>
+      <Stat stat={stat} />
+    </Foldable>
+  ))
+
+  return <>{items}</>
+}
+
 const SidebarWidget = (props) => {
   const { stat } = props
   return (
@@ -37,15 +51,7 @@ const SidebarWidget = (props) => {
       <Heading>{stat.name}</Heading>
       <Stat stat={stat} />
       <Heading>History</Heading>
-      <RpcQuery {...props} fetch={props => ['fs/history', { key: props.archive, path: props.path }]}>
-        {({ history }) => {
-          return history.map((stat, i) => (
-            <Foldable key={i} heading={'(' + stat.feed + ') ' + stat.seq}>
-              <Stat stat={stat} />
-            </Foldable>
-          ))
-        }}
-      </RpcQuery>
+      <History {...props} />
       {props.children}
     </div>
   )

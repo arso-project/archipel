@@ -21,7 +21,6 @@ exports.rpc = (api, opts) => {
       const drive = await getHyperdrive(this.session, key)
       depth = depth || 0
       let stat = await statPath(path, 0)
-      console.log('stat', stat)
       return stat
 
       async function statPath (path, currentDepth) {
@@ -57,10 +56,7 @@ exports.rpc = (api, opts) => {
     async readFileStream (key, path) {
       const drive = await getHyperdrive(this.session, key)
       const rs = drive.createReadStream(path)
-      return {
-        stream: rs,
-        path: path
-      }
+      return rs
     },
 
     async history (key, path) {
@@ -73,7 +69,7 @@ exports.rpc = (api, opts) => {
         stat.feed = node.feed
         return stat
       })
-      return { history: res }
+      return res
     },
 
     async writeFile (key, path, stream) {
@@ -209,15 +205,14 @@ function joinPath (prefix, suffix) {
 }
 
 function cleanStat (stat, path, key) {
-  console.log('orig', stat)
   return {
     key,
     path,
     name: p.parse(path).base,
     isDirectory: stat.isDirectory(),
     size: stat.size,
-    mtime: stat.mtime,
-    ctime: stat.ctime,
+    mtime: stat.mtime.toISOString(),
+    ctime: stat.ctime.toISOString(),
     mimetype: stat.isDirectory() ? 'archipel/directory' : mime.lookup(path),
     children: undefined
   }
