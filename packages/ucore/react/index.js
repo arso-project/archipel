@@ -132,6 +132,14 @@ export class WithCore extends React.PureComponent {
   }
 }
 
+export function withCore (Component) {
+  return props => (
+    <WithCore>
+      {(core) => <Component {...props} core={core} />}
+    </WithCore>
+  )
+}
+
 export class WithStore extends React.PureComponent {
   render () {
     let { store, children } = this.props
