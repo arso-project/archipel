@@ -9,14 +9,17 @@ const fetchStats = ({ archive, path }) => async (set, { core }) => {
   const key = archive
   try {
     // const res = await core.rpc.request('fs/stat', { key, path })
-    let res = await core.api.hyperdrive.stat(key, path)
-    console.log(archive, path, res)
-    res = [res]
+    let stat = await core.api.hyperdrive.stat(key, path, 1)
     set(draft => {
-      res.forEach(stat => {
+      setStat(stat)
+      function setStat (stat) {
         draft.stats[stat.key] = draft.stats[stat.key] || {}
         draft.stats[stat.key][stat.path] = stat
-      })
+        if (stat.children) {
+          stat.children.map(child => setStat(child))
+          draft.stats[stat.key][stat.path].children = stat.children.map(c => c.name)
+        }
+      }
     })
   } catch (e) {
     console.log('fetchStats error', e)

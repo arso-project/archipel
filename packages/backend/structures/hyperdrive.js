@@ -19,25 +19,26 @@ exports.rpc = (api, opts) => {
     async stat (key, path, depth) {
       // maybeWatch(api, session, req)
       const drive = await getHyperdrive(this.session, key)
-      let stat = await drive.stat(path)
-      stat = cleanStat(stat, path, key)
-      if (stat.isDirectory && depth && depth > 1) {
-        stat.children = await statChildren(stat.path, 0)
-      }
-
+      depth = depth || 0
+      let stat = await statPath(path, 0)
+      console.log('stat', stat)
       return stat
 
+      async function statPath (path, currentDepth) {
+        let stat = await drive.stat(path)
+        stat = cleanStat(stat, path, key)
+        if (stat.isDirectory && currentDepth < depth) {
+          stat.children = await statChildren(path, currentDepth + 1)
+        }
+        return stat
+      }
+
       async function statChildren (path, currentDepth) {
-        let children = await drive.readdir(stat.path)
+        let children = await drive.readdir(path)
         children = children.filter(c => c)
         if (!children.length) return []
-        children = await Promise.all(children.map(async name => {
-          let stat = cleanStat(await drive.stat(joinPath(path, name)))
-          if (stat.isDirectory && currentDepth < depth) {
-            stat.children = await getChildren(path, currentDepth + 1)
-          }
-        }))
-        return children
+        let promises = children.map(name => statPath(joinPath(path, name), currentDepth))
+        return await Promise.all(promises)
       }
     },
 
@@ -208,6 +209,7 @@ function joinPath (prefix, suffix) {
 }
 
 function cleanStat (stat, path, key) {
+  console.log('orig', stat)
   return {
     key,
     path,
