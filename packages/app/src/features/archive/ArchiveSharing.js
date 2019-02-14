@@ -112,30 +112,30 @@ class Authorize extends React.Component {
 }
 
 const Sharing = ({ archive, onShare, authorizeWriter }) => {
-  let { key, status } = archive
+  let { key, state } = archive
   return (
     <div className='flex flex-col justify-between'>
 
       <SettingsCard
         title='1. Make your archive available to others'
-        explanation={status.share
+        explanation={state.share
           ? 'click to unshare'
           : 'click to share'
         }
-        setting={status.share
+        setting={state.share
           ? <Button className='w-32 h-24 bg-green text-lg'
-            onClick={() => onShare(key, !status.share)}>
+            onClick={() => onShare(key, !state.share)}>
             shared
           </Button>
           : <Button className='w-32 h-24 bg-grey-darkest text-lg'
-            onClick={() => onShare(key, !status.share)}>
+            onClick={() => onShare(key, !state.share)}>
             not shared
           </Button>
         }>
         <TextShare />
       </SettingsCard>
 
-      {status.share
+      {state.share
         ? <SettingsCard
           title='2. Send your ArchiveKey to trustwothy others'
           settingsprops='w-40 md:w-40'
@@ -148,7 +148,7 @@ const Sharing = ({ archive, onShare, authorizeWriter }) => {
         </SettingsCard>
         : '' }
 
-      {status.share
+      {state.share
         ? <SettingsCard title='3. Authorize others back and sync their changes.'
           setting={<Authorize />}
           explanation='Enter ArchiveKey to authorize:'>
@@ -164,7 +164,7 @@ const ArchiveSharing = () => {
   return <Consumer store='archive' select={'selectedArchive'}>
     {(archive, { shareArchive, authorizeWriter }) => {
       if (!archive) return null
-      let { key, status } = archive
+      let { key, state } = archive
       console.log('Consumer:', key, shareArchive)
       return (<Sharing archive={archive} onShare={shareArchive} authorizeWriter={authorizeWriter} />)
     }}

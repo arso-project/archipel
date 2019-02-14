@@ -11,6 +11,9 @@ async function archivePlugin (core, opts) {
   core.components.add('archiveTabs', ArchiveSharing, { title: 'Sharing' })
 
   let store = core.makeStore('archive', storeConstructor)
+  // core.on('ready', () => store.loadArchives())
+  // console.log('go', store)
+  // store.actions.loadArchives()
 
   core.getStore('workspace').subscribe(onWorkspaceChange, 'current')
   function onWorkspaceChange (state, oldState) {

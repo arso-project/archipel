@@ -11,14 +11,12 @@ const initialState = {
 const createArchive = (title) => async (set, { get, core, actions }) => {
   let opts = { type: 'hyperdrive', info: { title } }
   const res = await core.api.hyperlib.openArchive(opts)
-  console.log(res)
   actions.loadArchives()
 }
 
 const loadArchives = () => async (set, { get, core }) => {
-  // set(draft => { draft.started = true; draft.archives = [] })
+  set(draft => { draft.started = true; draft.archives = {} })
   const res = await core.api.hyperlib.listArchives()
-  console.log(res)
   set(draft => {
     draft.archives = res
     if (draft.selected && !draft.archives[draft.selected]) {
@@ -73,7 +71,7 @@ const getNetworkStats = state => {
   return state.networkStats[state.selected]
 }
 
-loadArchives()
+// loadArchives()
 
 export default {
   initialState,

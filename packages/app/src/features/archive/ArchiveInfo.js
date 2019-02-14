@@ -72,22 +72,22 @@ const ArchiveInfo = () => {
   return <Consumer store='archive' select={'selectedArchive'}>
     {(archive, { shareArchive, authorizeWriter, getNetworkStats }) => {
       if (!archive) return null
-      let { key, status, info } = archive
+      let { key, state, info } = archive
       return (
         <div>
           <Item label='Key'><ClickToCopy>{key}</ClickToCopy></Item>
           <Item label='Share'>
             <div className='flex flex-row'>
               <ToggleButton className='flex-1 px-2' inactiveLabel='NO' activeLabel='YES'
-                value={status.share}
-                onToggle={() => shareArchive(key, !status.share)}
+                value={state.share}
+                onToggle={() => shareArchive(key, !state.share)}
               />
               <NetStats className='flex-1 px-2' />
             </div>
           </Item>
-          <Item label='Authorized'><YesNo>{status.authorized}</YesNo></Item>
-          <Item label='Local key'><ClickToCopy>{status.localWriterKey}</ClickToCopy></Item>
-          {status.authorized && (
+          <Item label='Authorized'><YesNo>{state.authorized}</YesNo></Item>
+          <Item label='Local key'><ClickToCopy>{state.localWriterKey}</ClickToCopy></Item>
+          {state.authorized && (
             <Item label='Authorize'>
               <Authorize archive={key} onSubmit={authorizeWriter} />
             </Item>

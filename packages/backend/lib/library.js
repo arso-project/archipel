@@ -1,5 +1,6 @@
 const EventEmitter = require('events').EventEmitter
 
+const shallowEqual = require('shallowequal')
 const hyperdb = require('../structures/hyperdb')
 const network = require('./network')
 
@@ -83,22 +84,16 @@ class Library extends EventEmitter {
     this.structures = new IndexedMap(['key', 'type', 'archive'])
     this.network = network()
 
-    this.state = {}
+    this.state = {
+      share: false
+    }
 
     this.handlers = handlers || {}
 
     this.storage = api.storage
 
-    this._init = false
-
-    // this.state = new Map()
-
     let rootStorage = nestStorage(this.storage, 'root')
     this.root = hyperdb.structure({ valueEncoding: 'json' }, { storage: rootStorage })
-
-    // this.root = new Archive()
-    // this.root.setPrimary({ type: 'hyperdb', storage: rootStorage, handler: this.handlers.hyperdb)
-    // this.root = new Archive('hyperdb', {}, { storage: rootStorage }, this.handlers)
 
     this.ready = asyncThunky(this._ready.bind(this))
   }
@@ -130,19 +125,14 @@ class Library extends EventEmitter {
     this._loading = false
   }
 
-  async storeInfo () {
+  async storeArchive (archive) {
     if (this._loading) return
-    await this.ready()
-    const promises = this.archives.values().map(a => {
-      let key = hex(a.key)
-      return this.root.api.put('archive/' + key, {
-        key: key,
-        type: a.type,
-        state: this.state[key]
-      })
+    let key = hex(archive.key)
+    return this.root.api.put('archive/' + key, {
+      key: key,
+      type: archive.type,
+      state: archive.state
     })
-    let res = await Promise.all(promises)
-    return res
   }
 
   // useHandler (name, handler) {
@@ -164,9 +154,11 @@ class Library extends EventEmitter {
     if (key && this.archives.has(key)) return this.archives.get(key)
     if (!type) throw new Error('Type for primary structure is required.')
 
+    if (!key) opts.create = true
+
     try {
       const archive = await withTimeout(open(), 1000)
-      await self.storeInfo()
+      await self.storeArchive(archive)
       return archive
     } catch (e) { 
       console.error(e)
@@ -175,16 +167,23 @@ class Library extends EventEmitter {
 
     async function open () {
       const archive = new Archive(type, opts, self.handlers, { storage: self.storage })
+
       archive.on('structure', s => self.structures.set(s.key, s))
+
       await archive.ready()
+
       const key = hex(archive.key)
-
       self.archives.set(key, archive)
-      self.state[key] = {}
 
-      if (opts.share) {
-        self.share(key)
+      // Apply initial state.
+      if (opts.state) {
+        if (opts.state.share) {
+          self.share(key)
+        }
       }
+
+      // Store info on state changes.
+      archive.on('state:set', state => self.storeArchive(archive))
 
       return archive
     }
@@ -198,10 +197,8 @@ class Library extends EventEmitter {
   // Make sharing session persistent
   async share (key) {
     if (!this.archives.has(key)) return
-    // this.state[key].share = true
     this.network.share(this.archives.get(key))
-    await this.storeInfo()
-    this.archives.get(key).status.share = true
+    this.archives.get(key).setState({ share: true })
     return this.archives.get(key).serialize()
   }
 
@@ -209,8 +206,7 @@ class Library extends EventEmitter {
     if (!this.archives.has(key)) return
     // this.state[key].share = false 
     this.network.unshare(this.archives.get(key))
-    await this.storeInfo()
-    this.archives.get(key).status.share = false
+    this.archives.get(key).setState({ share: false })
     return this.archives.get(key).serialize()
   }
 }
@@ -224,10 +220,10 @@ class Archive extends EventEmitter {
     this.opts = opts
     this.type = type
     this.info = opts.info || {}
-    this.status = {}
+    this.state = {}
 
     this.structures = new IndexedMap(['type'])
-    this.addStructure(type, { ...opts, primary: true }, true)
+    this.addStructure(type, { ...opts, primary: true })
   }
 
   async ready () {
@@ -244,32 +240,35 @@ class Archive extends EventEmitter {
     let structures = this.structures.values() || []
     return {
       key: hex(this.key),
-      primary: hex(this.primary.key),
+      type: this.type,
       info: this.info,
-      status: this.status,
-      structures: structures.map(s => s.getState())
+      state: this.state,
+      structures: structures.filter(s => !s.primary).map(s => s.getState())
     }
   }
 
-  async addStructure (type, opts, persist) {
-    const structure = this._addStructure(type, opts)
-    if (persist) await this.storeStructures()
+  setState (newState) {
+    if (!shallowEqual(newState, this.state)) {
+      this.state = newState
+      this.emit('state:set', this.state)
+    }
+  }
+
+  async addStructure (type, opts) {
+    const structure = this._openStructure(type, opts)
+    if (opts.create) await this.storeInfo()
     this.emit('structure', structure)
     return structure
   }
 
-  async storeStructures () {
-    let structureInfo = this.structures.values().filter(s => !s.primary).map(s => {
-      let optsToStore = ['key', 'type'].reduce((r, k) => {
-        r[k] = s[k]
-        return r
-      }, {})
-    })
+  async storeInfo () {
+    let info = {
+      structures: this.structures.values().filter(s => !s.primary).map(s => s.getState()),
+      info: this.info,
+      type: this.type
+    }
 
-    await this.primary.storeInfo({
-      structures: structureInfo,
-      info: this.info
-    })
+    await this.primary.storeInfo(info)
   }
 
   async loadStructures () {
@@ -278,13 +277,13 @@ class Archive extends EventEmitter {
       if (info.info) this.info = info.info
       if (!info.structures) return
       info.structures.map(async s => {
-        let structure = this._addStructure(s)
+        let structure = this._openStructure(s)
         await structure.ready()
       })
     } catch (e) {}
   }
 
-  _addStructure (type, opts) {
+  _openStructure (type, opts) {
     if (!this.handlers[type]) throw new Error('Unknown type: ' + type)
     if (this.structures.by('type', type)) throw new Error('Multiple structures of the same type are not allowed.')
 
@@ -309,11 +308,11 @@ class Archive extends EventEmitter {
     structure.type = opts.type
     structure.key = key
 
-    if (opts.info) structure.info = opts.info
-
     // structure.discoveryKey = discoveryKey(key)
 
-    if (primary) this.primary = structure
+    if (primary) {
+      this.primary = structure
+    }
     this.structures.set(hex(key), structure)
     return structure
   }
