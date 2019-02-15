@@ -45,6 +45,7 @@ const selectArchive = (key) => (set) => {
 }
 
 const addRemoteArchive = (opts) => async (set, { get, core, actions }) => {
+  opts.state = { share: true }
   const res = await core.api.hyperlib.openArchive(opts)
   if (res) set(draft => { draft.archives[res.key] = res })
   // Or better:?
