@@ -76,6 +76,14 @@ const wss = websocket.createServer({ server }, (stream, request) => {
   })
   
 })
+
+// handle errors.
+wss.on('error', (err) => console.log('socket server: error', err))
+wss.on('connection', function (socket) {
+  socket.on('close', (err) => console.log('socket socket: client closed connection', err))
+  socket.on('error', (err) => console.log('socket socket: error', err))
+})
+
 // start
 server.listen(port, () => {
   console.log(`server listening on port ${port}`)
