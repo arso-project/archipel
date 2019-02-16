@@ -16,6 +16,7 @@
     "@hyperswarm/network": "0.0.4",
     "debug": "^4.1.1",
     "ecstatic": "^3.3.0",
+    "hyper-graph-db": "^0.3.6",
     "hypercore-crypto": "^1.0.0",
     "hyperdb": "^3.5.0",
     "hyperdiscovery": "^8.0.0",
