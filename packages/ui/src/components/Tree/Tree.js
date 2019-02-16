@@ -252,6 +252,7 @@ export function setAndCopy (state, path, valueOrFunction) {
   let oldPos = state
   let newPos = nextState
   path.forEach((key, idx) => {
+    if (!oldPos[key]) oldPos[key] = {}
     oldPos = oldPos[key] || {}
 
     if (idx === path.length - 1) newPos[key] = cb(oldPos)
@@ -261,3 +262,4 @@ export function setAndCopy (state, path, valueOrFunction) {
   })
   return nextState
 }
+
