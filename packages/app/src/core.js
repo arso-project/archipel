@@ -7,7 +7,7 @@ import store from 'ucore/store'
 import { getApi } from './lib/rpc-client.js'
 
 // core
-import componentRegistry from './lib/component-registry'
+import { ucorePlugin as componentRegistry } from './lib/component-registry'
 import app from './features/app'
 import workspace from './features/workspace'
 import archive from './features/archive'
