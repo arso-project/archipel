@@ -11,16 +11,12 @@ async function archivePlugin (core, opts) {
   core.components.add('archiveTabs', ArchiveSharing, { title: 'Sharing' })
 
   let store = core.makeStore('archive', storeConstructor)
-  // core.on('ready', () => store.loadArchives())
-  // console.log('go', store)
-  // store.actions.loadArchives()
 
-  core.getStore('workspace').subscribe(onWorkspaceChange, 'current')
-  function onWorkspaceChange (state, oldState) {
-    store.loadArchives()
-  }
-
-  core.rpc.reply('archive/writeNetworkStats', (req) => {
-    core.getStore('archive').writeNetworkStats(req)
+  let updateStream = await core.api.hyperlib.createUpdateStream()
+  updateStream.on('data', data => {
+    let key = data.key
+    store.set(draft => {
+      draft.archives[key] = data
+    })
   })
 }

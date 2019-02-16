@@ -5,6 +5,8 @@ import ToggleButton from 'react-toggle-button'
 import { MdCheck, MdCancel } from 'react-icons/md'
 import NetStats from './NetStats'
 
+import { useToggle } from '../../lib/hooks'
+
 const Item = ({ label, children }) => (
   <div className='border-grey-light border-b flex'>
     <div className='w-24 px-2 py-4 border-grey-lightest'>
@@ -68,41 +70,48 @@ class Authorize extends React.Component {
   }
 }
 
-const ArchiveInfo = () => {
+const ArchiveInfoLoader = () => {
   return <Consumer store='archive' select={'selectedArchive'}>
     {(archive, { shareArchive, authorizeWriter, getNetworkStats }) => {
       if (!archive) return null
       let { key, state, info } = archive
-      return (
-        <div>
-          <Item label='Key'><ClickToCopy>{key}</ClickToCopy></Item>
-          <Item label='Share'>
-            <div className='flex flex-row'>
-              <ToggleButton className='flex-1 px-2' inactiveLabel='NO' activeLabel='YES'
-                value={state.share}
-                onToggle={() => shareArchive(key, !state.share)}
-              />
-              <NetStats className='flex-1 px-2' />
-            </div>
-          </Item>
-          <Item label='Authorized'><YesNo>{state.authorized}</YesNo></Item>
-          <Item label='Local key'><ClickToCopy>{state.localWriterKey}</ClickToCopy></Item>
-          {state.authorized && (
-            <Item label='Authorize'>
-              <Authorize archive={key} onSubmit={authorizeWriter} />
-            </Item>
-          )}
-          <Item label='Debug'>
-            <WithCore>
-              {core => (
-                <Button onClick={() => core.rpc.request('debug', { key })}>OK</Button>
-              )}
-            </WithCore>
-          </Item>
-        </div>
-      )
+      let actions = { shareArchive, authorizeWriter, getNetworkStats }
+      return <ArchiveInfo archive={archive} actions={actions} />
     }}
   </Consumer>
 }
 
-export default ArchiveInfo
+function ArchiveInfo (props) {
+  const [debug, toggleDebug] = useToggle(false)
+  const { archive, actions } = props
+  let { key, state, info } = archive
+  let { shareArchive, authorizeWriter, getNetworkStats } = actions
+  return (
+    <div>
+      <Item label='Key'><ClickToCopy>{key}</ClickToCopy></Item>
+      <Item label='Share'>
+        <div className='flex flex-row'>
+          <ToggleButton className='flex-1 px-2' inactiveLabel='NO' activeLabel='YES'
+            value={state.share}
+            onToggle={() => shareArchive(key, !state.share)}
+          />
+          <NetStats className='flex-1 px-2' />
+        </div>
+      </Item>
+      <Item label='Authorized'><YesNo>{state.writable}</YesNo></Item>
+      <Item label='Local key'><ClickToCopy>{state.localWriterKey}</ClickToCopy></Item>
+      {state.authorized && (
+        <Item label='Authorize'>
+          <Authorize archive={key} onSubmit={authorizeWriter} />
+        </Item>
+      )}
+      <Item label='Debug'>
+          <Button onClick={e => toggleDebug()}>{(debug ? 'Hide' : 'Show')}</Button>
+          { debug && <div><pre>{JSON.stringify(archive, null, 2)}</pre></div> }
+      </Item>
+    </div>
+  )
+}
+
+export default ArchiveInfoLoader
+

@@ -9,7 +9,8 @@ async function fsPlugin (core, opts) {
   core.makeStore('fs', store)
   core.components.add('archiveTabs', FsScreen, { title: 'Files', id: 'files' })
 
-  core.rpc.reply('fs/clearStats', (req) => {
-    core.getStore('fs').clearStats(req)
+  let watchStream = await core.api.hyperdrive.createWatchStream()
+  watchStream.on('data', info => {
+    core.getStore('fs').clearStats({ archive: info.key })
   })
 }

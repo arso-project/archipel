@@ -27,17 +27,18 @@ function boot (extensions) {
   // core libs
   core.use(componentRegistry)
 
+  // new api
+  core.use(async (core) => {
+    const api = await getApi()
+    core.decorate('api', api)
+  })
+
   // core features
   core.register(app)
   core.register(workspace)
   core.register(archive)
   core.register(drive)
 
-  // new api
-  core.use(async (core) => {
-    const api = await getApi()
-    core.decorate('api', api)
-  })
 
   extensions.forEach(extension => core.register(extension.default ? extension.default : extension))
 
