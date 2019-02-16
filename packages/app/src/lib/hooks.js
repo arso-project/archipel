@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react'
 
+const defaultState = { data: undefined, pending: false, error: false, started: false }
+
 export function useAsyncState () {
-	const defaultState = { data: undefined, pending: true, error: false, started: false }
 	const [state, setState] = useState(defaultState)
 	return {
 		state,
-		setError: error => { setState({ ...defaultState, pending: false, started: true, error })},
-		setStarted: started=> { setState({ ...defaultState, pending: true, started })},
-		setPending: () => { setState({ ...state, pending: true })},
-    setSuccess: data => { setState({ ...defaultState, pending: false, started: true, data })}
+    setError: error => { setState(state => ({ ...defaultState, pending: false, started: true, error }))},
+    setStarted: started => { setState(state => ({ ...defaultState, pending: true, started }))},
+    setPending: () => { setState(state => ({ ...state, pending: true }))},
+    setSuccess: data => { setState(state => ({ ...defaultState, pending: false, started: true, data }))}
 	}
 }
 
