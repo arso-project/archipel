@@ -13,6 +13,7 @@ const config = require('./config')
 const libraries = require('./lib/library')
 const hyperdrive = require('./structures/hyperdrive')
 const hyperdb = require('./structures/hyperdb')
+const hypergraph = require('./structures/hypergraph')
 
 // Read out shell parameter variables.
 let matchPort = new RegExp('^port[=:]', 'i')
@@ -39,7 +40,8 @@ const storage = name => raf(p.join('../..', dbPath, name))
 
 const hyperlib = libraries.make({ storage }, {
   hyperdrive: hyperdrive.structure,
-  hyperdb: hyperdb.structure
+  hyperdb: hyperdb.structure,
+  hypergraph: hypergraph.structure
 })
 
 // rpc
@@ -49,6 +51,7 @@ const api = rpc({
   },
   rpc: {
     hyperdrive: hyperdrive.rpc,
+    hypergraph: hypergraph.rpc,
     hyperlib: libraries.rpc
   }
 })
@@ -63,7 +66,8 @@ const server = http.createServer(static)
 
 // websocket rpc
 const wss = websocket.createServer({ server }, (stream, request) => {
-  request.on('error', err => console.log('error: ', err))
+  request.on('error', err => console.error('request error: ', err))
+  stream.on('error', err => console.error('stream error: ', err))
 
   const reqUrl = url.parse(request.url)
 
@@ -77,15 +81,30 @@ const wss = websocket.createServer({ server }, (stream, request) => {
   
 })
 
-// handle errors.
-wss.on('error', (err) => console.log('socket server: error', err))
+// Handle errors gracefully.
+// todo: find out what really is needed. kept getting ECONNRESET errors from TCP.onstreamread
+wss.on('error', (err) => console.error('socket server: error', err))
+server.on('error', (err) => console.error('http server: error', err))
 wss.on('connection', function (socket) {
-  socket.on('close', (err) => console.log('socket socket: client closed connection', err))
-  socket.on('error', (err) => console.log('socket socket: error', err))
+  socket.on('close', (err) => console.error('socket socket: client closed connection', err))
+  socket.on('error', (err) => console.error('socket socket: error', err))
 })
 
-// start
+
+// Start.
 server.listen(port, () => {
   console.log(`server listening on port ${port}`)
 })
+
+// Break on uncaught exceptions.
+if (process.env.NODE_ENV === 'development') {
+  process.on('uncaughtException', function (e) {
+    console.error('uncaught exception', e)
+    throw e
+  })
+  process.on('unhandledRejection', (error, p) => {
+    console.error('Unhandled Rejection at: Promise', p, 'reason:', error)
+    throw error
+  })
+}
 
