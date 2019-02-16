@@ -12,6 +12,7 @@ import app from './features/app'
 import workspace from './features/workspace'
 import archive from './features/archive'
 import drive from './features/drive'
+import graph from './features/graph'
 
 // settings
 const websocketUrl = window.ARCHIPEL_WEBSOCKET_URL
@@ -38,6 +39,7 @@ function boot (extensions) {
   core.register(workspace)
   core.register(archive)
   core.register(drive)
+  core.register(graph)
 
 
   extensions.forEach(extension => core.register(extension.default ? extension.default : extension))

@@ -173,7 +173,7 @@ function makeIndex (subjects, prop, aliases, placeholder) {
   return index
 }
 
-function triplesToThings (state, triples) {
+export function triplesToThings (state, triples) {
   if (!triples || !triples.length) return state
   triples.forEach((triple) => {
     let { subject, predicate, object } = triple
