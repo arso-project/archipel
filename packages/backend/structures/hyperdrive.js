@@ -4,6 +4,8 @@ const hyperdrive = require('hyperdrive')
 const pify = require('pify')
 const { prom } = require('@archipel/common/util/async')
 const { hex } = require('@archipel/common/util/hyperstack')
+const Readable = require('stream').Readable
+const EventEmitter = require('events').EventEmitter
 
 let Stat = require('hyperdrive/lib/stat')
 
@@ -17,7 +19,7 @@ exports.needs = ['hyperlib']
 exports.rpc = (api, opts) => {
   return {
     async stat (key, path, depth) {
-      // maybeWatch(api, session, req)
+      maybeWatch(this.session, key)
       const drive = await getHyperdrive(this.session, key)
       depth = depth || 0
       let stat = await statPath(path, 0)
@@ -75,16 +77,26 @@ exports.rpc = (api, opts) => {
     async createWriteStream (key, path) {
       const drive = await getHyperdrive(this.session, key)
       const stream = drive.createWriteStream(path)
-      console.log('start write')
-      stream.on('finish', () => console.log('finish write'))
+      // console.log('start write')
+      // stream.on('finish', () => console.log('finish write'))
       return stream
     },
 
     async writeFile (key, path, buf) {
       const drive = await getHyperdrive(this.session, key)
       return drive.writeFile(path, buf)
+    },
+
+    async createWatchStream () {
+      let stream = getWatchStream(this.session)
+      return stream
+    },
+
+    async watch (key) {
+      await maybeWatch(this.session, key)
     }
   }
+
 
   async function getHyperdrive (session, key) {
     if (!session.library) throw new Error('No library open.')
@@ -93,6 +105,33 @@ exports.rpc = (api, opts) => {
     let drive = archive.getStructure({ type: 'hyperdrive' })
     return drive.api
   }
+
+  function getWatchStream (session) {
+    if (!session.hyperdriveWatchStream) {
+      session.hyperdriveWatchStream = new Readable({
+        objectMode: true,
+        read () {}
+      })
+    }
+    return session.hyperdriveWatchStream
+  }
+
+  async function maybeWatch (session, key) {
+    session.hyperdriveWatching = session.hyperdriveWatching || []
+    if (session.hyperdriveWatching.indexOf(key) !== -1) return
+    session.hyperdriveWatching.push(key)
+
+    const drive = await getHyperdrive(session, key)
+    const stream = getWatchStream(session)
+    const watcher = drive.watch()
+    watcher.on('change', update)
+    session.on('close', () => watcher.removeListener('change', update))
+    function update () {
+      stream.push({ key })
+    }
+  }
+
+
 
 
   // let watchlist = []
@@ -116,10 +155,20 @@ exports.structure = (opts, api) => {
 
   let changeEmitter = null
 
-  const structure = {
+  const self = {
     async ready () {
       const [promise, done] = prom()
-      drive.ready(done)
+      drive.ready(() => {
+        let db = drive.db
+        let localWriterKey = db.local.key
+        db.authorized(localWriterKey, (err, res) => {
+          if (err) throw err
+          // if (res) self.setState({ authorized: true })
+          self.writable = !!res
+          console.log('writable', hex(drive.key), res)
+          done()
+        })
+      })
       return promise
     },
 
@@ -130,7 +179,8 @@ exports.structure = (opts, api) => {
     getState () {
       return {
         type: 'hyperdrive',
-        key: hex(drive.key)
+        key: hex(drive.key),
+        writable: self.writable
       }
     },
 
@@ -144,21 +194,25 @@ exports.structure = (opts, api) => {
     },
 
     async storeInfo (info) {
-      await structure.api.writeFile('hyperlib.json', JSON.stringify(info, null, 2))
+      await self.api.writeFile('hyperlib.json', JSON.stringify(info, null, 2))
     },
 
     async fetchInfo () {
       try {
-        let info = await structure.api.readFile('hyperlib.json')
+        let info = await self.api.readFile('hyperlib.json')
         info = JSON.parse(info)
         return info
       } catch (e) {
         return
       }
+    },
+
+    watchInfo (cb) {
+      drive.db.watch('hyperlib.json', cb)
     }
   }
 
-  structure.api = {
+  self.api = {
     drive: drive,
     asyncWriteStream (path, stream) {
       return new Promise((resolve, reject) => {
@@ -192,14 +246,14 @@ exports.structure = (opts, api) => {
   // Todo: Document available api.
   const asyncFuncs = ['ready', 'readFile', 'writeFile', 'readdir', 'mkdir', 'stat', 'authorize']
   asyncFuncs.forEach(func => {
-    structure.api[func] = pify(drive[func].bind(drive))
+    self.api[func] = pify(drive[func].bind(drive))
   })
   const syncFuncs = ['createWriteStream', 'createReadStream', 'replicate']
   syncFuncs.forEach(func => {
-    structure.api[func] = drive[func].bind(drive)
+    self.api[func] = drive[func].bind(drive)
   })
 
-  return structure
+  return self
 }
 
 function joinPath (prefix, suffix) {

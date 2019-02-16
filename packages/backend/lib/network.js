@@ -3,38 +3,49 @@ const netspeed = require('./network-speed')
 const Readable = require('stream').Readable
 const sodium = require('sodium-universal')
 const { hex } = require('@archipel/common/util/hyperstack')
+const debug = require('debug')('network')
 
 module.exports = () => new Network()
 
 class Network {
   constructor () {
     this.networks = {}
+    this._open = this._open.bind(this)
   }
 
   share (archive) {
     const key = archive.key
+    const self = this
 
     const opts = { live: true }
 
-    archive.structures.values().forEach(structure => {
-      const key = hex(structure.key)
-      if (this.networks[key]) return
-      // todo: this is a hack
-      // if (!structure.id) structure.id = randomBytes(32)
-      // console.log(structure.id)
+    archive.structures.values().forEach(structure => this._open(structure))
+    archive.on('structure', this._open)
+  }
 
-      const network = hyperdiscovery(structure.structure())
-
+  _open (structure) {
+    const key = hex(structure.key)
+    if (this.networks[key]) return
+    let db = structure.structure()
+    try {
+      const network = hyperdiscovery(db)
       const feeds = structure.feeds()
       const speed = netspeed(feeds)
 
       network.on('connection', (peer) => console.log('got peer!'))
+      network.on('error', e => {
+        if (e.code === 'EADDRINUSE') return // this seams to be normal
+        console.error(`Network error for ${key}`, e)
+      })
 
       this.networks[structure.key] = { key, network, speed }
-    })
+    } catch (e) {
+      console.error('ERRRORRRR', key, e, structure)
+    }
   }
 
   unshare (archive) {
+    archive.removeListener('structure', this._open)
     archive.structures.values().forEach(structure => {
       const key = structure.key
       if (!this.networks[key]) return
@@ -71,11 +82,5 @@ class Network {
       })
     }
   }
-}
-
-function randomBytes (n) {
-  var buf = Buffer.alloc(n)
-  sodium.randombytes_buf(buf)
-  return buf
 }
 

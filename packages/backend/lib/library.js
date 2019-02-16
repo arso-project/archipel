@@ -1,4 +1,5 @@
 const EventEmitter = require('events').EventEmitter
+const Readable = require('stream').Readable
 
 const shallowEqual = require('shallowequal')
 const hyperdb = require('../structures/hyperdb')
@@ -7,6 +8,8 @@ const network = require('./network')
 const { IndexedMap } = require('@archipel/common/util/map')
 const { asyncThunky, prom, withTimeout } = require('@archipel/common/util/async')
 const { nestStorage, keyPair, hex } = require('@archipel/common/util/hyperstack')
+
+const debug = require('debug')('library')
 
 function make (api, handlers) {
   api = api || {}
@@ -65,6 +68,18 @@ function rpc (api, opts) {
     async statsStream () {
       let library = await getLibrary(this.session)
       return library.network.createStatsStream()
+    },
+
+    async createUpdateStream () {
+      let library = await getLibrary(this.session)
+      const stream = new Readable({
+        objectMode: true,
+        read () {}
+      })
+      library.on('archive:update', async archive => {
+        stream.push(await archive.serialize())
+      })
+      return stream
     }
   }
 
@@ -157,12 +172,12 @@ class Library extends EventEmitter {
     if (!key) opts.create = true
 
     try {
-      const archive = await withTimeout(open(), 1000)
+      const archive = await withTimeout(open(), 5000)
       await self.storeArchive(archive)
       return archive
     } catch (e) { 
-      console.error(e)
-      throw new Error(`Cannot open archive: ${type} ${key}. Reason: ${e.message}`)
+      console.error(`Cannot open archive: ${type} ${key}. Reason: ${e.message}`)
+      return
     }
 
     async function open () {
@@ -183,7 +198,11 @@ class Library extends EventEmitter {
       }
 
       // Store info on state changes.
-      archive.on('state:set', state => self.storeArchive(archive))
+      archive.on('state', state => self.storeArchive(archive))
+
+      // Forward update events.
+      let updateEvents = ['state', 'structure', 'info', 'update']
+      updateEvents.forEach(ev => archive.on(ev, () => self.emit('archive:update', archive)))
 
       return archive
     }
@@ -217,78 +236,145 @@ class Archive extends EventEmitter {
     super()
     this.handlers = handlers
     this.api = api
-    this.opts = opts
+    this.opts = opts || {}
     this.type = type
-    this.info = opts.info || {}
+    this.info = opts.create && opts.info ? opts.info : {}
     this.state = {}
 
     this.structures = new IndexedMap(['type'])
-    this.addStructure(type, { ...opts, primary: true })
+
+    this.ready = asyncThunky(this._ready.bind(this))
+
+    this.primary = this._openStructure(type, opts)
   }
 
-  async ready () {
+  async _ready () {
+    const self = this
+    // debug('start open archive', this.type, this.opts)
     await this.primary.ready()
-    await this.loadStructures()
-    this.key = this.primary.key
+    // debug('primary ready')
+    await this.primary.ready()
 
-    let promises = this.structures.map(structure => structure.ready())
-    return Promise.all(promises)
+    this.key = hex(this.primary.key)
+
+    // If creating a new archive, store initial info.
+    if (this.opts.create) {
+      // debug('op: create!')
+      await this.storeInfo()
+      // debug('op: create! info stored')
+
+    // Otherwise, try to load the info.
+    } else {
+      // debug('op: open!')
+      try {
+        await initFromInfo()
+        // debug('op: open! info loaded')
+      } catch (e) {
+        console.error('Error loading info for ' + this.key, e)
+      }
+    }
+
+    this.primary.watchInfo(async () => {
+      try {
+        await initFromInfo()
+        this.emit('info')
+        // debug('info changed: loaded', this.info)
+      } catch (e) {
+        console.error('Error loading after watch', this.key, e)
+      }
+    })
+
+    async function initFromInfo () {
+      let info = await withTimeout(self.primary.fetchInfo(), 1000)
+      if (info.structures) {
+        await self.loadStructures(info.structures)
+      }
+      if (info.info) {
+        await self.setInfo(info.info)
+      }
+    }
   }
 
   async serialize () {
-    await this.ready()
-    let structures = this.structures.values() || []
+    let structures = []
+    this.structures.forEach(([key, s]) => {
+      if (s !== this.primary) structures.push({ ...s.getState(), key })
+      // structures.push({ ...s.getState(), key })
+    })
+
+    let state = this.getState()
+
     return {
       key: hex(this.key),
       type: this.type,
       info: this.info,
-      state: this.state,
-      structures: structures.filter(s => !s.primary).map(s => s.getState())
+      state: state,
+      structures
     }
   }
 
   setState (newState) {
     if (!shallowEqual(newState, this.state)) {
       this.state = newState
-      this.emit('state:set', this.state)
+      this.emit('state', this.state)
     }
   }
 
-  async addStructure (type, opts) {
+  getState () {
+    let state = { ...this.state, ...this.primary.getState() }
+    return state
+  }
+
+  async createStructure (type, opts) {
+    await this.ready()
+    // if (!this.writable) throw new Error('Cannot write to this archive')
+    const structure = await this.openStructure(type, { ...opts, create: true })
+    await this.storeInfo()
+    return structure
+  }
+
+  async openStructure (type, opts) {
+    opts = opts || {}
     const structure = this._openStructure(type, opts)
-    if (opts.create) await this.storeInfo()
+    await structure.ready()
     this.emit('structure', structure)
     return structure
   }
 
-  async storeInfo () {
-    let info = {
-      structures: this.structures.values().filter(s => !s.primary).map(s => s.getState()),
-      info: this.info,
-      type: this.type
-    }
+  async setInfo (info, save) {
+    this.info = { ...this.info, ...info }
+    if (save) await this.storeInfo()
+  }
 
+  async storeInfo () {
+    if (!this.getState().writable) {
+      throw new Error('Cannot storeInfo, not writable', this.key)
+      return // todo: throw error?
+    }
+    let info = await this.serialize()
+    info.state = undefined
     await this.primary.storeInfo(info)
   }
 
-  async loadStructures () {
-    try {
-      let info = await withTimeout(this.primary.fetchInfo(), 200)
-      if (info.info) this.info = info.info
-      if (!info.structures) return
-      info.structures.map(async s => {
-        let structure = this._openStructure(s)
-        await structure.ready()
-      })
-    } catch (e) {}
+  async loadStructures (structures) {
+    for (let i = 0; i < structures.length; i++) {
+      let info  = structures[i]
+      let { type, key } = info
+      if (this.structures.has(key)) continue
+      let structure = this._openStructure(type, info)
+      await structure.ready()
+    }
   }
 
   _openStructure (type, opts) {
+    opts = opts || {}
     if (!this.handlers[type]) throw new Error('Unknown type: ' + type)
-    if (this.structures.by('type', type)) throw new Error('Multiple structures of the same type are not allowed.')
+    if (!opts.create && !opts.key) throw new Error('Either key or create must be set.')
+    // if (this.structures.by('type', type)) throw new Error('Multiple structures of the same type are not allowed.')
 
     const handler = this.handlers[type]
-    const primary = opts.primary
+
+    opts.type = type
 
     if (!opts.key) {
       let keys = keyPair()
@@ -304,15 +390,11 @@ class Archive extends EventEmitter {
 
     const structure = handler(opts, api)
 
-    structure.primary = primary
     structure.type = opts.type
     structure.key = key
 
     // structure.discoveryKey = discoveryKey(key)
 
-    if (primary) {
-      this.primary = structure
-    }
     this.structures.set(hex(key), structure)
     return structure
   }

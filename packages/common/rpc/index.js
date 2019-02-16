@@ -2,7 +2,7 @@ const generate = require('nanoid/generate')
 const nolookalikes = require('nanoid-dictionary/nolookalikes');
 const debug = require('debug')('rpc')
 
-// const EventEmitter = require('events').EventEmitter
+const EventEmitter = require('events').EventEmitter
 
 const { MapOfMaps } = require('../util/map')
 const { prom, isPromise, withTimeout } = require('../util/async')
@@ -18,7 +18,7 @@ class Peer {
   constructor (opts) {
     opts = opts || {}
     this.id = opts.id || null
-    this.session = opts.session || {}
+    this.session = opts.session || new EventEmitter()
     this.api = opts.api || {}
     this.bus = opts.bus || {}
 
@@ -32,6 +32,11 @@ class Peer {
   saveCallback (fn) {
     let idx = this._callbacks.push(fn)
     return idx
+  }
+
+  close () {
+    // todo: more cleanup?
+    this.session.emit('close')
   }
 }
 
@@ -84,6 +89,8 @@ class RpcApi {
         console.error('Received message from unknown peer: ', msg)
       }
     })
+
+    bus.on('close', () => peer.close())
 
     return promise
   }
@@ -202,6 +209,7 @@ class RpcApi {
         opts = fn.opts
         fn = fn.create
       }
+      if (typeof fn !== 'function') console.error('cannot create api', name, fn)
       build[name] = fn(this.api, opts)
     })
 

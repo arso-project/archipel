@@ -103,7 +103,9 @@ class IndexedMap {
   }
 
   forEach (fn) {
-    this.store.values().forEach(fn)
+    for (let [key, el] of this.store.entries()) {
+      fn([key, el])
+    }
   }
 
   set (id, obj) {
@@ -129,14 +131,23 @@ class IndexedMap {
     if (!this.index[key]) return null
     if (!this.index[key].has(value)) return null
     let ids = this.index[key].get(value)
+    // console.log('by', key, value, ids)
+    if (!ids) return null
     if (single) return this.store.get(ids.values().next().value)
-    else return ids.map(id => this.store.get(id))
+    let ret = []
+    ids.forEach(id => ret.push(id))
+    return ret
+    // else return ids.values().map(id => this.store.get(id))
   }
 
   map (fn) {
     let entries = this.store.entries()
     if (!entries || !entries.length) return []
     else return entries.map((key, value) => fn(value))
+  }
+
+  entries () {
+    return this.store.entries()
   }
 
   _clear (id) {
