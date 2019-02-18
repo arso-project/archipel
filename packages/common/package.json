@@ -14,6 +14,7 @@
     "debug": "^4.1.1",
     "hypercore-crypto": "^1.0.0",
     "msgpack-lite": "0.1.26",
+    "multiplex": "6.7.0",
     "nanoid": "^2.0.1",
     "nanoid-dictionary": "^2.0.0",
     "pify": "^4.0.1",

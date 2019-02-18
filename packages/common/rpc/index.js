@@ -8,9 +8,6 @@ const { MapOfMaps } = require('../util/map')
 const { prom, isPromise, withTimeout } = require('../util/async')
 
 const nanoid = () => generate(nolookalikes, 8)
-if (!setImmediate) {
-  const setImmediate = fn => setTimeout(fn, 0)
-}
 
 module.exports = opts => new RpcApi(opts)
 
