@@ -33,11 +33,9 @@
   },
   "dependencies": {
     "avvio": "^6.0.0",
-    "hyperpc": "^2.1.0",
     "immer": "^1.7.2",
     "nanobus": "^4.3.4",
-    "shallowequal": "^1.1.0",
-    "websocket-stream": "^5.1.2"
+    "shallowequal": "^1.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7",

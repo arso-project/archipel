@@ -1,6 +1,5 @@
 // ucore
 import ucore from 'ucore'
-import rpc from 'ucore/rpc/client'
 import store from 'ucore/store'
 
 // new api
@@ -9,7 +8,7 @@ import { getApi } from './lib/rpc-client.js'
 // core
 import { ucorePlugin as componentRegistry } from './lib/component-registry'
 import app from './features/app'
-import workspace from './features/workspace'
+// import workspace from './features/workspace' // disabled, not yet ported
 import archive from './features/archive'
 import drive from './features/drive'
 import graph from './features/graph'
@@ -22,7 +21,6 @@ const websocketUrl = window.ARCHIPEL_WEBSOCKET_URL
 function boot (extensions) {
   // ucore
   const core = ucore()
-  core.register(rpc, { url: websocketUrl })
   core.register(store)
 
   // core libs
@@ -36,11 +34,10 @@ function boot (extensions) {
 
   // core features
   core.register(app)
-  core.register(workspace)
+  // core.register(workspace)
   core.register(archive)
   core.register(drive)
   core.register(graph)
-
 
   extensions.forEach(extension => core.register(extension.default ? extension.default : extension))
 
