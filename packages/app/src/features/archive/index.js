@@ -19,4 +19,8 @@ async function archivePlugin (core, opts) {
       draft.archives[key] = data
     })
   })
+  let statsStream = await core.api.hyperlib.createStatsStream()
+  statsStream.on('data', data => {
+    // do something with stats data.
+  })
 }

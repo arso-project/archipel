@@ -27,7 +27,6 @@ function make (api, handlers) {
   }
 }
 
-
 function rpc (api, opts) {
   return {
     async open (name) {
@@ -65,7 +64,7 @@ function rpc (api, opts) {
       return library.unshare(key)
     },
 
-    async statsStream () {
+    async createStatsStream () {
       let library = await getLibrary(this.session)
       return library.network.createStatsStream()
     },
@@ -232,7 +231,6 @@ class Library extends EventEmitter {
 
 class Archive extends EventEmitter {
   constructor (type, opts, handlers, api) {
-    console.log('Archive Constructor called')
     super()
     this.handlers = handlers
     this.api = api

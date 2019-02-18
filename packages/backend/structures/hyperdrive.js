@@ -165,7 +165,7 @@ exports.structure = (opts, api) => {
           if (err) throw err
           // if (res) self.setState({ authorized: true })
           self.writable = !!res
-          console.log('writable', hex(drive.key), res)
+          // console.log('writable', hex(drive.key), res)
           done()
         })
       })
