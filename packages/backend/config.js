@@ -1,6 +1,7 @@
 const config = {
   server: {
     port: process.env.NODE_PORT || 8080,
+    host: process.env.NODE_HOST || '127.0.0.1',
     static: process.env.ARCHIPEL_STATIC_PATH || '../app/dist'
   },
   library: {
@@ -9,4 +10,3 @@ const config = {
 }
 
 module.exports = config
-

@@ -5,6 +5,7 @@
   "description": "Archipel backend",
   "author": "arso team",
   "scripts": {
+    "start": "node bin.js",
     "test": "tape test/*.js"
   },
   "standard": {
