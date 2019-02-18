@@ -1,12 +1,12 @@
-const youtube = require('./packages/import-youtube')
-const markdown = require('./packages/markdown')
-const audioplayer = require('./packages/audio-player')
-const pdfviewer = require('./packages/pdf-viewer')
+const youtube = require('./packages/plugin-youtube')
+const markdown = require('./packages/plugin-markdown')
+const audio = require('./packages/plugin-audio')
+const pdf = require('./packages/plugin-pdf')
 
 module.exports = [
   youtube,
   markdown,
-  audioplayer,
-  pdfviewer
+  audio,
+  pdf
 ]
 
