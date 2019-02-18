@@ -7,7 +7,6 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const LiveReloadPlugin = require('webpack-livereload-plugin')
 
-
 // Make sure any symlinks in the project folder are resolved:
 // https://github.com/facebookincubator/create-react-app/issues/637
 const appDirectory = fs.realpathSync(process.cwd());
@@ -15,7 +14,19 @@ const appDirectory = fs.realpathSync(process.cwd());
 const PATHS = {
   entry: resolveApp('./render.js'),
   output: resolveApp('./dist'),
-  copy: [{ from: resolveApp('assets'), to: resolveApp('dist') }],
+  copy: [
+    {
+      from: resolveApp('assets'),
+      to: resolveApp('dist')
+    },
+    // NOTE: This is a quite ugly hack. It should
+    // a) not be needed
+    // b) live in the plugin-pdf folder.
+    {
+      from: require.resolve('pdfjs-dist/build/pdf.worker.js'),
+      to: resolveApp('dist')
+    }
+  ],
   appSrc: [resolveApp('.'), resolveApp('..')]
 }
 
