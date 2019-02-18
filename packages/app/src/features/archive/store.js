@@ -36,7 +36,7 @@ const shareArchive = (key, value) => async (set, { get, core, actions }) => {
 
 const authorizeWriter = ({ key, writerKey }) => async (set, { get, core, actions }) => {
   let res
-  res = await core.rpc.request('workspace/authorizeWriter', { key, writerKey })
+  res = await core.api.hyperlib.authorizeWriter(key, writerKey)
   return res
 }
 

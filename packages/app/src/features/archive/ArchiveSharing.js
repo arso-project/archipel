@@ -150,7 +150,7 @@ const Sharing = ({ archive, onShare, authorizeWriter }) => {
 
       {state.share
         ? <SettingsCard title='3. Authorize others back and sync their changes.'
-          setting={<Authorize />}
+          setting={<Authorize onSubmit={authorizeWriter} archive={key} />}
           explanation='Enter ArchiveKey to authorize:'>
           <TextAuthorize />
         </SettingsCard>
@@ -165,7 +165,6 @@ const ArchiveSharing = () => {
     {(archive, { shareArchive, authorizeWriter }) => {
       if (!archive) return null
       let { key, state } = archive
-      console.log('Consumer:', key, shareArchive)
       return (<Sharing archive={archive} onShare={shareArchive} authorizeWriter={authorizeWriter} />)
     }}
   </Consumer>

@@ -193,6 +193,35 @@ exports.structure = (opts, api) => {
       return feeds
     },
 
+    authorized (key) {
+      key = Buffer.from(key, 'hex')
+      return new Promise((resolve, reject) => {
+        drive.db.authorized(key, async (err, res) => {
+          if (err) return reject(err)
+          resolve(res)
+        })
+      })
+    },
+
+    async authorize (key) {
+      const self = this
+      key = Buffer.from(key, 'hex')
+      if (await self.authorized(key)) return null
+      return new Promise((resolve, reject) => {
+        drive.db.authorize(key, async (err, res) => {
+          if (err) reject(err)
+          if (res) {
+            // Hack: Do a write after the auth is complete.
+            // Without this, hyperdrive breaks when loading the stat
+            // for the root folder (/). I think this is a bug in hyperdb.
+            // await drive.db.put('', '')
+            await drive.writeFile('.foo', Buffer.from(''))
+            resolve(true)
+          }
+        })
+      })
+    },
+
     async storeInfo (info) {
       await self.api.writeFile('hyperlib.json', JSON.stringify(info, null, 2))
     },

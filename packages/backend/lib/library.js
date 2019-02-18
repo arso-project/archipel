@@ -64,6 +64,12 @@ function rpc (api, opts) {
       return library.unshare(key)
     },
 
+    async authorizeWriter (key, writerKey) {
+      let library = await getLibrary(this.session)
+      let archive = await library.getArchive(key)
+      return archive.authorizeWriter(writerKey)
+    },
+
     async createStatsStream () {
       let library = await getLibrary(this.session)
       return library.network.createStatsStream()
@@ -254,6 +260,7 @@ class Archive extends EventEmitter {
     await this.primary.ready()
 
     this.key = hex(this.primary.key)
+    this.localWriterKey = hex(this.primary.structure().local.key)
 
     // If creating a new archive, store initial info.
     if (this.opts.create) {
@@ -304,6 +311,7 @@ class Archive extends EventEmitter {
 
     return {
       key: hex(this.key),
+      localWriterKey: hex(this.localWriterKey),
       type: this.type,
       info: this.info,
       state: state,
@@ -321,6 +329,12 @@ class Archive extends EventEmitter {
   getState () {
     let state = { ...this.state, ...this.primary.getState() }
     return state
+  }
+
+  async authorizeWriter (writerKey) {
+    await this.ready()
+    console.log(Object.keys(this.primary))
+    return this.primary.authorize(writerKey)
   }
 
   async createStructure (type, opts) {
