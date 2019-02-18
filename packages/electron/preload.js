@@ -14,9 +14,12 @@ const path = require('path')
 const pathPrefix = process.env.ARCHIPEL_APP_PATH || isDev ? path.join(__dirname, '../app') : __dirname
 
 // eslint-disable-next-line no-eval
-window.eval = global.eval = function () {
-  throw new Error('Sorry, this app does not support window.eval().')
+if (!isDev) {
+  window.eval = global.eval = function () {
+    throw new Error('Sorry, this app does not support window.eval().')
+  }
 }
+
 const setTimeout = global.setTimeout
 window.setTimeout = global.setTimeout = function (fn, ms) {
   if (typeof fn !== 'function') {
@@ -32,17 +35,28 @@ window.setInterval = global.setInterval = function (fn, ms) {
   return setInterval(fn, ms)
 }
 
+const websocketUrl = process.argv.pop()
+window.ARCHIPEL_WEBSOCKET_URL = websocketUrl
+
+console.log('PRELOAD', process.argv)
+
 // SETUP
-process.once('loaded', () => {
-  document.addEventListener('DOMContentLoaded', () => {
-    var ipc = require('electron').ipcRenderer
-    ipc.send('rpc')
-    ipc.on('rpc', (ev, port) => {
-      window.ARCHIPEL_WEBSOCKET_URL = 'ws://localhost:' + port + '/ucore'
-      require(pathPrefix + '/dist/electron/bundle.electron.js')
-    })
-  })
-})
+// process.once('loaded', () => {
+  // console.log('LOADED')
+  // var ipc = require('electron').ipcRenderer
+  // ipc.send('rpc')
+  // ipc.on('rpc', (ev, port) => {
+    // console.log('RPC!')
+    // window.ARCHIPEL_WEBSOCKET_URL = 'ws://localhost:' + port + '/api'
+  // })
+  // document.addEventListener('DOMContentLoaded', () => {
+    // var ipc = require('electron').ipcRenderer
+    // ipc.send('rpc')
+    // ipc.on('rpc', (ev, port) => {
+      // window.ARCHIPEL_WEBSOCKET_URL = 'ws://localhost:' + port + '/api'
+    // })
+  // })
+// })
 
 if (isDev) {
   window.__devtron = {require: require, process: process}

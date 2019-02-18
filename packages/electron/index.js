@@ -27,6 +27,11 @@ app.on('ready', () => {
   //   callback({cancel: false, responseHeaders: Object.assign({}, details.responseHeaders, cspHeader)})
   // })
 
+  archipel(websocketUrl => open(websocketUrl))
+})
+
+function open (websocketUrl) {
+  process.env.ARCHIPEL_WEBSOCKET_URL = websocketUrl
   win = new BrowserWindow({
     // Extending the size of the browserwindow to make sure that the developer bar is visible.
     width: 800 + (isDev ? 50 : 0),
@@ -37,23 +42,22 @@ app.on('ready', () => {
     backgroundColor: 'white',
     webPreferences: {
       nodeIntegration: false,
-      preload: path.join(__dirname, './preload.js')
+      preload: path.join(__dirname, './preload.js'),
+      additionalArguments: [websocketUrl]
     }
   })
   if (isDev) {
     require('./lib/development.js')(app, win)
   }
-  win.loadURL(`file://${pathPrefix}/assets/index.html`)
+  win.loadURL(`file://${pathPrefix}/dist/index.html`)
 
   // Menu.setApplicationMenu(Menu.buildFromTemplate(menu))
   Menu.setApplicationMenu(null)
 
-  archipel(win)
-
   if (isDev) {
     win.webContents.openDevTools()
   }
-})
+}
 
 app.on('will-finish-launching', () => {
   app.on('open-url', (_, url) => win.webContents.send('link', url))
@@ -64,10 +68,12 @@ app.on('window-all-closed', () => {
   app.quit()
 })
 
-const quit = app.makeSingleInstance(() => {
-  if (!win) return
-  if (win.isMinimized()) win.restore()
-  win.focus()
-})
+// todo: port to electron 4
+// const quit = app.makeSingleInstance(() => {
+  // if (!win) return
+  // if (win.isMinimized()) win.restore()
+  // win.focus()
+// })
 
-if (quit) app.quit()
+// if (quit) app.quit()
+

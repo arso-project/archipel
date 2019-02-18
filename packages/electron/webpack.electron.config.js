@@ -9,11 +9,9 @@ module.exports = {
     publicPath: '/',
     libraryTarget: 'commonjs2'
   },
-  // weak is required by dnode (from parent), but has to be rebuilt so it is included as a manual dep and not packed.
-  externals: {'weak': 'weak'},
   resolve: {
     extensions: ['.js', '.json'],
-    modules: [path.join(__dirname, '..'), 'node_modules']
+    modules: [path.join(__dirname, '..', '..'), 'node_modules']
   },
   plugins: [
   ],
