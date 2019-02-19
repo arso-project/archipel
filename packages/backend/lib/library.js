@@ -8,6 +8,7 @@ const network = require('./network')
 const { IndexedMap } = require('@archipel/common/util/map')
 const { asyncThunky, prom, withTimeout } = require('@archipel/common/util/async')
 const { nestStorage, keyPair, hex } = require('@archipel/common/util/hyperstack')
+const { authMessage } = require('@archipel/common/util/authMessage')
 
 const debug = require('debug')('library')
 
@@ -26,6 +27,10 @@ function make (api, handlers) {
     }
   }
 }
+
+/*  #########################################
+    ############ Exposed Api ################
+    ######################################### */
 
 function rpc (api, opts) {
   return {
@@ -85,6 +90,12 @@ function rpc (api, opts) {
         stream.push(await archive.serialize())
       })
       return stream
+    },
+
+    async requestAuthorizationMsg (key, structures, userMsg) {
+      let library = await getLibrary(this.session)
+      let archive = await library.getArchive(key)
+      return authMessage(archive, structures, userMsg)
     }
   }
 
@@ -95,6 +106,10 @@ function rpc (api, opts) {
     return library
   }
 }
+
+/*  #########################################
+    ############ Library ####################
+    ######################################### */
 
 class Library extends EventEmitter {
   constructor (api, handlers) {
@@ -235,6 +250,10 @@ class Library extends EventEmitter {
   }
 }
 
+/*  #########################################
+    ############ Archive ####################
+    ######################################### */
+
 class Archive extends EventEmitter {
   constructor (type, opts, handlers, api) {
     super()
@@ -333,7 +352,6 @@ class Archive extends EventEmitter {
 
   async authorizeWriter (writerKey) {
     await this.ready()
-    console.log(Object.keys(this.primary))
     return this.primary.authorize(writerKey)
   }
 

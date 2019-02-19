@@ -1,9 +1,8 @@
 import React from 'react'
 import { Consumer, WithCore } from 'ucore/react'
-import { Button, Foldable, SettingsCard, Card } from '@archipel/ui'
-import ToggleButton from 'react-toggle-button'
-import { MdCheck, MdCancel, MdWarning } from 'react-icons/md'
-import NetStats from './NetStats'
+import { Button, Checkbox, SettingsCard, Card } from '@archipel/ui'
+
+import { withApi } from '../../lib/api.js'
 
 const TextShare = () => (
   <p>
@@ -111,6 +110,80 @@ class Authorize extends React.Component {
   }
 }
 
+const StructuresCheckList = function ({ structures, onSelect, selected }) {
+  if (!structures) return ''
+  let listItems = structures.map(i => <li key={'reqAuthItem' + i.key}>
+    <Checkbox id={'reqAuthItemCheck' + i.key} label={i.type}
+      checked={selected[i.key] || false}
+      onChange={(e) => onSelect(e.target.checked, i.key)} />
+  </li>)
+
+  return (
+    <ul className='list-reset'>
+      {listItems}
+    </ul>
+  )
+}
+
+class ReqAuthorizationInner extends React.Component {
+  constructor (props) {
+    super(props)
+    this.onSubmit = this.onSubmit.bind(this)
+    this.StructuresCheckList = StructuresCheckList.bind(this)
+    this.state = {
+      selected: {}
+    }
+  }
+
+  async onSubmit (e) {
+    const { archive } = this.props
+    const { selected } = this.state
+    const { requestAuthorizationMsg } = this.props.api.hyperlib
+    let requestItems = []
+    for (let i of Object.keys(selected)) {
+      if (selected[i]) requestItems.push(i)
+    }
+    if (requestItems.length > 0) {
+      // let res = await this.props.onSubmit(selected)
+      const res = await requestAuthorizationMsg(archive.key, requestItems)
+      this.setState({ res, selected: {} })
+    } else {
+      this.setState({ res: 'please select structures!' })
+    }
+  }
+
+  async onSelect (bool, key) {
+    let { selected } = this.state
+    selected[key] = bool
+    this.setState({ selected })
+  }
+
+  render () {
+    const { selected, res } = this.state
+    const { archive } = this.props
+    return (
+      <div>
+        <div className='flex flex-col'>
+          <Checkbox id='authPrimCheck' label={archive.info.title}
+            checked={selected[archive.key] || false}
+            onChange={(e) => this.onSelect(e.target.checked, archive.key)} />
+          {/* <Checkbox id='authSubCheck' label={archive.structures[0].type}
+            onChange={(e) => this.onSelect(e.target.value, archive.structures[0].key)} /> */}
+          <div className='pl-4'>
+            <StructuresCheckList structures={archive.structures}
+              onSelect={this.onSelect.bind(this)}
+              selected={selected} />
+          </div>
+          <Button onClick={() => this.onSubmit()}>Generate Authentification Request</Button>
+          {res}
+        </div>
+      </div>
+    )
+  }
+}
+
+const ReqAuthorization = withApi(ReqAuthorizationInner)
+
 const Sharing = ({ archive, onShare, authorizeWriter }) => {
   let { key, state } = archive
   return (
@@ -152,6 +225,14 @@ const Sharing = ({ archive, onShare, authorizeWriter }) => {
         ? <SettingsCard title='3. Authorize others back and sync their changes.'
           setting={<Authorize onSubmit={authorizeWriter} archive={key} />}
           explanation='Enter ArchiveKey to authorize:'>
+          <TextAuthorize />
+        </SettingsCard>
+        : '' }
+
+      {state.share
+        ? <SettingsCard title='3. Authorize others back and sync their changes.'
+          setting={<ReqAuthorization archive={archive} />}
+          explanation='Select Structures:'>
           <TextAuthorize />
         </SettingsCard>
         : '' }
