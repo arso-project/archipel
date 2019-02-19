@@ -5,25 +5,24 @@
 
 /* Hide the browser's default checkbox */
 .chb input {
- position: absolute;
- opacity: 0;
- cursor: pointer;
- height: 0;
- width: 0;
+  display: none;
 }
 
 .chb [size] {
-  @apply border-4 border-grey-light rounded w-5 h-5 text-transparent
+  @apply border-4 border-grey-light rounded w-5 h-5 text-transparent;
 }
 
 .chb:hover > [size] {
-  @apply shadow border-indigo-lighter
+  @apply shadow border-indigo-lighter;
 }
 
 .chb:hover > span {
-  @apply text-indigo-lighter
+  @apply text-indigo-lighter;
 }
 
 .chb input:checked + [size] {
-  @apply text-teal-light border-teal-light
+  @apply text-teal-light border-teal-light;
+}
+
+.chb span {
 }
