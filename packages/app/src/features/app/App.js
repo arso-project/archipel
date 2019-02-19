@@ -2,7 +2,7 @@ import React from 'react'
 import { IconContext } from 'react-icons'
 
 import { ScreenRender, ScreenSwitcher } from './ScreenController.js'
-import SelectWorkspace from '../workspace/SelectWorkspace.js'
+// import SelectWorkspace from '../workspace/SelectWorkspace.js'
 
 const Header = ({ children, show }) => (
   <div className={'px-4 py-3 w-full h-10 border-b-2 leading-none ' + (!show ? 'hidden' : '')}>
@@ -46,7 +46,7 @@ class App extends React.Component {
           <Header show={this.state.chrome} >
             {/* <div className=''><ScreenSwitcher /></div> */}
             <div className='font-bold'>Archipel: Somoco</div>
-            <div className=''><SelectWorkspace /></div>
+            {/* <div className=''><SelectWorkspace /></div> */}
           </Header>
           <div className='flex-1 flex flex-col overflow-y-scroll'>
             <ScreenRender chrome={this.state.chrome} />
