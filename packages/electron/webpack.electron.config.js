@@ -13,6 +13,19 @@ module.exports = {
     extensions: ['.js', '.json'],
     modules: [path.join(__dirname, '..', '..'), 'node_modules']
   },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        use: ['remove-hashbang-loader']
+      }
+    ]
+  },
+  resolveLoader: {
+    alias: {
+      'remove-hashbang-loader': path.join(__dirname, './remove-hashbang-loader')
+    }
+  },
   plugins: [
   ],
   target: 'electron-main',
