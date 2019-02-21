@@ -3,15 +3,15 @@ import { List } from '@archipel/ui'
 import PropTypes from 'proptypes'
 
 const Key = ({ string }) => (
-  <strong className=''>
-    {string.substring(0, 8)}…
-  </strong>
+  <span className='text-sm text-grey bg-grey-lightest px-1 rounded inline-block'>
+    {string.substring(0, 4)}…
+  </span>
 )
 
 const Archive = ({ item, selected }) => {
   return (
     <span>
-      <strong>{item.info.title}</strong> <Key string={item.key} />
+      {item.info.title} <Key string={item.key} />
     </span>
   )
 }

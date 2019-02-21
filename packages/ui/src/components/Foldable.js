@@ -28,7 +28,8 @@ class Foldable extends React.Component {
       )
     }
     let onClick = () => this.toggle()
-    let mainCls = 'px-4 py-3'
+    // let mainCls = 'px-4 py-3'
+    let mainCls = 'px-2 py-2'
     if (this.state.open) mainCls += ' bg-yellow-lightest'
     return (
       <div className={mainCls}>
