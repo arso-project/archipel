@@ -23,7 +23,7 @@ class StreamBus extends EventEmitter {
       this.stransports.set(stream, name)
     })
 
-    this.stream.on('close', () => this.emit('close'))
+    this.stream.on('close', () => this.receiveMessage({ type: 'close' }))
 
     this.transports = new Map()
 

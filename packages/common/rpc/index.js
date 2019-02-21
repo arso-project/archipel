@@ -78,7 +78,8 @@ class RpcApi {
 
         clearTimeout(timeout)
         done(null, peer)
-
+      } else if (msg.type === 'close') {
+        peer.close()
       } else if (peer.id === msg.from.peer) {
         this.postMessage(msg)
       } else {
@@ -86,8 +87,6 @@ class RpcApi {
         console.error('Received message from unknown peer: ', msg)
       }
     })
-
-    bus.on('close', () => peer.close())
 
     return promise
   }
