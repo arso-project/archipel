@@ -1,26 +1,27 @@
 import React, { useState, useEffect } from 'react'
+import { Input } from '@archipel/ui'
 
 const defaultState = { data: undefined, pending: false, error: false, started: false }
 
 export function useAsyncState () {
-	const [state, setState] = useState(defaultState)
-	return {
-		state,
-    setError: error => { setState(state => ({ ...defaultState, pending: false, started: true, error }))},
-    setStarted: started => { setState(state => ({ ...defaultState, pending: true, started }))},
-    setPending: () => { setState(state => ({ ...state, pending: true }))},
-    setSuccess: data => { setState(state => ({ ...defaultState, pending: false, started: true, data }))}
-	}
+  const [state, setState] = useState(defaultState)
+  return {
+    state,
+    setError: error => { setState(state => ({ ...defaultState, pending: false, started: true, error })) },
+    setStarted: started => { setState(state => ({ ...defaultState, pending: true, started })) },
+    setPending: () => { setState(state => ({ ...state, pending: true })) },
+    setSuccess: data => { setState(state => ({ ...defaultState, pending: false, started: true, data })) }
+  }
 }
 
 export function useAsync (defaultValue) {
-	const { state, setError, setPending, setSuccess, setStarted } = useAsyncState()
-	return [state, setPromise]
+  const { state, setError, setPending, setSuccess, setStarted } = useAsyncState()
+  return [state, setPromise]
 
-	function setPromise (asyncFn) {
+  function setPromise (asyncFn) {
     let abort = false
-		if (!state.started) setStarted(true)
-		else setPending()
+    if (!state.started) setStarted(true)
+    else setPending()
 
     const maybeAbort = fn => (...args) => {
       if (!abort) fn(...args)
@@ -32,16 +33,16 @@ export function useAsync (defaultValue) {
       .catch(maybeAbort(setError))
 
     return () => { abort = true }
-	}
+  }
 }
 
 export function useAsyncEffect (asyncFn, inputs) {
-	const [state, setPromise] = useAsync()
+  const [state, setPromise] = useAsync()
   useEffect(() => {
     let abort = setPromise(asyncFn)
     return abort
   }, inputs)
-	return state
+  return state
 }
 
 export function useCounter () {
@@ -55,11 +56,12 @@ export function useCounter () {
 export function useForm (defaultValue) {
   defaultValue = defaultValue || {}
   const [state, setState] = useState(defaultValue)
-  return [
+  return {
     state,
     itemProps,
-    makeItem
-  ]
+    makeField,
+    setState
+  }
 
   function itemProps (name, defaultValue) {
     let value = state[name] === undefined ? defaultValue : state[name]
@@ -67,40 +69,40 @@ export function useForm (defaultValue) {
     return { name, value, onChange }
   }
 
-  function makeItem ({ title, name, defaultValue, type }) {
+  function makeField ({ title, name, defaultValue, type }) {
     defaultValue = defaultValue || ''
     return (
       <>
         {title && <label htmlFor={name}>{title}</label> }
-        <input type={type} {...itemProps(name, defaultValue)} />
+        <Input type={type} {...itemProps(name, defaultValue)} />
       </>
     )
   }
 }
 
 export function useToggle (init) {
-  const [state, setState] = useState(init ? true : false)
+  const [state, setState] = useState(!!init ? true : false)
   return [state, () => setState(state => !state)]
 }
 
 export function useRerender () {
   const [_, setState] = useState(true)
   const rerender = () => setState(state => !state)
-  return rerender 
+  return rerender
 }
 
 export function useKey (key, cb) {
   useEffect(() => {
-		function onKeydown (e) {
-			if (e.key === key) cb(e)
-		}
-		document.addEventListener('keydown', onKeydown)
-		return () => document.removeEventListener('keydown', onKeydown)
-	}, [])
+    function onKeydown (e) {
+      if (e.key === key) cb(e)
+    }
+    document.addEventListener('keydown', onKeydown)
+    return () => document.removeEventListener('keydown', onKeydown)
+  }, [])
 }
 
 export function useStack () {
-  const [state, setState] = useState()
+  const [state, setState] = useState([])
   return [
     state,
     val => setState([...state, val]),

@@ -27,20 +27,6 @@ class Registry {
 
 export const components = new Registry()
 
-export const __components = {
-  add: (type, component, opts, match) => {
-    _components[type] = _components[type] || []
-    _components[type].push({ component, opts, match })
-  },
-  getAll: (type) => {
-    let list = _components[type]
-    if (!list) return null
-    return list
-    // return list.map(item => item.component)
-  }
-}
-
-
 export async function ucorePlugin (core) {
   core.decorate('components', components)
 }
