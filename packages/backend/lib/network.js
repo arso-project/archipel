@@ -1,9 +1,8 @@
 const hyperdiscovery = require('hyperdiscovery')
 const netspeed = require('./network-speed')
 const Readable = require('stream').Readable
-const sodium = require('sodium-universal')
 const { hex } = require('@archipel/common/util/hyperstack')
-const debug = require('debug')('network')
+// const debug = require('debug')('network')
 
 module.exports = () => new Network()
 
@@ -14,21 +13,17 @@ class Network {
   }
 
   share (archive) {
-    const key = archive.key
-    const self = this
-
-    const opts = { live: true }
-
     archive.structures.values().forEach(structure => this._open(structure))
     archive.on('structure', this._open)
   }
 
   _open (structure) {
+    const opts = { live: true }
     const key = hex(structure.key)
     if (this.networks[key]) return
     let db = structure.structure()
     try {
-      const network = hyperdiscovery(db)
+      const network = hyperdiscovery(db, opts)
       const feeds = structure.feeds()
       const speed = netspeed(feeds)
 
@@ -40,7 +35,7 @@ class Network {
 
       this.networks[structure.key] = { key, network, speed }
     } catch (e) {
-      console.error('ERRRORRRR', key, e, structure)
+      console.error('Error sharing structure', key, e)
     }
   }
 
