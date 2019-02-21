@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { Heading, Button, Status } from '@archipel/ui'
 
 import { withApi } from '../../lib/api'
-import { useAsyncEffect, useToggle } from '../../lib/hooks'
+import { useAsyncEffect, useToggle, useForm } from '../../lib/hooks'
 import { triplesToThings } from './store'
 
 function makeFileLink (archive, path) {
@@ -46,9 +46,86 @@ function Tags (props) {
   )
 }
 
-function Tag (props) {
+function Sidebar (props) {
   const { archive, path, api } = props
   let link = makeFileLink(archive, path)
+  return (
+    <div>
+      <Tag archive={archive} link={link} api={api} />
+      <Metadata archive={archive} link={link} api={api} />
+    </div>
+  )
+}
+
+const FIELDS = {
+  title: {
+    label: 'Title',
+    type: 'string'
+  },
+
+  description: {
+    label: 'Description',
+    type: 'text'
+  }
+}
+
+function Metadata (props) {
+  const { archive, link, api } = props
+  const [update, triggerUpdate] = useToggle()
+  let res = useAsyncEffect(async () => {
+    let triples = await api.hypergraph.get(archive, spo(link))
+    console.log('load triples', triples)
+    let subjects = toSubjects(triples)
+    console.log('load subjects', subjects)
+    console.log('load ret', subjects[link])
+    return subjects[link] || {}
+  }, [link, update])
+
+  if (!res.data) return <Status {...res} />
+
+  return <MetadataEditor {...props} data={res.data} onSubmit={onSubmit} />
+
+  async function onSubmit (values) {
+    let triples = []
+    Object.keys(values).forEach(key => {
+      triples.push(spo(link, key, values[key]))
+    })
+    console.log('triples', triples)
+    await api.hypergraph.put(archive, triples)
+    triggerUpdate()
+  }
+}
+
+function MetadataEditor (props) {
+  const { archive, link, api, data, onSubmit } = props
+  const { state, setState, makeField, fieldProps } = useForm(data)
+  console.log('editor', data)
+
+  let els = []
+  for (let [key, info] of Object.entries(FIELDS)) {
+    els.push((
+      <div key={key}>{makeField({ name: key, title: info.label })}</div>
+    ))
+  }
+  return (
+    <form onSubmit={onSubmitForm}>
+      <div>
+        {els}
+      </div>
+      <Button type='submit'>Save</Button>
+    </form>
+  )
+
+  async function onSubmitForm (e) {
+    e.preventDefault()
+    console.log('form values', state)
+    onSubmit(state)
+    // onSubmit(formValues)
+  }
+}
+
+function Tag (props) {
+  const { archive, link, api } = props
 
   const [input, setInput] = useState('')
   const [saved, setSaved] = useToggle()
@@ -56,7 +133,7 @@ function Tag (props) {
   return (
     <div>
       <Tags link={link} api={api} archive={archive} update={saved} />
-      <input 
+      <input
         placeholder='Tag...'
         className='p-2 border-black border font-xl'
         onChange={e => setInput(e.target.value)} type='text'
@@ -114,10 +191,10 @@ function TagCard (props) {
 }
 
 function Subject (props) {
-	const { link, entity } = props
-	return (
-		<em className='display-block'>{link}</em>
-	)
+  const { link, entity } = props
+  return (
+    <em className='display-block'>{link}</em>
+  )
 }
 
 function toObjects (triples) {
@@ -125,6 +202,16 @@ function toObjects (triples) {
     acc[t.object] = acc[t.object] || {}
     acc[t.object][t.predicate] = acc[t.object][t.predicate] || []
     acc[t.object][t.predicate].push(t.subject)
+    return acc
+  }, {})
+}
+
+function toSubjects (triples) {
+  if (!triples || !triples.length) return {}
+  return triples.reduce((acc, t) => {
+    acc[t.subject] = acc[t.subject] || {}
+    acc[t.subject][t.predicate] = acc[t.subject][t.predicate] || []
+    acc[t.subject][t.predicate].push(t.object)
     return acc
   }, {})
 }
@@ -137,5 +224,5 @@ function toObjects (triples) {
   // })
 // }
 
-export default withApi(Tag)
+export default withApi(Sidebar)
 
