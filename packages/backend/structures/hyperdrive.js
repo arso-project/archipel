@@ -303,6 +303,6 @@ function cleanStat (stat, path, key) {
     mimetype: stat.isDirectory() ? 'archipel/directory' : mime.lookup(path),
     children: undefined
   }
-  if (!info.mimetype) info.mimetype = 'archipel/unknown
+  if (!info.mimetype) info.mimetype = 'archipel/unknown'
   return info
 }
