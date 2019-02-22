@@ -105,10 +105,22 @@ export function useStack () {
   const [state, setState] = useState([])
   return [
     state,
-    val => setState([...state, val]),
+    val => setState(state => [...state, val]),
     () => setState([])
   ]
 }
+
+export function useHover () {
+  const [hovered, set] = useState(false)
+  return {
+    hovered,
+    bind: {
+      onMouseEnter: () => set(true),
+      onMouseLeave: () => set(false),
+    },
+  }
+}
+
 
 export function copyToClipboard (str) {
   const el = document.createElement('textarea');
