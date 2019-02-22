@@ -7,8 +7,6 @@ import { getApi } from './lib/rpc-client.js'
 
 // core
 import { ucorePlugin as componentRegistry } from './lib/component-registry'
-import app from './features/app'
-// import workspace from './features/workspace' // disabled, not yet ported
 import archive from './features/archive'
 import drive from './features/drive'
 import graph from './features/graph'
@@ -33,8 +31,6 @@ function boot (extensions) {
   })
 
   // core features
-  core.register(app)
-  // core.register(workspace)
   core.register(archive)
   core.register(drive)
   core.register(graph)
