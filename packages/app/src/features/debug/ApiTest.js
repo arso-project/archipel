@@ -1,28 +1,15 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useApi, WithApi, withApi, Status } from '../../lib/api.js'
-import { useToggle } from '../../lib/hooks.js'
+import { useToggle, useKey } from '../../lib/hooks.js'
 import { Button, List } from '@archipel/ui'
 
-export default function ApiTest (props) {
-  const [show, toggleShow] = useToggle(false)
-  const toggle = (
-    <div 
-      className='absolute pin-t pin-r p-2'>
-      <Button onClick={e => toggleShow()}>
-        { show ? 'Hide' : 'ApiTest' }
-      </Button>
-    </div>
-  )
-
-  if (!show) return toggle
-
+export default function ApiTest () {
   return (
-    <div className='bg-teal-lightest'>
-      {toggle}
+    <>
       <ApiTestHooks />
       <ApiTestHOC />
       <ApiTestWrapper />
-    </div>
+    </>
   )
 }
 

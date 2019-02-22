@@ -9,7 +9,7 @@ import { useToggle } from '../../lib/hooks'
 
 const Item = ({ label, children }) => (
   <div className='border-grey-light border-b flex'>
-    <div className='w-24 px-2 py-4 border-grey-lightest'>
+    <div className='w-48 px-2 py-4 border-grey-lightest'>
       <strong>{label}: </strong>
     </div>
     <div className='flex-1 px-2 py-4'>

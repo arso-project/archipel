@@ -23,7 +23,8 @@
     "react-values": "^0.3.0",
     "speedometer": "^1.1.0",
     "through2": "^2.0.3",
-    "ucore": "^0.4.0"
+    "ucore": "^0.4.0",
+    "wayfarer": "^6.6.4"
   },
   "devDependencies": {
     "@sucrase/webpack-loader": "^2.0.0",

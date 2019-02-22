@@ -27,6 +27,8 @@ class Registry {
 
 export const components = new Registry()
 
+export default components
+
 export async function ucorePlugin (core) {
   core.decorate('components', components)
 }
