@@ -80,7 +80,7 @@ function rpc (api, opts) {
       return library.network.createStatsStream()
     },
 
-    async createUpdateStream () {
+    async createArchiveStream (init) {
       let library = await getLibrary(this.session)
       const stream = new Readable({
         objectMode: true,
@@ -89,6 +89,13 @@ function rpc (api, opts) {
       library.on('archive:update', async archive => {
         stream.push(await archive.serialize())
       })
+
+      if (init) {
+        library.listArchives().then(async archives => {
+          archives.forEach(async archive => stream.push(await archive.serialize()))
+        })
+      }
+
       return stream
     },
 
