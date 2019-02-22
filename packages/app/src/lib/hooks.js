@@ -82,7 +82,7 @@ export function useForm (defaultValue) {
 
 export function useToggle (init) {
   const [state, setState] = useState(!!init ? true : false)
-  return [state, () => setState(state => !state)]
+  return [state, (val) => setState(state => val === undefined ? !state : !!val)]
 }
 
 export function useRerender () {

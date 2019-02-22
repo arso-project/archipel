@@ -292,7 +292,7 @@ function joinPath (prefix, suffix) {
 }
 
 function cleanStat (stat, path, key) {
-  return {
+  let info = {
     key,
     path,
     name: p.parse(path).base,
@@ -303,4 +303,6 @@ function cleanStat (stat, path, key) {
     mimetype: stat.isDirectory() ? 'archipel/directory' : mime.lookup(path),
     children: undefined
   }
+  if (!info.mimetype) info.mimetype = 'archipel/unknown
+  return info
 }

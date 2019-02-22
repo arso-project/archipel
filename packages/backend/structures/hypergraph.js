@@ -12,7 +12,6 @@ exports.needs = ['hyperlib']
 // hypergraph rpc
 // -
 exports.rpc = (api, opts) => {
-console.log
   return {
     // async list (key, prefix) {
       // const db = await getHypergraph(key)

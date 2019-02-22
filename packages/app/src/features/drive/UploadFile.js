@@ -121,13 +121,13 @@ class UploadFile extends React.Component {
 
     updateState({ pending: true })
 
-    const { dir, api, archive } = this.props
+    let { path, api, archive } = this.props
     const key = archive
 
     let { name, webkitRelativePath } = file
     if (this.state.uploadDir) name = webkitRelativePath
 
-    const path = (dir === '/' ? '' : dir) + '/' + name
+    path = (path === '/' ? '' : path) + '/' + name
     const speedo = speedometer()
     let speed = 0
     let written = 0
@@ -160,11 +160,10 @@ class UploadFile extends React.Component {
     })
 
     // todo: is this clean enough?
-    // core.getStore('fs').fetchStats({ archive: key, path: this.props.dir })
+    // core.getStore('fs').fetchStats({ archive: key, path: this.props.path})
   }
 
   render () {
-    console.log('render', this.state, this.props)
     return (
       <Foldable heading='Upload file'>
         <div className='flex mb-2'>
@@ -195,7 +194,7 @@ class UploadFile extends React.Component {
 
 UploadFile.propTypes = {
   archive: PropTypes.string,
-  dir: PropTypes.string
+  path: PropTypes.string
 }
 
 export default withApi(UploadFile)

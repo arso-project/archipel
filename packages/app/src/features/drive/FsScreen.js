@@ -24,7 +24,7 @@ function DirGrid (props) {
   const { archive, path, selected, onSelect } = props
   return (
     <div className=''>
-      <DirActions />
+      <DirActions archive={archive} path={path} />
       <div>
         <ListDir archive={archive} path={path} selected={selected} onSelect={onSelect} grid />
       </div>
@@ -33,7 +33,10 @@ function DirGrid (props) {
 }
 
 function DirActions (props) {
-  const { archive, path } = props
+  const { params } = useRouter()
+  let { archive, path } = params
+  path = path || '/'
+  /* const { archive, path } = props */
   let Toggle = props => (
     <span {...props} className='bg-purple-lightest border-1 border-purple-lighter cursor-pointer hover:bg-purple-dark hover:text-purple-lightest text-purple-dark rounded-sm inline-block p-2 font-bold italic'><MdFlashOn />Actions</span>
   )
@@ -91,8 +94,7 @@ export default function FsScreen () {
   return (
     <div>
       <div className='flex mb-4 max-w-full'>
-        <div className='flex-0 mr-4 w-64'>
-          <Heading>Directories</Heading>
+        <div className='flex-0 w-64 p-4'>
           <DirTree archive={archive} dir={'/'} path={path} onSelect={onSelect} />
         </div>
         <div className='flex-1'>

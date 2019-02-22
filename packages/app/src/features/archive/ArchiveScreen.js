@@ -12,7 +12,8 @@ import ListArchives from './ListArchives'
 import CreateArchive from './CreateArchive'
 import AddArchive from './AddArchive'
 
-export default function ArchiveScreen () {
+export default function ArchiveScreen (props) {
+  const { children } = props
   const { params, goto } = useRouter()
 
   // todo: Change onSelect syntax in List to be a single function.
@@ -34,7 +35,7 @@ export default function ArchiveScreen () {
         </div>
         <div className='flex-1 p-4'>
           { !archive && <NoArchive /> }
-          { archive && <ArchiveAppScreen archive={archive} loadedArchive={selected} /> }
+          { archive && <ArchiveAppScreen archive={archive} loadedArchive={selected} children={children} /> }
         </div>
       </div>
     )
@@ -76,12 +77,19 @@ function ArchiveList (props) {
 }
 
 function ArchiveAppScreen (props) {
-  const { archive, loadedArchive } = props
+  const { archive, loadedArchive, children } = props
 
-  const [tab, setTab] = useState(0)
+  let [tab, setTab] = useState(0)
   const [menu, toggleMenu] = useToggle(true)
 
   let tabs = registry.getAll('archiveTabs').map(mapRegisteredToTabs)
+
+  // TODO: Think about if this a valid option.
+  if (children) {
+    tabs.push({ title: 'ROUTE', component: () => children })
+    tab = tabs.length - 1
+  }
+
   let TabComponent = tabs[tab].component
 
   let color = 'pink'

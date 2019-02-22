@@ -1,6 +1,8 @@
 import store from './store'
 import FsScreen from './FsScreen'
 
+import { getApi } from '../../lib/api'
+
 export default {
   plugin: fsPlugin
 }
@@ -14,3 +16,4 @@ async function fsPlugin (core, opts) {
     core.getStore('fs').clearStats({ archive: info.key })
   })
 }
+

@@ -13,11 +13,17 @@ import Panels from './foo/panels'
 import '@archipel/ui/tailwind.pcss'
 
 registerRoute('/', ArchiveScreen)
-registerRoute('/archive/:archive', ArchiveScreen)
-// registerRoute('/archive/:archive/*', ArchiveScreen)
 
-registerRoute('/archive/:archive/file', FsScreen)
-registerRoute('/archive/:archive/file/*', FsScreen)
+registerRoute('/archive', ArchiveScreen)
+registerRoute('/archive/:archive', ArchiveScreen)
+registerRoute('/archive/:archive/*', ArchiveScreen)
+
+let opts = {
+  wrap: children => <ArchiveScreen>{children}</ArchiveScreen>
+}
+
+registerRoute('/archive/:archive/file', FsScreen, opts)
+registerRoute('/archive/:archive/file/*', FsScreen, opts)
 
 registerRoute('/tags', Tags)
 registerRoute('/panels', Panels)
@@ -26,9 +32,7 @@ registerRoute('/404', () => <strong>404 Not Found</strong>)
 export function App (props) {
   return (
     <div>
-      <Router attach global Wrap={Wrapper}>
-        <FooPage route='/bar/*' />
-      </Router>
+      <Router attach global Wrap={Wrapper} />
     </div>
   )
 }
@@ -45,17 +49,6 @@ function Wrapper (props) {
       <div className='flex-0 max-w-1/2'>
         <Debug />
       </div>
-    </div>
-  )
-}
-
-function FooPage () {
-  const { params, route, goto } = useRouter()
-  return (
-    <div className='p-2 m-2'>
-      Hellohello
-      <div onClick={e => goto('/')} className='text-pink bg-grey-light p-2'>MOVE!</div>
-      <pre>{JSON.stringify({ params, route }, null, 2)}</pre>
     </div>
   )
 }

@@ -17,9 +17,10 @@ const routes = {}
  *   element: A HTML element to render.
  *   link: Register a link with this name or { name, icon }
  */
-export function registerRoute (route, component) {
+export function registerRoute (route, component, opts) {
+  opts = opts || {}
   if (typeof route === 'function') route = route()
-  else if (component) route = { route, component }
+  else if (component) route = { route, component, ...opts }
 
   routes[route.route] = route
 }
@@ -35,7 +36,7 @@ export function initRouter (routes, onRoute) {
     router.on(route.route, params => {
       let context = { ...route, params }
       // if (route.middleware) context = route.onopen(params)
-      onRoute({ ...route, params })
+      onRoute(context)
     })
   }
 
@@ -121,6 +122,7 @@ export function Router (props) {
   }
 
   let rendered = <Route {...context} />
+  if (route.wrap) rendered = route.wrap(rendered)
   if (Wrap) rendered = <Wrap {...context}>{rendered}</Wrap>
 
   return (

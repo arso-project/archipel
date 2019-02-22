@@ -4,6 +4,7 @@ import { Heading, Button, Status } from '@archipel/ui'
 
 import { withApi } from '../../lib/api'
 import { useAsyncEffect, useToggle, useForm } from '../../lib/hooks'
+import { useRouter } from '../../lib/router'
 import { triplesToThings } from './store'
 
 function makeFileLink (archive, path) {
@@ -192,8 +193,11 @@ function TagCard (props) {
 
 function Subject (props) {
   const { link, entity } = props
+  const { goto } = useRouter()
+  let parts = link.substring(7).split('/')
+  let uiLink = ['archive', parts.shift(), 'file', parts.join('/')]
   return (
-    <em className='display-block'>{link}</em>
+    <a className='display-block cursor-pointer' onClick={e => goto(uiLink)}>{link}</em>
   )
 }
 

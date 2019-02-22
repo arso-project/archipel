@@ -3,16 +3,9 @@ import PropTypes from 'prop-types'
 import { Heading } from '@archipel/ui'
 import RpcQuery from '../util/RpcQuery'
 import { WithCore } from 'ucore/react'
+import JSONTree from 'react-json-tree'
 
 import { useApi, Status } from '../../lib/api.js'
-
-function matchComponent (file) {
-  let { mimetype } = file
-  if (mimetype.match(/image\/.*/)) {
-    return Image
-  }
-  return FileContent
-}
 
 const Image = ({ content, stat }) => {
   let src = 'data:image/png;base64,' + content
@@ -21,12 +14,40 @@ const Image = ({ content, stat }) => {
   </div>
 }
 
-const FileContent = ({ content }) => {
+const Text = ({ content }) => {
   return (
     <div className='p-4 border-2 bg-grey-lighter'>
       <pre className='overflow-hidden max-w-xl'>
         {content}
       </pre>
+    </div>
+  )
+}
+
+function Json (props) {
+  const { content } = props
+  let json
+  try {
+    json = JSON.parse(content)
+  } catch (e) {}
+
+  if (!json) return <Text content={content} />
+
+  return (
+    <div>
+      <JSONTree 
+        data={json} 
+        invertTheme={true} theme='bright'
+        shouldExpandNode={(keyName, data, level) => level < 2}
+      />
+    </div>
+  )
+}
+
+function Fallback () {
+  return (
+    <div className='p-4 text-xl text-grey-dark'>
+      There's no viewer available for this type of file :-(
     </div>
   )
 }
@@ -74,8 +95,29 @@ const defaultViewers = [
     }
   },
   {
-    component: FileContent,
+    component: Json,
     opts: {
+      stream: false,
+      format: 'utf-8',
+      match: ({ mimetype }) => {
+        return mimetype && mimetype.match(/json/)
+      }
+    }
+  },
+  {
+    component: Text,
+    opts: {
+      stream: false,
+      format: 'utf-8',
+      match: ({ mimetype }) => {
+        return mimetype && mimetype.match(/text/)
+      }
+    }
+  },
+  {
+    component: Fallback,
+    opts: {
+      collect: false,
       stream: false,
       format: 'utf-8',
       match: () => true
@@ -89,7 +131,6 @@ const formats = {
 }
 
 function selectViewer (viewers, file) {
-  console.log(file)
   return viewers.reduce((result, current) => {
     if (result) return result
     if (current.opts.match(file)) result = current
@@ -103,7 +144,7 @@ const FileViewer = (props) => {
   let { opts, component: Viewer } = viewer
   if (opts.stream) {
     return <Viewer stream={stream} stat={stat} />
-  } else {
+  } else if (opts.collect || opts.collect === undefined) {
     return (
       <Collect stream={stream}>
         {content => {
@@ -115,6 +156,8 @@ const FileViewer = (props) => {
         }}
       </Collect>
     )
+  } else {
+    return <Viewer stat={stat} />
   }
 }
 
