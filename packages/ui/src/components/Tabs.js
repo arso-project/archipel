@@ -1,16 +1,16 @@
 import React from 'react'
 import List from './List'
 
-const TabHeader = ({ tabs, selected, onSelect }) => (
-  <List items={tabs} onSelect={onSelect} selected={selected}>
+const TabHeader = ({ tabs, selected, onSelect, ...props }) => (
+  <List items={tabs} onSelect={onSelect} selected={selected} {...props}>
     {(tab, i) => tab.title}
   </List>
 )
 
-const TabContent = ({ tabs, selected, props }) => {
+const TabContent = ({ tabs, selected, passProps }) => {
   if (!(tabs[selected] && tabs[selected].component)) return null
   const Component = tabs[selected].component
-  return <Component {...props} />
+  return <Component {...passProps} />
 }
 
 class Tabs extends React.Component {
@@ -26,19 +26,27 @@ class Tabs extends React.Component {
   }
 
   render () {
-    const { tabs, ...props } = this.props
+    let { tabs, direction, Wrapper, passProps } = this.props
+    direction = direction || 'horizontal'
+    let horizontal = direction === 'horizontal'
     const { selected } = this.state
+    let wrapperCls = horizontal ? 'flex flex-col' : 'flex'
+    let headerCls = horizontal ? 'flex' : ''
+    let bodyCls = horizontal ? 'flex-1' : 'ml-4 flex-1'
+    let content = <TabContent tabs={tabs} selected={selected} passProps={passProps} />
+    if (Wrapper) content = <Wrapper {...passProps}>{content}</Wrapper>
     return (
       <div>
-        <div className='flex'>
-          <TabHeader tabs={tabs} onSelect={this.onSelect} selected={selected} />
-          <div className='ml-4 flex-1'>
-            <TabContent tabs={tabs} selected={selected} props={props} />
+        <div className={wrapperCls}>
+          <TabHeader className={headerCls} tabs={tabs} onSelect={this.onSelect} selected={selected} />
+          <div className={bodyCls}>
+            {content}
           </div>
         </div>
       </div>
     )
   }
 }
+
 
 export default Tabs

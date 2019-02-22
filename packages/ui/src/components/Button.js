@@ -15,4 +15,15 @@ const Button = (props) => {
   )
 }
 
+export function FloatingButton (props) {
+  const { icon, label, active, onClick } = props
+
+  let cls = `text-grey-lighter hover:bg-blue-dark ${active ? 'bg-blue-dark is-active' : 'bg-black'} btn-floating`
+  return (
+    <div className={cls} onClick={onClick}>
+      {icon}
+    </div>
+  )
+}
+
 export default Button

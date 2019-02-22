@@ -11,7 +11,7 @@
 }
 
 .btn-normal {
-  @apply border-2 border-grey-darkest px-4 py-2 text-center bg-grey-darkest text-grey-lightest;
+  @apply border-2 border-grey-darkest px-4 h-8 text-center bg-grey-darkest text-grey-lightest;
 }
 
 .btn-normal:hover {
@@ -23,3 +23,24 @@
 .btn-normal:focus {
   @apply outline-none border-red;
 }
+
+.btn-floating {
+  @apply cursor-pointer rounded-full;
+  font-size: 1.5rem;
+  line-height: 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 5px;
+  box-sizing: content-box;
+  opacity: .4;
+  position: relative;
+  bottom: -.4rem;
+  left: .4rem;
+  /* transition: transform .1s ease-out; */
+}
+
+.btn-floating:hover, .btn-floating.is-active {
+  opacity: 1;
+  transform: scale(1.2);
+}
+

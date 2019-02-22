@@ -61,11 +61,12 @@ class List extends React.Component {
   }
 
   render () {
-    let { items, renderItem, children, grid, focus } = this.props
+    let { items, renderItem, children, grid, focus, className } = this.props
+    className = className || ''
     if (!items) return <span>No items.</span>
     // const clsItem = 'px-4 py-3 leading-none m-0 cursor-pointer overflow-hidden '
     const clsItem = 'px-2 py-2 leading-none m-0 cursor-pointer overflow-hidden '
-    let clsBase = 'list-reset '
+    let clsBase = 'list-reset ' + className
     // if (focus) clsBase += ' border border-teal'
     renderItem = renderItem || children || defaultRender
     return (
@@ -74,7 +75,9 @@ class List extends React.Component {
           // let cls = clsBase + (isSelected(item, i) ? 'bg-teal-dark hover:bg-teal-dark' : 'bg-bright hover:bg-teal')
           let cls = clsItem
           cls += ' truncate '
-          cls += (this.isSelected(item, i) ? 'text-red ' : 'hover:text-red')
+          // cls += (this.isSelected(item, i) ? 'text-red ' : 'hover:text-red')
+          cls += (this.isSelected(item, i) ? 'bg-grey-lighter ' : 'hover:bg-grey-lighter ')
+          // if (!grid) cls += i % 2 === 0 ? ' bg-grey-lightest ' : ' '
           let key = typeof item === 'object' && item.id ? item.id : i
           if (grid) cls += ' float-left border-transparent border-8'
           return (

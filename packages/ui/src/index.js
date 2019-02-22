@@ -7,7 +7,7 @@ import './global.pcss'
 // Components
 // B
 export { default as Box } from './components/Box'
-export { default as Button } from './components/Button'
+export { default as Button, FloatingButton } from './components/Button'
 // C
 export { default as Card } from './components/Card'
 export { default as Checkbox } from './components/Checkbox'
