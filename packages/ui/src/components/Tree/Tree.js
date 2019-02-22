@@ -1,11 +1,17 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import shallowEqual from 'shallowequal'
 
 // const { Consumer: NodeConsumer, Provider: NodeProvider } = React.createContext([])
 const { Consumer: TreeConsumer, Provider: TreeProvider } = React.createContext({})
 
 // export { NodeConsumer, NodeProvider, TreeConsumer, TreeProvider }
-export { TreeConsumer, TreeProvider }
+const TreeContext = React.createContext()
+
+export function useTree () {
+  const context = useContext(TreeContext)
+  return context
+}
+// export { TreeConsumer, TreeProvider }
 
 const actions = {
   init (state, path, props) {
@@ -67,6 +73,14 @@ export class Tree extends React.Component {
     if (runAction) runAction(this.runAction.bind(this))
   }
 
+  componentDidMount () {
+    if (this.props.hideRoot) {
+      let nodeId = this.props.getId(this.props.item)
+      this.runAction('expand', [nodeId])
+    }
+    if (this.props.init) this.props.init(this.treeState())
+  }
+
   setPath (path, value, cb) {
     let state = this.state
     let tree = setAndCopy(this.state.tree, [...path], value)
@@ -97,6 +111,7 @@ export class Tree extends React.Component {
         let [name, path, props] = self.actionQueue.shift()
         let action = self.props.actions[name] || self.actions[name]
         let newState = action(state, path, props)
+        // console.log('tree action', { name, path, props, state, newState })
         state = newState
         if (name === 'select' && self.props.onSelect) {
           self.props.onSelect(self.getPath(path))
@@ -120,18 +135,25 @@ export class Tree extends React.Component {
     this.setState({ tree })
   }
 
-  render () {
-    let { children, item, wrap, renderNode, nodeId, ...props } = this.props
-    renderNode = renderNode || children
-
-    const treeState = {
+  treeState () {
+    return {
       state: this.state,
       setState: this.setState,
       runAction: this.runAction,
       getPath: this.getPath,
       setPath: this.setPath,
-      renderNode,
-      nodeId
+      treeProps: this.props,
+      getId: this.props.getId,
+      renderNode: this.props.renderNode
+    }
+  }
+
+  render () {
+    let { children, item, wrap, renderNode, getId, ...props } = this.props
+    renderNode = renderNode || children
+
+    const treeState = {
+      ...this.treeState()
     }
 
     let path = []
@@ -148,9 +170,9 @@ export class Tree extends React.Component {
     }
 
     return (
-      <TreeProvider value={treeState}>
+      <TreeContext.Provider value={treeState}>
         {inner}
-      </TreeProvider>
+      </TreeContext.Provider>
     )
   }
 }
@@ -159,21 +181,15 @@ Tree.defaultProps = {
   actions: {}
 }
 
-export const TreeNode = (props) => {
+export function TreeNode (props) {
+  const treeState = useTree()
+  let { id, item, parent, level } = props
+  const { getId, getPath, runAction, renderNode, treeProps } = treeState
+  if (!id && getId) id = getId(item)
+  let path = [...parent, id]
+  let state = getPath(path)
   return (
-    <TreeConsumer>
-      {(treeState) => {
-        let { id, item, parent, level } = props
-        const { nodeId, getPath, runAction, renderNode } = treeState
-        if (!id && nodeId) id = nodeId(item)
-        // if (level === undefined) level = 0
-        let path = [...parent, id]
-        let state = getPath(path)
-        return (
-          <PureTreeNode id={id} path={path} item={item} state={state} runAction={runAction} renderNode={renderNode} level={level} />
-        )
-      }}
-    </TreeConsumer>
+    <PureTreeNode id={id} path={path} item={item} state={state} runAction={runAction} renderNode={renderNode} level={level} treeProps={treeProps} />
   )
 }
 
@@ -200,10 +216,10 @@ class PureTreeNode extends React.Component {
   }
 
   render () {
-    const { id, item, path, state, runAction, renderNode, level } = this.props
+    const { id, item, path, state, runAction, renderNode, level, treeProps } = this.props
     let action = (name, props) => e => runAction(name, path, props)
     const Node = props => <TreeNode {...props} parent={path} level={level + 1} />
-    return renderNode({ id, path, item, state, action, level, Node })
+    return renderNode({ id, path, item, state, action, level, Node, treeProps })
   }
 }
 

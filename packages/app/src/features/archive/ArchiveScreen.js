@@ -4,15 +4,16 @@ import { MdMenu, MdClose, MdSubdirectoryArrowLeft } from 'react-icons/md'
 import { Tabs, Heading } from '@archipel/ui'
 import { Consumer } from 'ucore/react'
 
-import registry from '../../lib/component-registry.js'
-import { useToggle } from '../../lib/hooks.js'
+import registry from '../../lib/component-registry'
+import { useToggle } from '../../lib/hooks'
+import { useRouter } from '../../lib/router'
 
 import ListArchives from './ListArchives'
 import CreateArchive from './CreateArchive'
 import AddArchive from './AddArchive'
 
-export default function ArchiveScreen (props) {
-  const { params, goto } = props
+export default function ArchiveScreen () {
+  const { params, goto } = useRouter()
 
   // todo: Change onSelect syntax in List to be a single function.
   return <ArchiveUcoreLoader Render={ArchiveScreen} changeprop={params.archive} />

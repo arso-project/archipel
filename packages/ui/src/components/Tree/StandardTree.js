@@ -1,37 +1,41 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import scrollIntoView from 'scroll-into-view-if-needed'
 import { MdZoomIn, MdCloudDownload, MdSelectAll, MdExpandMore, MdExpandLess, MdCenterFocusStrong } from 'react-icons/md'
 
 // import Tree from './index.js'
-import { Tree } from './Tree.js'
+import { Tree, TreeNode, useTree } from './Tree.js'
 // import Tooltip from '../Tooltip'
-
-export class StandardTreeNode extends React.Component {
-  render () {
-    if (this.props.grid) return <GridTreeNode {...this.props} />
-    else return <LineTreeNode {...this.props} />
-  }
+//
+export function StandardTree (props) {
+  return <Tree {...props} wrap={(tree, children) => <StandardTreeInner {...props} tree={tree} children={children} />} />
 }
 
-const LineTreeNode = (props) => {
-  const { level, action, state, children, label, Icon, color, expandable, Node, renderChildren, grid } = props
-  let expand = (
-    <div className='inline-block w-8 mr-1'>
-      {expandable && state.expand && <MdExpandLess />}
-      {expandable && !state.expand && <MdExpandMore />}
-    </div>
-  )
-  let onClick = () => {
-    expandable
-      ? action('expand')()
-      : action('select')()
-  }
+StandardTree.Node = StandardTreeNode
+
+export default StandardTree
+
+export function StandardTreeNode (props) {
+  const { mode } = props
+  const { grid } = props.treeProps
+  if (mode === 'label') return <LabelNode {...props} />
+  else if (grid) return <GridTreeNode {...props} />
+  else return <LineTreeNode {...props} />
+}
+
+function LabelNode (props) {
+  const { Icon, label } = props
+  return <>{label}</>
+  // return <><Icon /> {label}</>
+}
+
+export function LineTreeNode (props) {
+  const { level, action, state, children, label, Icon, color, expandable, Node, renderChildren, treeProps } = props
+  const { hideRoot } = treeProps
 
   let cls = itemClass({ color, ...state })
 
-  let wrapCls = ''
-  if (grid) {
-    wrapCls += ' float-left w-36 '
+  if (level === 0 && hideRoot) {
+    return renderChildren(props)
   }
 
   let renderedChildren = null
@@ -39,8 +43,16 @@ const LineTreeNode = (props) => {
     renderedChildren = renderChildren(props)
   }
 
+
+  let expand = (
+    <div className='inline-block w-8 mr-1'>
+      {expandable && state.expand && <MdExpandLess />}
+      {expandable && !state.expand && <MdExpandMore />}
+    </div>
+  )
+
   return (
-    <div className={wrapCls}>
+    <div>
       <ScrollIntoView doScroll={state.focus} />
       <div className={cls} onClick={onClick}>
         {expand}<Icon /> {label}
@@ -49,41 +61,32 @@ const LineTreeNode = (props) => {
       { renderedChildren }
     </div>
   )
-}
 
-function itemClass ({ color, select, focus }) {
-  let cls = ' cursor-pointer p-1 '
-  cls += color ? 'text-' + color + ' ' : ''
-  if (select) {
-    cls += ' bg-blue-lighter '
-  } else if (focus) {
-    cls += ' bg-grey-lighter '
-  } else {
-    cls += ' bg-white '
+  function onClick () {
+    if (expandable) {
+      action('expand')()
+      action('select')()
+    }
+    else action('select')()
   }
-  return cls
 }
 
-const GridTreeNode = (props) => {
-  const { level, action, state, children, label, Icon, color, expandable, Node, renderChildren, grid } = props
+function GridTreeNode (props) {
+  const tree = useTree()
+  const { level, action, state, children, label, Icon, color, expandable, Node, renderChildren } = props
   let onClick = () => {
     if (expandable) {
       action('expand', true)()
       action('zoom')()
+      action('select')()
     } else action('select')()
   }
   let cls = itemClass({ color, ...state })
   cls = 'w-32 h-24 rounded-sm border-grey-dark m-2 float-left hover:bg-grey-lightest rounded-lg flex flex-col ' + cls
-  if (level === 0) {
-    return (
-      <div>
-        <h3>{label}</h3>
-        <div>
-          {renderChildren(props)}
-        </div>
-      </div>
-    )
-  } else {
+  let zoomLevel = tree.state.zoom ? tree.state.zoom.length : 0
+  // console.log('grid node', { level, zoomLevel, label })
+  if (level === 0) return renderChildren(props)
+  else {
     return (
       <div className={cls} onClick={onClick}>
         <div className='text-center'><Icon size={64} /></div>
@@ -93,44 +96,18 @@ const GridTreeNode = (props) => {
   }
 }
 
-class ScrollIntoView extends React.Component {
-  constructor (props) {
-    super(props)
-    this.el = React.createRef()
-  }
-
-  componentDidUpdate (prevProps) {
-    if (!prevProps.doScroll && this.props.doScroll) {
-      scrollIntoView(this.el.current, {
-        behavior: 'smooth',
-        scrollMode: 'if-needed',
-        block: 'top',
-        inline: 'top'
-      })
-    }
-  }
-
-  render () {
-    return (
-      <div ref={this.el} />
-    )
-  }
-}
-
-export const StandardTree = (props) => {
-  return <Tree {...props} wrap={(tree, children) => <StandardTreeInner {...props} tree={tree} children={children} />} />
-}
-
 class StandardTreeInner extends React.Component {
   constructor (props) {
     super(props)
     this.onKeydown = this.onKeydown.bind(this)
+    console.log('INNER', props)
   }
 
   async onKeydown (e) {
     const { state, runAction } = this.props.tree
     const { keyboardFocus } = this.props
     if (!keyboardFocus) return
+    if (e.altKey) return
 
     if (e.key === 'ArrowDown') {
       this.changeFocus('down')
@@ -249,36 +226,94 @@ class StandardTreeInner extends React.Component {
   }
 
   render () {
-    const { grid, tree } = this.props
+    const { grid, tree, Node } = this.props
     const { state, runAction } = tree
-    let zoom = null
-    if (grid && state.zoom && state.zoom.length) {
-      zoom = (
-        <div className='flex'>
-          {state.zoom.map((id, i) => {
-            let onClick = () => {
-              let newZoom
-              if (i === 0) newZoom = []
-              else newZoom = state.zoom.slice(0, i + 1)
-              runAction('zoom', newZoom)
-            }
-            return <div key={i} className='p-1 mr-1 border-black border-2 cursor-pointer' onClick={onClick}>{id}</div>
-          })}
-        </div>
-      )
-    }
     return (
       <div>
-        {zoom}
+        {grid && <Breadcrumb tree={tree} />}
         {this.props.children}
       </div>
     )
   }
 }
 
-StandardTree.Node = StandardTreeNode
+function Breadcrumb (props) {
+  const { tree } = props
+  const { state, runAction, getPath, renderNode, treeProps } = tree
+  let zoom = null
+  if (!state.zoom || !state.zoom.length) return null
+  return (
+    <div className='flex'>
+      {state.zoom.map((id, i) => <Item key={i} id={id} level={i} />)}
+    </div>
+  )
 
-export default StandardTree
+  function Item (props) {
+    const { id, level } = props
+    const path = state.zoom.slice(0, level + 1)
+    const node = getPath(path)
+    // console.log('bc n', node)
+    // return null
+
+    const Node = props => <TreeNode {...props} parent={path} level={level + 1} />
+    let rendered = renderNode({ id, path, item: node.item, level, Node, mode: 'label', treeProps })
+    let seperator = <div className='font-bold text-teal-darkest'>/</div>
+
+    return (
+      <>
+        {seperator}
+        <div className='px-2 cursor-pointer font-bold text-pink' onClick={onClick}>{rendered}</div>
+      </>
+    )
+
+    function onClick () {
+      let newZoom = path
+      // if (level === 0) newZoom = []
+      // else newZoom = path
+      runAction('zoom', newZoom)
+      runAction('select', newZoom)
+    }
+  }
+}
+
+// Todo: Convert to hook.
+class ScrollIntoView extends React.Component {
+  constructor (props) {
+    super(props)
+    this.el = React.createRef()
+  }
+
+  componentDidUpdate (prevProps) {
+    if (!prevProps.doScroll && this.props.doScroll) {
+      scrollIntoView(this.el.current, {
+        behavior: 'smooth',
+        scrollMode: 'if-needed',
+        block: 'top',
+        inline: 'top'
+      })
+    }
+  }
+
+  render () {
+    return (
+      <div ref={this.el} />
+    )
+  }
+}
+
+
+function itemClass ({ color, select, focus }) {
+  let cls = ' cursor-pointer p-1 '
+  cls += color ? 'text-' + color + ' ' : ''
+  if (select) {
+    cls += ' bg-blue-lighter '
+  } else if (focus) {
+    cls += ' bg-grey-lighter '
+  } else {
+    cls += ' bg-white '
+  }
+  return cls
+}
 
 // const Button = ({ children, onClick, on }) => {
 //   let cls = 'rounded-full text-lg mr-1 cursor-pointer hover:bg-grey-light '

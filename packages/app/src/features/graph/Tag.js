@@ -74,10 +74,10 @@ function Metadata (props) {
   const [update, triggerUpdate] = useToggle()
   let res = useAsyncEffect(async () => {
     let triples = await api.hypergraph.get(archive, spo(link))
-    console.log('load triples', triples)
+    // console.log('load triples', triples)
     let subjects = toSubjects(triples)
-    console.log('load subjects', subjects)
-    console.log('load ret', subjects[link])
+    // console.log('load subjects', subjects)
+    // console.log('load ret', subjects[link])
     return subjects[link] || {}
   }, [link, update])
 
@@ -90,7 +90,7 @@ function Metadata (props) {
     Object.keys(values).forEach(key => {
       triples.push(spo(link, key, values[key]))
     })
-    console.log('triples', triples)
+    // console.log('triples', triples)
     await api.hypergraph.put(archive, triples)
     triggerUpdate()
   }
@@ -99,7 +99,7 @@ function Metadata (props) {
 function MetadataEditor (props) {
   const { archive, link, api, data, onSubmit } = props
   const { state, setState, makeField, fieldProps } = useForm(data)
-  console.log('editor', data)
+  // console.log('editor', data)
 
   let els = []
   for (let [key, info] of Object.entries(FIELDS)) {

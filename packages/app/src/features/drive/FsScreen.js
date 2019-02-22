@@ -1,92 +1,108 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Heading, Modal } from '@archipel/ui'
+import { Consumer } from 'ucore/react'
+import { MdFlashOn } from 'react-icons/md'
+
+import { useRouter } from '../../lib/router'
 
 import ListDir from './ListDir'
 import CreateDir from './CreateDir'
 import UploadFile from './UploadFile'
 import ViewFile from './ViewFile'
 import Sidebar from './Sidebar'
-import { Consumer } from 'ucore/react'
 
-const DirTree = ({ archive, dir, selected, onSelect }) => (
-  <div>
-    <ListDir archive={archive} dir={dir} selected={selected} onSelect={onSelect} focus />
-  </div>
-)
-
-const DirGrid = ({ archive, dir, selected, onSelect }) => (
-  <div className=''>
+function DirTree (props) {
+  const { archive, path, selected, onSelect } = props
+  return (
     <div>
-      <Heading>{dir}</Heading>
-      <Modal toggle='Actions'>
-        <CreateDir archive={archive} dir={dir} />
-        <UploadFile archive={archive} dir={dir} />
-      </Modal>
+      <ListDir archive={archive} path={path} selected={selected} onSelect={onSelect} focus />
     </div>
-    <div>
-      <ListDir archive={archive} dir={dir} selected={selected} onSelect={onSelect} grid />
-    </div>
-  </div>
-)
+  )
+}
 
-// const File = ({ archive, path }) => (
-//   <div className='p-2 w-1/4'>
-//     <ViewFile archive={archive} path={path} />
-//   </div>
-// )
-
-const Content = ({ archive, path, onSelect }) => (
-  <Consumer store='fs' select='getStat' archive={archive} path={path}>
-    {(stat) => {
-      if (!stat) return null
-      if (stat.isDirectory) return <DirGrid archive={archive} dir={path} onSelect={onSelect} />
-      else return <ViewFile archive={archive} path={path} stat={stat} />
-    }}
-  </Consumer>
-)
-
-class FsScreen extends React.PureComponent {
-  constructor () {
-    super()
-    this.state = { selected: '/' }
-    this.selectFile = this.selectFile.bind(this)
-  }
-
-  componentWillReceiveProps (nextProps) {
-    if (nextProps.archive !== this.props.archive) this.setState({ selected: '/' })
-  }
-
-  componentDidMount () {
-
-  }
-
-  selectFile (fileOrPath, version) {
-    const self = this
-    return (e) => {
-      self.setState({ selected: typeof fileOrPath === 'object' ? fileOrPath.path : fileOrPath, version })
-    }
-  }
-
-  render () {
-    const { archive } = this.props
-    const { selected, version } = this.state
-
-    return <div>
-      <div className='flex mb-4 max-w-full'>
-        {/* {dirs.map((dir, i) => <Dir archive={archive} key={i} dir={dir} depth={i} onSelect={this.selectFile(i)} />)} */}
-        <div className='flex-0 mr-4 w-64'>
-          <Heading>Directories</Heading>
-          {<DirTree archive={archive} dir={'/'} selected={selected} onSelect={this.selectFile} />}
-        </div>
-        <div className='flex-1'>
-          {selected && <Content archive={archive} path={selected} version={version} onSelect={this.selectFile} />}
-        </div>
-        <div className='flex-0 w-64'>
-          {selected && <Sidebar archive={archive} path={selected} />}
-        </div>
+function DirGrid (props) {
+  const { archive, path, selected, onSelect } = props
+  return (
+    <div className=''>
+      <DirActions />
+      <div>
+        <ListDir archive={archive} path={path} selected={selected} onSelect={onSelect} grid />
       </div>
     </div>
+  )
+}
+
+function DirActions (props) {
+  const { archive, path } = props
+  let Toggle = props => (
+    <span {...props} className='bg-purple-lightest border-1 border-purple-lighter cursor-pointer hover:bg-purple-dark hover:text-purple-lightest text-purple-dark rounded-sm inline-block p-2 font-bold italic'><MdFlashOn />Actions</span>
+  )
+  return (
+    <Modal Toggle={Toggle}>
+      <CreateDir archive={archive} path={path} />
+      <UploadFile archive={archive} path={path} />
+    </Modal>
+  )
+}
+
+function Content (props) {
+  const { archive, path, onSelect } = props
+  return <StatUcoreLoader Render={Render} archive={archive} path={path} />
+
+  function Render (props) {
+    const { stat } = props
+    if (!stat) return null
+    return (
+      <>
+        <Heading>{path}</Heading>
+        {stat.isDirectory && <DirGrid archive={archive} path={path} onSelect={onSelect} />}
+        {!stat.isDirectory && <ViewFile archive={archive} path={path} stat={stat} />}
+      </>
+    )
   }
 }
 
-export default FsScreen
+export function StatUcoreLoader (props) {
+  const { Render, archive, path } = props
+  return (
+    <Consumer store='fs' select='getStat' archive={archive} path={path}>
+      {(stat, store) => {
+        if (!stat) store.fetchStats({ archive, path })
+        return <Render stat={stat} />
+      }}
+    </Consumer>
+  )
+}
+
+export default function FsScreen () {
+  const { goto, params } = useRouter()
+  const { archive, wildcard } = params
+
+  let path = wildcard
+  if (!path) path = '/'
+
+  const [version, setVersion] = useState()
+
+  function onSelect (fileOrPath, version) {
+    let path = typeof fileOrPath === 'object' ? fileOrPath.path : fileOrPath
+    goto(['archive', archive, 'file', path])
+  }
+
+  return (
+    <div>
+      <div className='flex mb-4 max-w-full'>
+        <div className='flex-0 mr-4 w-64'>
+          <Heading>Directories</Heading>
+          <DirTree archive={archive} dir={'/'} path={path} onSelect={onSelect} />
+        </div>
+        <div className='flex-1'>
+          {path && <Content archive={archive} path={path} version={version} onSelect={onSelect} />}
+        </div>
+        <div className='flex-0 w-64'>
+          {path && <Sidebar archive={archive} path={path} />}
+        </div>
+      </div>
+    </div>
+  )
+}
+

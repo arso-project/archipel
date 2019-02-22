@@ -38,13 +38,11 @@ class Modal extends React.Component {
   }
 
   render () {
-    let { toggle, children } = this.props
-    let toggleFunc
-    if (typeof toggle === 'string') toggleFunc = (props) => <Button {...props}>{toggle}</Button>
-    else toggleFunc = toggle
+    let { toggle, Toggle, children } = this.props
+    if (typeof toggle === 'string') Toggle = (props) => <Button {...props}>{toggle}</Button>
     return (
       <React.Fragment>
-        {toggleFunc({ onClick: this.onClick })}
+        <Toggle onClick={this.onClick} />
         { this.state.visible &&
           <ModalElement onClose={this.onClick}>
             {typeof children === 'function' ? children({ toggle: this.onClick }) : children}

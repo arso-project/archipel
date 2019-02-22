@@ -4,6 +4,8 @@ import registry from './lib/component-registry.js'
 import { Router, registerRoute, useRouter } from './lib/router'
 
 import ArchiveScreen from './features/archive/ArchiveScreen.js'
+import FsScreen from './features/drive/FsScreen.js'
+
 import Debug from './features/debug/Debug'
 import Tags from './foo/tags'
 import Panels from './foo/panels'
@@ -12,7 +14,11 @@ import '@archipel/ui/tailwind.pcss'
 
 registerRoute('/', ArchiveScreen)
 registerRoute('/archive/:archive', ArchiveScreen)
-registerRoute('/archive/:archive/*', ArchiveScreen)
+// registerRoute('/archive/:archive/*', ArchiveScreen)
+
+registerRoute('/archive/:archive/file', FsScreen)
+registerRoute('/archive/:archive/file/*', FsScreen)
+
 registerRoute('/tags', Tags)
 registerRoute('/panels', Panels)
 registerRoute('/404', () => <strong>404 Not Found</strong>)

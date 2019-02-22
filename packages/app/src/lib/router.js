@@ -51,6 +51,9 @@ export function initRouter (routes, onRoute) {
   }
 
   function goto (link) {
+    if (Array.isArray(link)) {
+      link = '/' + link.join('/')
+    }
     link = hashMatch(link)
     if (link === current) return
     current = link
@@ -66,7 +69,6 @@ export function initRouter (routes, onRoute) {
 function mergeRoutes (lists) {
   let routes = {}
   lists = lists.filter(l => l)
-  console.log('lists', lists)
   lists.forEach(list => Object.keys(list).forEach(route => {
     routes[route] = list[route]
   }))
