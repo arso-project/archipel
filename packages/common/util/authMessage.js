@@ -2,12 +2,13 @@ const { hex } = require('./hyperstack')
 const sodium = require('sodium-universal')
 
 module.exports = {
-  authMessage
+  createAuthCypher,
+  decipherAuthRequest
 }
 
-const cypherMessageVersion = '0.1'
-const cypherMessageIdentifier = 'arso authentification message' 
-const cypherEncoding = 'base64'
+const cipherMessageVersion = '0.1'
+const cipherMessageIdentifier = 'arso authentification message' 
+const cipherEncoding = 'base64'
 const msgEncoding = 'ascii'
 const linelength = 32
 
@@ -17,68 +18,88 @@ const linelength = 32
 // const secKey = Buffer.alloc(sodium.crypto_box_PUBLICKEYBYTES)
 // sodium.crypto_box_keypair(pubkey, secKey)
 
-async function authMessage (archive, structures, userMsg) {
-
-  if (typeof archive === 'object' && structures) return encryptionPipeline(archive, structures, userMsg)
-  if (typeof archive === 'string') return decryptionPipeline(archive) 
+async function createAuthCypher (archive, structures, userMsg) {
+  let bufKeys = extractKeys(archive)
+  let secret = constructSecret(structures, userMsg)
+  let cipher = await encrypt(archive, secret)
+  let cipherMessage = constructCipherMessage(bufKeys.discoveryKey, cipher)
+  return cipherMessage
+  // if (typeof archive === 'object' && structures) return encryptionPipeline(archive, structures, userMsg)
+  // if (typeof archive === 'string') return decryptionPipeline(archive) 
   // return null
 }
 
-async function encryptionPipeline (archive, structures, userMsg) {
-  let bufKeys = extractKeys(archive)
-  let secret = constructSecret(structures, userMsg)
-  let cypher = await encrypt(archive, structures, secret)
-  let cypherMessage = constructCypherMessage(bufKeys.discoveryKey, cypher)
-  return cypherMessage
+async function decipherAuthRequest (archives, cyphertext) {
+  let { discoveryKey, cipher } = destructCipherMessage(cyphertext)
+  let archivesKeys = {}
+  archives.forEach(function (a) { archivesKeys[hex(a.primary.structure().discoveryKey)] = a.primary.structure().key })
+  let decryptionKey = archivesKeys[discoveryKey]
+  let archive = archives.find((a) => (a.key === hex(decryptionKey)))
+  let authRequestStr = await decrypt(archive, cipher)
+  console.log(authRequestStr)
+  let authRequestObj
+  try {
+    authRequestObj = JSON.parse(authRequestStr)
+    console.log(authRequestObj)
+  } catch (err) {
+    console.warn(err)
+    if (err) {
+      authRequestObj = { failure: 'Message to object reconstruction failed' }
+    }
+  }
+  // let requestedPrimary = archives.find((a) => (a.key === authRequestObj.structures[0]))
+  // requestedPrimary = requestedPrimary.serialize()
+  // let requestedStructures = requestedPrimary.structures.filter()
+  return authRequestObj
 }
 
-async function decryptionPipeline (cypherMessage) {
-  let cypherMsgParts = destructCypherMessage(cypherMessage)
-  // not working:
-  // discoveryKey to archiveMapping required
-  let message = await decrypt(cypherMsgParts.cypher)
-  return message
-}
+// async function decryptionPipeline (cipherMessage) {
+//   let cipherMsgParts = destructCipherMessage(cipherMessage)
+//   // not working:
+//   // discoveryKey to archiveMapping required
+//   let message = await decrypt(cipherMsgParts.cipher)
+//   return message
+// }
 
-function constructSecret (structures, userMsg) {
+function constructSecret (structures, userMessage) {
   let secretObject = {
     structures,
-    userMessage: userMsg
+    userMessage
   }
   return JSON.stringify(secretObject)
 }
 
-function constructCypherMessage (discoveryKey, cypher) {
+function constructCipherMessage (discoveryKey, cipher) {
   let header = ''
   let footer = ''
-  let cypherMessage = ''
+  let cipherMessage = ''
 
   discoveryKey = multilineString(hex(discoveryKey), linelength)
-  cypher = multilineString(cypher, linelength)
+  cipher = multilineString(cipher, linelength)
   for (let i = 0; i < linelength; i++) { header += '#' }
   footer += '\n\n'
   footer += header
   header += '\n\n'
-  header += cypherMessageIdentifier
+  header += cipherMessageIdentifier
   header += '\n\n'
   header += 'Version: '
-  header += cypherMessageVersion
+  header += cipherMessageVersion
   header += '\n\n'
   header += discoveryKey
   header += '\n\n'
-  cypherMessage = header + cypher + footer
+  cipherMessage = header + cipher + footer
 
-  return cypherMessage
+  return cipherMessage
 }
 
-function destructCypherMessage (cypherMessage) {
-  let parts = cypherMessage.split('\n\n')
+function destructCipherMessage (cipherMessage) {
+  let parts = cipherMessage.split('\n\n')
   parts.splice(0, 1)[0]
   let identifier = parts.splice(0, 1)[0]
-  if (identifier !== cypherMessageIdentifier) console.warn('unknown cypher message type')
+  if (identifier !== cipherMessageIdentifier) console.warn('unknown cipher message type')
   let version = parts.splice(0, 1)[0]
   version = /[0-9.]{3,}/.exec(version)[0]
-  if (version !== cypherMessageVersion) console.warn('unknown cypher message version')
+  if (version !== cipherMessageVersion) console.warn('unknown cipher message version')
   let discoveryKey
   try {
     discoveryKey = parts.splice(0, 1)[0].split('\n').join('')
@@ -86,18 +107,18 @@ function destructCypherMessage (cypherMessage) {
     console.warn('discoveryKey extraction failed')
     return null
   }
-  let cypher
+  let cipher
   try {
-    cypher = parts.splice(0, 1)[0].split('\n').join('')
+    cipher = parts.splice(0, 1)[0].split('\n').join('')
   } catch (err) {
-    console.warn('cyphertext extraction failed')
+    console.warn('ciphertext extraction failed')
   }
-  return { discoveryKey, cypher, version }
+  return { discoveryKey, cipher, version }
 }
 
-async function encrypt (archive, structures, userMsg) {
-  let msg = Buffer.from(userMsg, msgEncoding)
-  let cypher = Buffer.alloc(sodium.crypto_box_SEALBYTES + msg.length)
+async function encrypt (archive, msg) {
+  msg = Buffer.from(msg, msgEncoding)
+  let cipher = Buffer.alloc(sodium.crypto_box_SEALBYTES + msg.length)
   let keys = extractKeys(archive)
   let pubkey = Buffer.alloc(sodium.crypto_box_PUBLICKEYBYTES)
   try {
@@ -105,15 +126,15 @@ async function encrypt (archive, structures, userMsg) {
   } catch (err) { console.warn(err) }
   return new Promise((resolve, reject) => {
     try {
-      sodium.crypto_box_seal(cypher, msg, pubkey)
+      sodium.crypto_box_seal(cipher, msg, pubkey)
     } catch (err) { console.warn(err) }
-    resolve(cypher.toString(cypherEncoding))
+    resolve(cipher.toString(cipherEncoding))
   })
 }
 
-async function decrypt (archive, cypher) {
-  cypher = Buffer.from(cypher, cypherEncoding)
-  let msg = await Buffer.alloc(cypher.length - sodium.crypto_box_SEALBYTES)
+async function decrypt (archive, cipher) {
+  cipher = Buffer.from(cipher, cipherEncoding)
+  let msg = await Buffer.alloc(cipher.length - sodium.crypto_box_SEALBYTES)
   let keys = extractKeys(archive)
   let pubkey = Buffer.alloc(sodium.crypto_box_PUBLICKEYBYTES)
 
@@ -142,7 +163,7 @@ async function decrypt (archive, cypher) {
   } catch (err) { console.warn(err) }
 
   return new Promise((resolve, reject) => {
-    if (sodium.crypto_box_seal_open(msg, cypher, pubkey, secKey)) {
+    if (sodium.crypto_box_seal_open(msg, cipher, pubkey, secKey)) {
       sodium.sodium_munlock(secKey)
       sodium.sodium_munlock(secSignKey)
 

@@ -8,7 +8,7 @@ const network = require('./network')
 const { IndexedMap } = require('@archipel/common/util/map')
 const { asyncThunky, prom, withTimeout } = require('@archipel/common/util/async')
 const { nestStorage, keyPair, hex } = require('@archipel/common/util/hyperstack')
-const { authMessage } = require('@archipel/common/util/authMessage')
+const { createAuthCypher, decipherAuthRequest } = require('@archipel/common/util/authMessage')
 
 const debug = require('debug')('library')
 
@@ -93,9 +93,16 @@ function rpc (api, opts) {
     },
 
     async requestAuthorizationMsg (key, structures, userMsg) {
+      console.log('bla', key)
       let library = await getLibrary(this.session)
       let archive = await library.getArchive(key)
-      return authMessage(archive, structures, userMsg)
+      return createAuthCypher(archive, structures, userMsg)
+    },
+
+    async decipherAuthorizationMsg (authMessage) {
+      let library = await getLibrary(this.session)
+      let archives = await library.listArchives()
+      return decipherAuthRequest(archives, authMessage)
     }
   }
 

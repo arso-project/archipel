@@ -1,8 +1,9 @@
 import React from 'react'
 import { Consumer, WithCore } from 'ucore/react'
-import { Button, Checkbox, SettingsCard, Card } from '@archipel/ui'
+import { Button, Checkbox, SettingsCard, StructuresCheckList } from '@archipel/ui'
 
 import { withApi } from '../../lib/api.js'
+import { HttpPublisher } from 'electron-publish';
 
 const TextShare = () => (
   <p>
@@ -110,45 +111,50 @@ class Authorize extends React.Component {
   }
 }
 
-const StructuresCheckList = function ({ structures, onSelect, selected }) {
-  if (!structures) return ''
-  let listItems = structures.map(i => <li key={'reqAuthItem' + i.key}>
-    <Checkbox id={'reqAuthItemCheck' + i.key} label={i.type}
-      checked={selected[i.key] || false}
-      onChange={(e) => onSelect(e.target.checked, i.key)} />
-  </li>)
+// const StructuresCheckList = function ({ structures, onSelect, selected }) {
+//   if (!structures) return ''
+//   let listItems = structures.map(i => <li key={'reqAuthItem' + i.key}>
+//     <Checkbox id={'reqAuthItemCheck' + i.key} label={i.type}
+//       checked={selected[i.key] || false}
+//       onChange={(e) => onSelect(e.target.checked, i.key)} />
+//   </li>)
 
-  return (
-    <ul className='list-reset'>
-      {listItems}
-    </ul>
-  )
-}
+//   return (
+//     <ul className='list-reset'>
+//       {listItems}
+//     </ul>
+//   )
+// }
 
 class ReqAuthorizationInner extends React.Component {
   constructor (props) {
     super(props)
     this.onSubmit = this.onSubmit.bind(this)
     this.StructuresCheckList = StructuresCheckList.bind(this)
+    this.promptMsg = 'please select structures!'
     this.state = {
-      selected: {}
+      selected: {},
+      userMsg: null,
+      res: this.promptMsg
     }
   }
 
   async onSubmit (e) {
     const { archive } = this.props
-    const { selected } = this.state
+    const { selected, userMsg } = this.state
     const { requestAuthorizationMsg } = this.props.api.hyperlib
+
     let requestItems = []
     for (let i of Object.keys(selected)) {
       if (selected[i]) requestItems.push(i)
     }
+
     if (requestItems.length > 0) {
       // let res = await this.props.onSubmit(selected)
-      const res = await requestAuthorizationMsg(archive.key, requestItems)
+      const res = await requestAuthorizationMsg(archive.key, requestItems, userMsg)
       this.setState({ res, selected: {} })
     } else {
-      this.setState({ res: 'please select structures!' })
+      this.setState({ res: this.promptMsg })
     }
   }
 
@@ -167,15 +173,16 @@ class ReqAuthorizationInner extends React.Component {
           <Checkbox id='authPrimCheck' label={archive.info.title}
             checked={selected[archive.key] || false}
             onChange={(e) => this.onSelect(e.target.checked, archive.key)} />
-          {/* <Checkbox id='authSubCheck' label={archive.structures[0].type}
-            onChange={(e) => this.onSelect(e.target.value, archive.structures[0].key)} /> */}
           <div className='pl-4'>
             <StructuresCheckList structures={archive.structures}
               onSelect={this.onSelect.bind(this)}
               selected={selected} />
           </div>
+          <textarea placeholder='Add a custom message to the request'
+            onChange={(e) => this.setState({ userMsg: e.target.value })} />
           <Button onClick={() => this.onSubmit()}>Generate Authentification Request</Button>
-          {res}
+          <textarea readOnly placeholder='Authentification Message'
+            value={res} cols='20' rows='8' />
         </div>
       </div>
     )

@@ -4,7 +4,7 @@ import { Tabs, Heading } from '@archipel/ui'
 import ListArchives from './ListArchives'
 import CreateArchive from './CreateArchive'
 import AddArchive from './AddArchive'
-
+import AuthorizationMenu from './AuthorizationMenu'
 import { Consumer } from 'ucore/react'
 
 class ArchiveScreen extends React.PureComponent {
@@ -17,14 +17,19 @@ class ArchiveScreen extends React.PureComponent {
 
     return (
       <div className='flex flex-1'>
-        <div className={sidebarCls} >
-          <CreateArchive />
-          <AddArchive />
-          <ListArchives
-            archives={archives}
-            isSelected={item => item === selectedArchive}
-            onSelect={(item, i) => (e) => { onSelect(item.key) }}
-          />
+        <div className={sidebarCls + 'flex flex-col justify-between'}>
+          <div>
+            <CreateArchive />
+            <AddArchive />
+            <ListArchives
+              archives={archives}
+              isSelected={item => item === selectedArchive}
+              onSelect={(item, i) => (e) => { onSelect(item.key) }}
+            />
+          </div>
+          <div>
+            <AuthorizationMenu />
+          </div>
         </div>
         <div className='flex-1 p-4'>
           { selectedArchive && <Heading className='mt-0' size={8}>{selectedArchive.info.title}</Heading> }
