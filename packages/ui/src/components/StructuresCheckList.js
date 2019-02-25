@@ -3,12 +3,14 @@ import { cls } from '../util.js'
 import { Checkbox, InfoPopup } from '..'
 
 const StructuresCheckList = (props) => {
-  let { structures, onSelect, selected, ...rest } = props
+  let { structures, onSelect, selected, disabled, idSub, ...rest } = props
   if (!structures) return ''
-  console.log(structures)
+  // console.log(structures)
+  // console.log('selected*', selected)
   let listItems = structures.map(i => <li key={'reqAuthItem' + i.key}>
-    <Checkbox id={'reqAuthItemCheck' + i.key} label={i.type}
-      checked={selected[i.key] || false}
+    <Checkbox id={idSub + i.key} label={i.type}
+      checked={selected[i.key]}
+      disabled={disabled ? disabled[i.key] : undefined}
       onChange={(e) => onSelect(e.target.checked, i.key)} />
   </li>)
 

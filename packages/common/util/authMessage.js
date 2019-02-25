@@ -18,9 +18,11 @@ const linelength = 32
 // const secKey = Buffer.alloc(sodium.crypto_box_PUBLICKEYBYTES)
 // sodium.crypto_box_keypair(pubkey, secKey)
 
-async function createAuthCypher (archive, structures, userMsg) {
+async function createAuthCypher (library, content) {
+  let archive = library.getArchive(content.primaryKey)
   let bufKeys = extractKeys(archive)
-  let secret = constructSecret(structures, userMsg)
+  content.localWriterKey = archive.localWriterKey
+  let secret = constructSecret(content)
   let cipher = await encrypt(archive, secret)
   let cipherMessage = constructCipherMessage(bufKeys.discoveryKey, cipher)
   return cipherMessage
@@ -29,28 +31,38 @@ async function createAuthCypher (archive, structures, userMsg) {
   // return null
 }
 
-async function decipherAuthRequest (archives, cyphertext) {
-  let { discoveryKey, cipher } = destructCipherMessage(cyphertext)
+async function decipherAuthRequest (library, cyphertext) {
+  let parts = destructCipherMessage(cyphertext)
+  console.log(parts)
+  if (!parts) return null
+  let { discoveryKey, cipher } = parts
+  console.log('proceeded')
+  let archive = await getArchiveByDiscoveryKey(library, discoveryKey)
+  console.log(archive)
+  let authRequestStr = await decrypt(archive, cipher)
+  let authRequestObj = getObjectFromString(authRequestStr)
+  return authRequestObj
+}
+
+async function getArchiveByDiscoveryKey (library, discoveryKey) {
+  let archives = await library.listArchives()
   let archivesKeys = {}
   archives.forEach(function (a) { archivesKeys[hex(a.primary.structure().discoveryKey)] = a.primary.structure().key })
-  let decryptionKey = archivesKeys[discoveryKey]
-  let archive = archives.find((a) => (a.key === hex(decryptionKey)))
-  let authRequestStr = await decrypt(archive, cipher)
-  console.log(authRequestStr)
-  let authRequestObj
+  let archiveKey = archivesKeys[discoveryKey]
+  return library.getArchive(archiveKey)
+}
+
+function getObjectFromString (string) {
+  let object
   try {
-    authRequestObj = JSON.parse(authRequestStr)
-    console.log(authRequestObj)
+    object = JSON.parse(string)
   } catch (err) {
     console.warn(err)
     if (err) {
-      authRequestObj = { failure: 'Message to object reconstruction failed' }
+      object = { failure: 'Message to object reconstruction failed' }
     }
   }
-  // let requestedPrimary = archives.find((a) => (a.key === authRequestObj.structures[0]))
-  // requestedPrimary = requestedPrimary.serialize()
-  // let requestedStructures = requestedPrimary.structures.filter()
-  return authRequestObj
+  return object
 }
 
 // async function decryptionPipeline (cipherMessage) {
@@ -61,9 +73,11 @@ async function decipherAuthRequest (archives, cyphertext) {
 //   return message
 // }
 
-function constructSecret (structures, userMessage) {
+function constructSecret ({ primaryKey, structures, localWriterKey, userMessage }) {
   let secretObject = {
+    primaryKey,
     structures,
+    writerKey: localWriterKey,
     userMessage
   }
   return JSON.stringify(secretObject)
@@ -94,6 +108,7 @@ function constructCipherMessage (discoveryKey, cipher) {
 
 function destructCipherMessage (cipherMessage) {
   let parts = cipherMessage.split('\n\n')
+  if (parts.length <= 5) return null
   parts.splice(0, 1)[0]
   let identifier = parts.splice(0, 1)[0]
   if (identifier !== cipherMessageIdentifier) console.warn('unknown cipher message type')

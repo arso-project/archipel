@@ -168,22 +168,21 @@ class ReqAuthorizationInner extends React.Component {
     const { selected, res } = this.state
     const { archive } = this.props
     return (
-      <div>
-        <div className='flex flex-col'>
-          <Checkbox id='authPrimCheck' label={archive.info.title}
-            checked={selected[archive.key] || false}
-            onChange={(e) => this.onSelect(e.target.checked, archive.key)} />
-          <div className='pl-4'>
-            <StructuresCheckList structures={archive.structures}
-              onSelect={this.onSelect.bind(this)}
-              selected={selected} />
-          </div>
-          <textarea placeholder='Add a custom message to the request'
-            onChange={(e) => this.setState({ userMsg: e.target.value })} />
-          <Button onClick={() => this.onSubmit()}>Generate Authentification Request</Button>
-          <textarea readOnly placeholder='Authentification Message'
-            value={res} cols='20' rows='8' />
+      <div className='flex flex-col'>
+        <Checkbox id='authPrimCheck' label={archive.info.title + '/' + archive.type}
+          checked={selected[archive.key] || false}
+          onChange={(e) => this.onSelect(e.target.checked, archive.key)} />
+        <div className='pl-4'>
+          <StructuresCheckList structures={archive.structures}
+            idSub='authReqItems'
+            onSelect={this.onSelect.bind(this)}
+            selected={selected} />
         </div>
+        <textarea placeholder='Add a custom message to the request'
+          onChange={(e) => this.setState({ userMsg: e.target.value })} />
+        <Button onClick={() => this.onSubmit()}>Generate Authentification Request</Button>
+        <textarea readOnly placeholder='Authentification Message'
+          value={res} cols='20' rows='8' />
       </div>
     )
   }

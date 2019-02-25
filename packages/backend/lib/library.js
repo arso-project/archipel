@@ -69,10 +69,16 @@ function rpc (api, opts) {
       return library.unshare(key)
     },
 
-    async authorizeWriter (key, writerKey) {
+    async authorizeWriter (key, writerKey, structures) {
+      if (!structures) return this.authorizeWriter(key, writerKey, [key])
       let library = await getLibrary(this.session)
       let archive = await library.getArchive(key)
-      return archive.authorizeWriter(writerKey)
+      let results = []
+      for (let i of structures) {
+        let structure = archive.structures.get(i)
+        results.push(await structure.authorize(writerKey))
+      }
+      return results
     },
 
     async createStatsStream () {
@@ -92,17 +98,14 @@ function rpc (api, opts) {
       return stream
     },
 
-    async requestAuthorizationMsg (key, structures, userMsg) {
-      console.log('bla', key)
+    async requestAuthorizationMsg (key, structures, userMessage) {
       let library = await getLibrary(this.session)
-      let archive = await library.getArchive(key)
-      return createAuthCypher(archive, structures, userMsg)
+      return createAuthCypher(library, { primaryKey: key, structures, userMessage })
     },
 
     async decipherAuthorizationMsg (authMessage) {
       let library = await getLibrary(this.session)
-      let archives = await library.listArchives()
-      return decipherAuthRequest(archives, authMessage)
+      return decipherAuthRequest(library, authMessage)
     }
   }
 
