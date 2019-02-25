@@ -98,7 +98,7 @@ export function useKey (key, cb) {
     }
     document.addEventListener('keydown', onKeydown)
     return () => document.removeEventListener('keydown', onKeydown)
-  }, [])
+  }, [key])
 }
 
 export function useStack () {

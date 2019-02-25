@@ -2,6 +2,7 @@ import React, { useState, useMemo, useContext, useRef, useEffect } from 'react'
 import wayfarer from 'wayfarer'
 
 const routes = {}
+const elements = {}
 
 /**
  * Register a route.
@@ -22,6 +23,11 @@ export function registerRoute (route, component, opts) {
   if (typeof route === 'function') route = route()
   else if (component) route = { route, component, ...opts }
 
+  let elementKeys = ['link', 'panel']
+  for (let key of elementKeys) {
+    if (opts[key]) registerElement(route.route, { [key]: opts[key] })
+  }
+
   routes[route.route] = route
 }
 
@@ -29,14 +35,35 @@ export function getRoutes () {
   return routes
 }
 
+export function registerElement (route, opts) {
+  if (!opts) return
+  /* if (route.charAt(0) === '/') route = route.substring(1) */
+  if (!elements[route]) elements[route] = {}
+  for (let [key, value] of Object.entries(opts)) {
+    if (!elements[route][key]) elements[route][key] = []
+    if (!Array.isArray(value)) value = [value]
+    elements[route][key] = [...elements[route][key], ...value]
+  }
+}
+
+export function getElements (route) {
+  /* if (route.charAt(0) === '/') route = route.substring(1) */
+  return elements[route] || {}
+}
+
 export function initRouter (routes, onRoute) {
   const router = wayfarer('/404')
 
   for (let route of Object.values(routes)) {
     router.on(route.route, params => {
-      let context = { ...route, params }
+      // console.log('route!', route.route, params)
       // if (route.middleware) context = route.onopen(params)
-      onRoute(context)
+      let elements = getElements(route)
+      let data = { ...route, params, elements }
+      if (elements.middleware) elements.middleware.forEach(cb => {
+        data = cb(data)
+      })
+      onRoute(data)
     })
   }
 
@@ -60,6 +87,7 @@ export function initRouter (routes, onRoute) {
     current = link
     try {
       window.location = '#' + link
+      // console.log('goto', link)
       router(link)
     } catch (e) {
       console.error('Unregistered link: ' + link)
@@ -116,20 +144,53 @@ export function Router (props) {
   if (route.component) {
     Route = route.component
   } else if (route.element) {
-    Route = props => <Element element={el} />
+    Route = props => <Element element={route.element} />
   } else {
     return fallback || null
   }
 
   let rendered = <Route {...context} />
-  if (route.wrap) rendered = route.wrap(rendered)
-  if (Wrap) rendered = <Wrap {...context}>{rendered}</Wrap>
+
+  // Apply both global and route-specific wrappers.
+  let wrappers = []
+  if (route.Wrap) wrappers.push(route.Wrap)
+  if (Wrap) wrappers.push(Wrap)
+  wrappers.forEach(Wrap => rendered = <Wrap {...context}>{rendered}</Wrap>)
 
   return (
     <RouterContext.Provider value={context}>
       {rendered}
     </RouterContext.Provider>
   )
+}
+
+function buildLink (route, params) {
+  if (typeof route === 'string') route = route.split('/')
+  return route.map(el => {
+    if (el.startsWith(':') && params.hasOwnProperty(el.substring(1))) {
+      return params[el.substring(1)]
+    } else if (el === '*' && params.wildcard) {
+      return params.wildcard
+    }
+    return el
+  })
+}
+
+export function Link (props) {
+  let { link, children } = props
+
+  const { goto, params } = useRouter()
+  let resolvedLink = buildLink(link, params)
+  let href = '/#/' + resolvedLink.join('/')
+
+  return (
+    <a className='no-underline' href={href} onClick={onClick}>{children}</a>
+  )
+
+  function onClick (e) {
+    e.preventDefault()
+    goto(resolvedLink)
+  }
 }
 
 export function useRouter (props) {
