@@ -8,7 +8,6 @@ import { getApi } from './lib/rpc-client.js'
 // core
 import { ucorePlugin as componentRegistry } from './lib/component-registry'
 import archive from './features/archive'
-import drive from './features/drive'
 import graph from './features/graph'
 
 // settings
@@ -32,7 +31,6 @@ function boot (extensions) {
 
   // core features
   core.register(archive)
-  core.register(drive)
   core.register(graph)
 
   extensions.forEach(extension => core.register(extension.default ? extension.default : extension))

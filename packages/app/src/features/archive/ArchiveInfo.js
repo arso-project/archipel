@@ -6,6 +6,7 @@ import { MdCheck, MdCancel } from 'react-icons/md'
 import NetStats from './NetStats'
 
 import { useToggle } from '../../lib/hooks'
+import { getApi } from '../../lib/api'
 
 const Item = ({ label, children }) => (
   <div className='border-grey-light border-b flex'>
@@ -106,11 +107,22 @@ function ArchiveInfo (props) {
         </Item>
       )}
       <Item label='Debug'>
-          <Button onClick={e => toggleDebug()}>{(debug ? 'Hide' : 'Show')}</Button>
-          { debug && <div><pre>{JSON.stringify(archive, null, 2)}</pre></div> }
+        <Button onClick={e => onDebug()}>DEBUG</Button>
+        <Button onClick={e => toggleDebug()}>{(debug ? 'Hide' : 'Show')}</Button>
+        { debug && <div><pre>{JSON.stringify(archive, null, 2)}</pre></div> }
       </Item>
     </div>
   )
+
+  async function onDebug () {
+    console.log(archive)
+    const structs = [archive.key, archive.structures[0].key]
+    console.log('GO')
+    const api = await getApi()
+    console.log('API', api)
+    const res = await api.hyperlib.debug(archive.key, structs)
+    console.log('RES', res)
+  }
 }
 
 export default ArchiveInfoLoader

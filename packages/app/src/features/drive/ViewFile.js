@@ -1,11 +1,30 @@
 import React from 'react'
-import PropTypes from 'prop-types'
-import { Heading } from '@archipel/ui'
-import RpcQuery from '../util/RpcQuery'
-import { WithCore } from 'ucore/react'
 import JSONTree from 'react-json-tree'
+import registry from '../../lib/component-registry'
 
 import { useApi, Status } from '../../lib/api.js'
+
+// function extractVersion (string) {
+  // let parts = string.match(/(.*)\+([0-9]+:[0-9+])/)
+  // if (parts) return [parts[1], parts[2]]
+  // else return [string, null]
+// }
+
+export default function FileContent (props) {
+  const { archive, path, stat } = props
+
+  const state = useApi(async api => api.hyperdrive.readFileStream(archive, path), [archive, path])
+
+  if (!state.data) return <Status {...state} />
+  const [api, stream] = state.data
+
+  let viewers = registry.getAll('fileViewer')
+  viewers = viewers.concat(defaultViewers)
+
+  // Todo: This is a hacky way to force rerenders.
+  let change = {}
+  return <FileViewer change={change} stream={stream} stat={stat} viewers={viewers} />
+}
 
 const Image = ({ content, stat }) => {
   let src = 'data:image/png;base64,' + content
@@ -35,9 +54,10 @@ function Json (props) {
 
   return (
     <div>
-      <JSONTree 
-        data={json} 
-        invertTheme={true} theme='bright'
+      <JSONTree
+        data={json}
+        invertTheme
+        theme='bright'
         shouldExpandNode={(keyName, data, level) => level < 2}
       />
     </div>
@@ -160,51 +180,6 @@ const FileViewer = (props) => {
     return <Viewer stat={stat} />
   }
 }
-
-function ViewFile (props) {
-  const { archive, path, stat} = props
-
-  const state = useApi(async api => api.hyperdrive.readFileStream(archive, path), [archive, path])
-  if (!state.data) return <Status {...state} />
-  const [api, stream] = state.data
-
-  return (
-    <WithCore>
-      {core => {
-        let viewers = core.components.getAll('fileViewer') || []
-        viewers = viewers.concat(defaultViewers)
-        let change = {}
-        return <FileViewer change={change} stream={stream} stat={stat} viewers={viewers} />
-      }}
-    </WithCore>
-  )
-}
-
-export default ViewFile
-
-// class ViewFile extends React.PureComponent {
-  // render () {
-    // const { archive, path, stat } = this.props
-    // return (
-      // <div>
-        // <Heading>{path}</Heading>
-        // <WithApi>
-          // {api=> (
-            // <RpcQuery {...{ archive, path }} fetch={props => ['fs/readFileStream', { key: props.archive, path: props.path }]}>
-              // {(data) => {
-                // let viewers = core.components.getAll('fileViewer') || []
-                // viewers = viewers.concat(defaultViewers)
-                // let change = {}
-                // return <FileViewer change={change} stream={data.stream} stat={stat} viewers={viewers} />
-              // }}
-            // </RpcQuery>
-          // )}
-        // </WithCore>
-      // </div>
-    // )
-  // }
-// }
-
 
 // Helper functions to convert a buffer to either a UTF8 string or a base64 array.
 function bufToBase64 (input) {

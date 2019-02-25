@@ -2,45 +2,19 @@ import React, { useState, useEffect, useRef, useMemo, useContext } from 'react'
 import { MdFolder, MdInsertDriveFile, MdExpandLess, MdExpandMore } from 'react-icons/md'
 
 import { useFile, useFiles } from './file'
-/* import { useToggle, useKey } from '../../lib/hooks' */
-/* import { Status } from '../../lib/api' */
 
 export default function ListDir (props) {
-  const { grid, focus, archive, path, onSelect} = props
-  if (grid) return <FileGrid {...props} />
+  console.log('listdir', props)
+  if (props.grid) return <FileGrid {...props} />
   else return <FileTree {...props} />
 }
 
 export function FileGrid (props) {
-  const { archive, path, focus, onSelect} = props
+  const { archive, path, onSelect } = props
   const file = useFile(archive, path, 1)
   if (!file.children || !file.children.length) return 'This folder is empty.'
   return (
     <div>{file.children.map((path, i) => <FileGridItem key={i} archive={archive} path={path} onSelect={onSelect} />)}</div>
-  )
-}
-
-export function FileItem (props) {
-  const { archive, path, mode } = props
-  const { goto } = useRouter()
-
-  // TODO: Make sure that the goto array does not have to be repeated.
-  function onSelect (path) {
-    goto(['archive', archive, 'file', path])
-  }
-
-  if (mode === 'label') return <FileLabel {...props} onSelect={onSelect} />
-  return <FileGridItem {...props} onSelect={onSelect} />
-}
-
-export function FileLabel (props) {
-  const { archive, path, onSelect } = props
-  const file = useFile(archive, path, 1)
-  if (!file) return null
-  let color = file.isDirectory ? 'blue' : 'grey-dark'
-  let Icon = fileIcon(file)
-  return (
-    <span className={`max-w-64 text-${color} bg-blue-lightest rounded px-2`}><Icon /> {file.name}</span>
   )
 }
 
@@ -60,9 +34,24 @@ export function FileGridItem (props) {
   )
 }
 
+export function FileLabel (props) {
+  const { archive, path } = props
+  const file = useFile(archive, path, 1)
+
+  if (!file) return null
+
+  let color = file.isDirectory ? 'blue' : 'grey-dark'
+  let Icon = fileIcon(file)
+  return (
+    <span className={`max-w-64 text-${color} bg-blue-lightest rounded px-2`}><Icon /> {file.name}</span>
+  )
+}
+
 export function FileTree (props) {
-  let { archive, path, focus, onSelect} = props
-  const file = useFile(archive, '/', 1)
+  let { archive, path, onSelect } = props
+
+  const file = useFile(archive, '/', 2)
+
   if (!file) return null
   return (
     <FileTreeItem archive={archive} file={file} selected={path} onSelect={onSelect} />
@@ -124,12 +113,12 @@ function FileTreeChildren (props) {
   const files = useFiles(archive, paths)
 
   if (!paths || !paths.length) return null
+
   let cls = ''
   if (!noindent) cls += 'pl-4'
   return (
     <div className={cls}>
       {files.map((path, i) => {
-        /* const childProps = focus.child(i, file.children.length) */
         return <FileTreeItem key={i} archive={archive} file={path} selected={selected} onSelect={onSelect} />
       })}
     </div>
@@ -154,3 +143,15 @@ function fileIcon (file) {
   return Icon
 }
 
+// export function FileItem (props) {
+// const { archive, path, mode } = props
+// const { goto } = useRouter()
+
+// // TODO: Make sure that the goto array does not have to be repeated.
+// function onSelect (path) {
+// goto(['archive', archive, 'file', path])
+// }
+
+// if (mode === 'label') return <FileLabel {...props} onSelect={onSelect} />
+// return <FileGridItem {...props} onSelect={onSelect} />
+// }

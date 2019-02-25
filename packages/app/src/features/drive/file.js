@@ -1,99 +1,91 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { getApi } from '../../lib/api'
+import { StatefulStore } from '../../lib/store'
 import { sortByProps } from '../../lib/state-utils'
 
-// const stores = {}
+const files = new StatefulStore('files')
 
-// function getStore (key) {
-  // if (!stores[key]) {
-    // stores[key] = {
-      // files: {},
-      // subscribers: {}
-    // }
-  // }
-  // return stores[key]
-// }
+init()
+
+export function init () {
+  getApi().then(api => go(api))
+
+  async function go (api) {
+    let watchStream = await api.hyperdrive.createWatchStream()
+    // todo: this is really inefficient.
+    watchStream.on('data', info => {
+      const keys = files.ids().filter(id => id.split('/')[0] === info.key)
+      keys.forEach(key => files.set(key, () => ({})))
+      loadFile(info.key, '/')
+    })
+  }
+}
 
 export function fileid (archive, path) {
   return `${archive}/${path}`
 }
 
-const files = {}
-const subscribers = {}
-
 export function watchFile (archive, path, cb, init) {
   let id = fileid(archive, path)
-  subscribers[id] = subscribers[id] || []
-  subscribers[id].push(cb)
-  if (init) cb(getFile(archive, path))
+  files.watch(id, cb, init)
 }
 
 export function unwatchFile (archive, path, cb) {
   let id = fileid(archive, path)
-  if (!subscribers[id]) return
-  subscribers[id] = subscribers[id].filter(fn => fn !== cb)
+  files.unwatch(id, cb)
 }
 
 export function loadFile (archive, path, depth) {
   const id = fileid(archive, path)
-  const file = getFile(archive, path)
 
-  if (!file.data && !file.error) load()
-  if (file.isDirectory && !file.children && depth) load()
+  const file = files.get(id)
+
+  if (!file.path && !file.error) load()
+  else if (file.isDirectory && !file.children && depth) load()
 
   return file
 
-  // if (file.started) {
-    // return file
-  // } else {
-    // setFile(archive, path, { started: true, pending: true })
-    // load()
-    // return file
-  // }
-
   async function load () {
+    const fstate = files.getState(id)
+    if (fstate.fetching) return
+    files.setState(id, { fetching: true }, true)
+
     const api = await getApi()
     try {
-      let data = await api.hyperdrive.stat(archive, path, depth)
-      setFile(archive, path, data)
+      let file = await api.hyperdrive.stat(archive, path, depth)
+      file = setChildren(file)
+
+      files.setState(id, { fetching: false }, true)
+      files.set(id, file)
     } catch (error) {
-      setFile(archive, path, { error })
+      files.setState(id, { fetching: false }, true)
+      files.set(id, { error })
     }
-    if (subscribers[id]) subscribers[id].forEach(fn => fn(files[id]))
   }
-}
 
-function getFile (archive, path) {
-  let id = fileid(archive, path)
-  if (files[id]) return files[id]
-  else {
-    files[id] = {}
-    return files[id]
-  }
-}
-
-function setFile (archive, path, file) {
-  let id = fileid(archive, path)
-  file = file || {}
-  if (file.children) {
-    let children = file.children.map(child => setFile(archive, child.path, child))
+  function setChildren (file) {
+    if (!file.children) return file
+    let children = file.children.map(child => {
+      let childid = fileid(archive, child.path)
+      if (child.children) child = setChildren(child)
+      files.set(childid, child)
+      return child.path
+    })
     file.children = children
+    return file
   }
-
-  let oldfile = files[id] || {}
-  files[id] = { 
-    ...oldfile,
-    ...file
-  }
-
-  return path
 }
 
-// export function useFileId (id, depth) {
-  // let [archive, ...path] = id.split('/')
-  // path = path.join('/')
-  // return useFile(archive, path, depth)
-// }
+export function getFile (archive, path) {
+  let id = fileid(archive, path)
+  return files.get(id)
+}
+
+export function setFile (archive, path, file) {
+  let id = fileid(archive, path)
+  files.set(id, file)
+}
+
 export function useFile (archive, path, depth) {
   const [state, setState] = useState(() => loadFile(archive, path, depth))
   useEffect(() => {
@@ -112,13 +104,16 @@ export function useFiles (archive, paths, sort) {
   paths = paths || []
 
   useEffect(() => {
+    let _unmount = false
     paths.forEach(path => {
       watchFile(archive, path, watcher, true)
     })
     function watcher (file) {
+      if (_unmount) return
       setState(state => ({ ...state, [file.path]: file }))
     }
     return () => {
+      _unmount = true
       paths.forEach(path => unwatchFile(archive, path, watcher))
     }
   }, [archive, paths])

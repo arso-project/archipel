@@ -155,7 +155,11 @@ function Tag (props) {
 }
 
 export const TagOverview = withApi(function TagOverview (props) {
-  const { archive, api } = props
+  const { api } = props
+  const { params } = useRouter()
+  if (!params.archive) return
+  let archive = params.archive
+
   let res = useAsyncEffect(async () => {
     let triples =  await api.hypergraph.get(archive, { predicate: 'tag' })
     let objects = toObjects(triples)
@@ -170,8 +174,8 @@ export const TagOverview = withApi(function TagOverview (props) {
   }
 
   return (
-    <div>
-      <Heading>Tags</Heading>
+    <div className='p-4'>
+      <Heading size={4}>Tags</Heading>
       <div className=''>
         {els}
       </div>

@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 
 import { MdMenu, MdClose, MdSubdirectoryArrowLeft } from 'react-icons/md'
-import { Tabs, Heading } from '@archipel/ui'
 import { Consumer } from 'ucore/react'
 
-import registry from '../../lib/component-registry'
 import { useToggle } from '../../lib/hooks'
-import { useRouter } from '../../lib/router'
+import { useRouter, Link, getElements } from '../../lib/router'
 
 import ListArchives from './ListArchives'
 import CreateArchive from './CreateArchive'
@@ -14,10 +12,10 @@ import AddArchive from './AddArchive'
 
 export default function ArchiveScreen (props) {
   const { children } = props
-  const { params, goto } = useRouter()
+  const { params, goto, route } = useRouter()
 
   // todo: Change onSelect syntax in List to be a single function.
-  return <ArchiveUcoreLoader Render={ArchiveScreen} changeprop={params.archive} />
+  return <ArchiveUcoreLoader Render={ArchiveScreen} changeprop={params.archive} changeprop2={route} />
 
   function ArchiveScreen (props) {
     const { archives, selected, onSelect } = props
@@ -76,65 +74,60 @@ function ArchiveList (props) {
   )
 }
 
+function ArchiveTabLinks () {
+  const { route } = useRouter()
+
+  let links = getElements('archive/:archive').link
+  if (!links || !links.length) return null
+  links = links.sort((a, b) => (a.weight || 0) > (b.weight || 0) ? 1 : -1)
+  let color = 'pink'
+  let lcls = `list-reset border-${color} border-r`
+
+  return (
+    <ul className={lcls}>
+      {links.map((el, i) => <TabEl key={i} el={el} />)}
+    </ul>
+  )
+
+  function TabEl (props) {
+    const { el } = props
+    let color = 'pink'
+    let cls = `p-2 cursor-pointer text-${color}-dark`
+    if (el.href === route || el.href + '/*' === route) cls += ` bg-${color}-lightest`
+    else cls += ` hover:bg-${color}-lightest`
+    return (
+      <Link link={el.href}>
+        <li className={cls}>
+          {el.name}
+        </li>
+      </Link>
+    )
+  }
+}
+
 function ArchiveAppScreen (props) {
   const { archive, loadedArchive, children } = props
-
-  let [tab, setTab] = useState(0)
   const [menu, toggleMenu] = useToggle(true)
-
-  let tabs = registry.getAll('archiveTabs').map(mapRegisteredToTabs)
-
-  // TODO: Think about if this a valid option.
-  if (children) {
-    tabs.push({ title: 'ROUTE', component: () => children })
-    tab = tabs.length - 1
-  }
-
-  let TabComponent = tabs[tab].component
 
   let color = 'pink'
   let cls = `border-${color} border flex`
   let hcls = `border-${color} border-b text-2xl m-0 px-2 py-4 text-${color}`
-  let lcls = `list-reset border-${color} border-r`
 
   let MenuIcon = menu ? MdClose : MdMenu
 
   return (
     <div className={cls}>
-      {menu && <TabList />}
+      {menu && <ArchiveTabLinks />}
       <div className='flex-1'>
         <h2 className={hcls}>
           <span onClick={e => toggleMenu()} className='cursor-pointer'><MenuIcon /></span>
           {loadedArchive.info.title}
         </h2>
-        <TabComponent archive={archive} />
+        <div>
+          {children}
+        </div>
       </div>
     </div>
-  )
-
-  function TabList () {
-    return (
-      <ul className={lcls}>
-        {tabs.map((info, i) => {
-          let cls = `p-2 cursor-pointer text-${color}-dark`
-          if (i === tab) cls += ` bg-${color}-lightest` 
-          else cls += ` hover:bg-${color}-lightest`
-          return <li key={i} className={cls} onClick={e => setTab(i)}>{info.title}</li>
-        })}
-      </ul>
-    )
-  }
-}
-
-function AppScreenWrapper (props) {
-  const { loadedArchive, color, children } = props
-  let cls = `border-${color} border-l`
-  let hcls = `border-${color} border-b text-2xl m-0 px-2 py-4 text-${color}`
-  return (
-    <div className={cls}>
-      <h2 className={hcls}>{loadedArchive.info.title}</h2>
-      {children}
-    </>
   )
 }
 
@@ -148,8 +141,4 @@ function ArchiveUcoreLoader (props) {
       }}
     </Consumer>
   )
-}
-
-function mapRegisteredToTabs (item) {
-  return { title: item.opts.title, component: item.component }
 }

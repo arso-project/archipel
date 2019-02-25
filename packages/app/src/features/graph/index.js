@@ -1,16 +1,19 @@
 import Tag, { TagOverview } from './Tag'
-import store from './store'
 
+import { registerElement, registerRoute } from '../../lib/router.js'
+import registry from '../../lib/component-registry'
+
+registry.add('fileSidebar', Tag, { title: 'Tags' })
+
+registerRoute('archive/:archive/tags', TagOverview, { wrap: true })
+
+registerElement('archive/:archive', {
+  link: { name: 'Tags', href: 'archive/:archive/tags', weight: 10 }
+})
+
+// todo: remove.
 export default {
   name: 'graph-frontend',
   plugin
 }
-
-async function plugin (core) {
-  core.makeStore('graph', store)
-  core.components.add('archiveTabs', TagOverview, { title: 'Graph' })
-
-  // core.components.add('archiveTabs', DebugScreen, { title: 'GraphDebug' })
-  // core.components.add('fileSidebar', FileSidebar, { title: 'Graph' })
-  core.components.add('fileSidebar', Tag, { title: 'Tags' })
-}
+async function plugin (core) {}
