@@ -8,7 +8,7 @@ const network = require('./network')
 const { IndexedMap } = require('@archipel/common/util/map')
 const { asyncThunky, prom, withTimeout } = require('@archipel/common/util/async')
 const { nestStorage, keyPair, hex } = require('@archipel/common/util/hyperstack')
-const { authMessage } = require('@archipel/common/util/authMessage')
+const { createAuthCypher, decipherAuthRequest } = require('@archipel/common/util/authMessage')
 
 const debug = require('debug')('library')
 
@@ -69,10 +69,16 @@ function rpc (api, opts) {
       return library.unshare(key)
     },
 
-    async authorizeWriter (key, writerKey) {
+    async authorizeWriter (key, writerKey, structures) {
+      if (!structures) return this.authorizeWriter(key, writerKey, [key])
       let library = await getLibrary(this.session)
       let archive = await library.getArchive(key)
-      return archive.authorizeWriter(writerKey)
+      let results = []
+      for (let i of structures) {
+        let structure = archive.structures.get(i)
+        results.push(await structure.authorize(writerKey))
+      }
+      return results
     },
 
     async createStatsStream () {
@@ -92,10 +98,14 @@ function rpc (api, opts) {
       return stream
     },
 
-    async requestAuthorizationMsg (key, structures, userMsg) {
+    async requestAuthorizationMsg (key, structures, userMessage) {
       let library = await getLibrary(this.session)
-      let archive = await library.getArchive(key)
-      return authMessage(archive, structures, userMsg)
+      return createAuthCypher(library, { primaryKey: key, structures, userMessage })
+    },
+
+    async decipherAuthorizationMsg (authMessage) {
+      let library = await getLibrary(this.session)
+      return decipherAuthRequest(library, authMessage)
     }
   }
 
