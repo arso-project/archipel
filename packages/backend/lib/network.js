@@ -64,7 +64,7 @@ class Network {
     return stream
 
     function current () {
-      return Object.keys(self.networks).map(key => {
+      return Object.keys(self.networks).filter(key => self.networks[key]).map(key => {
         const { network, speed } = self.networks[key]
         return {
           key,
