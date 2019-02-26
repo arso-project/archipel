@@ -103,6 +103,17 @@ function rpc (api, opts) {
       let library = await getLibrary(this.session)
       let archive = await library.getArchive(key)
       return authMessage(archive, structures, userMsg)
+    },
+
+    async debug (key, structures) {
+      let library = await getLibrary(this.session)
+      let archive = await library.getArchive(key)
+      // let results = []
+      for (let i of structures) {
+        let structure = archive.structures.get(i)
+        console.log(structure)
+        // results.push(structure.primary.authorizeWriter(writerKey))
+      }
     }
   }
 
@@ -283,7 +294,6 @@ class Archive extends EventEmitter {
     // debug('start open archive', this.type, this.opts)
     await this.primary.ready()
     // debug('primary ready')
-    await this.primary.ready()
 
     this.key = hex(this.primary.key)
     this.localWriterKey = hex(this.primary.structure().local.key)

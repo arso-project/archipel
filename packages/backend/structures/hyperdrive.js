@@ -176,11 +176,31 @@ exports.structure = (opts, api) => {
       return drive.replicate(opts)
     },
 
-    getState () {
-      return {
+    getState (includeFeeds) {
+      let state = {
         type: 'hyperdrive',
         key: hex(drive.key),
         writable: self.writable
+      }
+      if (includeFeeds) state.feeds = self.getFeedState()
+      return state
+    },
+
+    getFeedState () {
+      let metadataFeeds = drive.db.feeds.filter(f => f).map(mapFeeds).map(f => ({ ...f, type: 'metadata' }))
+      let contentFeeds = drive.db.contentFeeds.filter(f => f).map(mapFeeds).map(f => ({ ...f, type: 'content' }))
+      return  [ ...metadataFeeds, ...contentFeeds ]
+
+      function mapFeeds (feed) {
+        return {
+          key: hex(feed.key),
+          discoveryKey: hex(feed.discoveryKey),
+          opened: feed.opened,
+          writable: feed.writable,
+          length: feed.length,
+          byteLength: feed.byteLength,
+          peers: feed.peers,
+        }
       }
     },
 
