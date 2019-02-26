@@ -48,15 +48,24 @@ const TextCopyAchiveKey = () => (
   </div>
 )
 
-const TextAuthorize = () => (
+// const TextAuthorize = () => (
+//   <p>
+//     Assuming you have shared your archive and somebody synced it.
+//     In this case he/she has a local copy of your archive,
+//     but may also add content locally, controled with his/her
+//     own local ArchiveKey (LocalKey) (If you create a new archive the ArchiveKey
+//     and the LocalKey are the same), without you knowing. If you want
+//     to get the changes the other person is doing, you may authorize his/her
+//     LocalKey for writing to your archive:
+//   </p>
+// )
+
+const TextRequestAuthorization = () => (
   <p>
-    Assuming you have shared your archive and somebody synced it.
-    In this case he/she has a local copy of your archive,
-    but may also add content locally, controled with his/her
-    own local ArchiveKey (LocalKey) (If you create a new archive the ArchiveKey
-    and the LocalKey are the same), without you knowing. If you want
-    to get the changes the other person is doing, you may authorize his/her
-    LocalKey for writing to your archive:
+    If you are syncing the archive and/or substructures of somebody else, he or she may also sync
+    your local changes. E.g., this would allow you to collaborate on this archive or some work. To do so,
+    you have to generate an authorization cypher on the right. Just select all structures you want to request
+    authorization for and click generate. Afterwards copy-paste the cipher and send it to the other.
   </p>
 )
 
@@ -81,35 +90,35 @@ const ClickToCopy = ({ archiveKey }) => {
   )
 }
 
-class Authorize extends React.Component {
-  constructor (props) {
-    super(props)
-    this.inputRef = React.createRef()
-    this.onSubmit = this.onSubmit.bind(this)
-    this.state = { res: null }
-  }
+// class Authorize extends React.Component {
+//   constructor (props) {
+//     super(props)
+//     this.inputRef = React.createRef()
+//     this.onSubmit = this.onSubmit.bind(this)
+//     this.state = { res: null }
+//   }
 
-  async onSubmit (e) {
-    let val = this.inputRef.current.value
-    if (val) {
-      let res = await this.props.onSubmit({ key: this.props.archive, writerKey: val })
-      this.setState({ res })
-    }
-  }
+//   async onSubmit (e) {
+//     let val = this.inputRef.current.value
+//     if (val) {
+//       let res = await this.props.onSubmit({ key: this.props.archive, writerKey: val })
+//       this.setState({ res })
+//     }
+//   }
 
-  render () {
-    const { res } = this.state
-    return (
-      <div>
-        <div className='flex'>
-          <input type='text' ref={this.inputRef} />
-          <Button onClick={this.onSubmit}>OK</Button>
-        </div>
-        { res && <div>{JSON.stringify(res)}</div>}
-      </div>
-    )
-  }
-}
+//   render () {
+//     const { res } = this.state
+//     return (
+//       <div>
+//         <div className='flex'>
+//           <input type='text' ref={this.inputRef} />
+//           <Button onClick={this.onSubmit}>OK</Button>
+//         </div>
+//         { res && <div>{JSON.stringify(res)}</div>}
+//       </div>
+//     )
+//   }
+// }
 
 // const StructuresCheckList = function ({ structures, onSelect, selected }) {
 //   if (!structures) return ''
@@ -168,20 +177,22 @@ class ReqAuthorizationInner extends React.Component {
     const { selected, res } = this.state
     const { archive } = this.props
     return (
-      <div className='flex flex-col'>
-        <Checkbox id='authPrimCheck' label={archive.info.title + '/' + archive.type}
-          checked={selected[archive.key] || false}
-          onChange={(e) => this.onSelect(e.target.checked, archive.key)} />
-        <div className='pl-4'>
-          <StructuresCheckList structures={archive.structures}
-            idSub='authReqItems'
-            onSelect={this.onSelect.bind(this)}
-            selected={selected} />
+      <div className='flex flex-col items-center'>
+        <div className='flex flex-col p-1 m-1 bg-white'>
+          <Checkbox id='authPrimCheck' label={archive.info.title + '/' + archive.type}
+            checked={selected[archive.key] || false}
+            onChange={(e) => this.onSelect(e.target.checked, archive.key)} />
+          <div className='pl-4'>
+            <StructuresCheckList structures={archive.structures}
+              idSub='authReqItems'
+              onSelect={this.onSelect.bind(this)}
+              selected={selected} />
+          </div>
         </div>
-        <textarea placeholder='Add a custom message to the request'
+        <textarea className='w-56 m-1' placeholder='Add a custom message to the request'
           onChange={(e) => this.setState({ userMsg: e.target.value })} />
-        <Button onClick={() => this.onSubmit()}>Generate Authentification Request</Button>
-        <textarea readOnly placeholder='Authentification Message'
+        <Button className='w-auto' onClick={() => this.onSubmit()}>Generate Cipher</Button>
+        <textarea className='m-1' readOnly placeholder='Authentification Message'
           value={res} cols='20' rows='8' />
       </div>
     )
@@ -190,7 +201,7 @@ class ReqAuthorizationInner extends React.Component {
 
 const ReqAuthorization = withApi(ReqAuthorizationInner)
 
-const Sharing = ({ archive, onShare, authorizeWriter }) => {
+const Sharing = ({ archive, onShare /*, authorizeWriter*/}) => {
   let { key, state } = archive
   return (
     <div className='flex flex-col justify-between'>
@@ -227,19 +238,20 @@ const Sharing = ({ archive, onShare, authorizeWriter }) => {
         </SettingsCard>
         : '' }
 
-      {state.share
+      {/* {state.share
         ? <SettingsCard title='3. Authorize others back and sync their changes.'
           setting={<Authorize onSubmit={authorizeWriter} archive={key} />}
           explanation='Enter ArchiveKey to authorize:'>
           <TextAuthorize />
         </SettingsCard>
-        : '' }
+        : '' } */}
 
       {state.share
-        ? <SettingsCard title='3. Authorize others back and sync their changes.'
+        ? <SettingsCard title='3. Generate an authorization request to ask the archive oner to sync your changes.'
           setting={<ReqAuthorization archive={archive} />}
-          explanation='Select Structures:'>
-          <TextAuthorize />
+          explanation='Select Structures:'
+          warning='Only the original archive creator can decrypt the cypher.'>
+          <TextRequestAuthorization />
         </SettingsCard>
         : '' }
 
