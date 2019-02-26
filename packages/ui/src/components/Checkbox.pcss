@@ -1,6 +1,6 @@
 
 .chb {
-  @apply flex p-1 mt-1 mb-1 cursor-pointer text-grey-dark;
+  @apply flex mt-1 mb-1 cursor-pointer text-grey-dark;
 }
 
 /* Hide the browser's default checkbox */
@@ -13,15 +13,15 @@
 }
 
 .chb:hover > [size] {
-  @apply shadow border-indigo-lighter;
+  @apply shadow border-indigo;
 }
 
 .chb:hover > span {
-  @apply text-indigo-lighter;
+  @apply text-indigo;
 }
 
 .chb input:checked + [size] {
-  @apply text-teal-light border-teal-light;
+  @apply text-teal border-teal-light;
 }
 
 .chb[disabled] {

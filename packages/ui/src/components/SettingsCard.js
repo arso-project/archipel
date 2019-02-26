@@ -1,7 +1,14 @@
 import React from 'react'
 import { MdWarning } from 'react-icons/md'
 import { classname } from '../util'
-import Heading from './Heading'
+// import Heading from './Heading'
+
+function Heading (props) {
+  const { children, className } = props
+  let cls = className || ''
+  cls += ' text-xl mb-4'
+  return <h2 className={cls}>{children}</h2>
+}
 
 const Footer = ({children}) => (
   <div className='-mx-4 -mb-4 mt-4 px-4 py-2 bg-grey-lighter border-t border-black text-xs'>
@@ -9,7 +16,32 @@ const Footer = ({children}) => (
   </div>
 )
 
-const SettingsCard = (props) => {
+function SettingsCard (props) {
+  const { explanation, setting, warning, children, title } = props
+  let color = 'pink'
+  return (
+    <div className={`flex sm:flex-wrap md:flex-nowrap m-4 border border-${color} max-w-lg`}>
+      <div className='flex-1 p-4'>
+        {title && <Heading className={`text-${color}-dark`}>{title}</Heading>}
+        {children}
+      </div>
+      <div className='sm:w-full md:w-1/2 max-w-sm bg-grey-lighter p-4 flex flex-col flex-between'>
+        <div className='text-lg italic mb-2'>{explanation}</div>
+        <div className=''>{setting}</div>
+        {warning && (
+          <div className='italic mt-2 flex '>
+            <div className='text-orange mr-2'><MdWarning size={36} /></div>
+            <div>{warning}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default SettingsCard
+
+const SettingsCardOld = (props) => {
   let textprops = {}
   textprops.className = props.textprops || ''
   let settingsprops = {}
@@ -58,4 +90,3 @@ const Warning = (props) => {
   )
 }
 
-export default SettingsCard

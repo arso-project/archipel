@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Consumer, WithCore } from 'ucore/react'
 import { Button, Checkbox, SettingsCard, StructuresCheckList } from '@archipel/ui'
 
@@ -9,42 +9,16 @@ const TextShare = () => (
   <p>
     If you share your Archive, it will be made available
     in the Dat peer-to-peer network, but <strong>you decide
-    to whom.</strong> If you decide to share your archive,
-    we will guide you through the access control mechanism
-    in the following.
+    to whom.</strong>
   </p>
 )
 
 const TextCopyAchiveKey = () => (
   <div>
-    <strong>
-      Only send the following key on secure and encrypted
-      ways and only to trusted people!
-    </strong>
-    <p>
-      You may copy your ArchiveKey to your clipboard, buy clicking
-      the above shorthand of it.
-      This ArchiveKey has two important features. Firstly, in the
-      Dat peer-to-peer network it is the ID of your archive. Hence,
-      who does not know this ArchiveKey, can't find your archive
-      anywhere, even now, while it is shared and available in the
-      Dat peer-to-peer network.
-
-      Secondly, the ArchiveKey is used to encrypt your archive. Therefore,
-      nobody without the ArchiveKey can read your archive. This also means,
-      nobody without it can read the data-stream transfered between you and
-      any person you shared your ArchiveKey with.
-
-      This has important consequences:
-    </p>
-    <ul>
-      <li>Anbody having your ArchiveKey can read your archive.</li>
-      <li>Your archive is only as secret as the people you are
-        sharing it with are trustworthy.</li>
-      <li>If your want your archive to remain save, only share
+      <p className='mb-2'>Anbody who has this archive key can read your archive.</p>
+      <p>If your want your archive to remain private, only share
         your key with persons you trust, and only share it over trustworthy channels.
-        I.e. do not send it over unecrypted e-mail or messaging.</li>
-    </ul>
+      </p>
   </div>
 )
 
@@ -78,13 +52,13 @@ const copyToClipboard = str => {
   document.body.removeChild(el)
 }
 
-const ClickToCopy = ({ archiveKey }) => {
+const ClickToCopy = ({ archiveKey, onClick }) => {
   const displayKey = archiveKey.slice(0, 4) + '...' + archiveKey.slice(-2)
   return (
     <button className='w-32 p-2 cursor-pointer border border-black
       bg-grey-lightest hover:bg-grey
       text-black focus:text-teal-darkest'
-      onClick={() => copyToClipboard(archiveKey)}>
+      onClick={onClick}>
       {displayKey}
     </button>
   )
@@ -177,8 +151,8 @@ class ReqAuthorizationInner extends React.Component {
     const { selected, res } = this.state
     const { archive } = this.props
     return (
-      <div className='flex flex-col items-center'>
-        <div className='flex flex-col p-1 m-1 bg-white'>
+      <div className='flex flex-col'>
+        <div className='flex flex-col '>
           <Checkbox id='authPrimCheck' label={archive.info.title + '/' + archive.type}
             checked={selected[archive.key] || false}
             onChange={(e) => this.onSelect(e.target.checked, archive.key)} />
@@ -202,12 +176,13 @@ class ReqAuthorizationInner extends React.Component {
 const ReqAuthorization = withApi(ReqAuthorizationInner)
 
 const Sharing = ({ archive, onShare /*, authorizeWriter*/}) => {
+  const [copied, setCopied] = useState(false)
   let { key, state } = archive
   return (
     <div className='flex flex-col justify-between'>
 
       <SettingsCard
-        title='1. Make your archive available to others'
+        title='Share this archive'
         explanation={state.share
           ? 'click to unshare'
           : 'click to share'
@@ -227,11 +202,11 @@ const Sharing = ({ archive, onShare /*, authorizeWriter*/}) => {
 
       {state.share
         ? <SettingsCard
-          title='2. Send your ArchiveKey to trustwothy others'
+          title='Send the archive key to others'
           settingsprops='w-40 md:w-40'
-          explanation='click to copy:'
+          explanation={copied ? 'copied to clipboard!' : 'click to copy:'}
           setting={
-            <ClickToCopy archiveKey={key} />
+            <ClickToCopy archiveKey={key} onClick={e => onCopyClick()}/>
           }
           warning='Only send to trusted people and over trustworthy encrypted channels!'>
           <TextCopyAchiveKey />
@@ -247,7 +222,7 @@ const Sharing = ({ archive, onShare /*, authorizeWriter*/}) => {
         : '' } */}
 
       {state.share
-        ? <SettingsCard title='3. Generate an authorization request to ask the archive oner to sync your changes.'
+        ? <SettingsCard title='Request write access'
           setting={<ReqAuthorization archive={archive} />}
           explanation='Select Structures:'
           warning='Only the original archive creator can decrypt the cypher.'>
@@ -257,6 +232,13 @@ const Sharing = ({ archive, onShare /*, authorizeWriter*/}) => {
 
     </div>
   )
+
+  // todo: setCopied may be invoked on unounted component. Fix with useTimeout hook.
+  function onCopyClick () {
+    copyToClipboard(key)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1000)
+  }
 }
 
 const ArchiveSharing = () => {

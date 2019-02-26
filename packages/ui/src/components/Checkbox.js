@@ -13,7 +13,7 @@ const Checkbox = (props) => {
       <input type='checkbox' value='1' id={id}
         onChange={onChange} checked={checked} disabled={disabled} />
       <MdCheck size={24} />
-      <span>{label}</span>
+      <span className='ml-2'>{label}</span>
       {info ? <InfoPopup info={info} /> : ''}
     </label>
   )
