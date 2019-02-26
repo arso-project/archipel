@@ -52,8 +52,10 @@ function Sidebar (props) {
   let link = makeFileLink(archive, path)
   return (
     <div>
+      <div className='mb-2'>
+        <Metadata archive={archive} link={link} api={api} />
+      </div>
       <Tag archive={archive} link={link} api={api} />
-      <Metadata archive={archive} link={link} api={api} />
     </div>
   )
 }
@@ -99,7 +101,7 @@ function Metadata (props) {
 
 function MetadataEditor (props) {
   const { archive, link, api, data, onSubmit } = props
-  const { state, setState, makeField, fieldProps } = useForm(data)
+  const { state, setState, makeField, fieldProps, didChange } = useForm(data)
   // console.log('editor', data)
 
   let els = []
@@ -113,7 +115,7 @@ function MetadataEditor (props) {
       <div>
         {els}
       </div>
-      <Button type='submit'>Save</Button>
+      {didChange && <Button type='submit'>Save</Button>}
     </form>
   )
 

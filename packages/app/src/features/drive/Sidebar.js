@@ -4,6 +4,7 @@ import { Heading, Foldable } from '@archipel/ui'
 
 import { useApi, Status } from '../../lib/api.js'
 import { useFile } from './file'
+import registry from '../../lib/component-registry.js'
 
 function date (isostring) {
   return isostring
@@ -64,9 +65,27 @@ export default function Sidebar (props) {
 
   return (
     <>
+      <OtherItems />
       <SidebarWidget file={file} />
     </>
   )
+
+  function OtherItems () {
+    let sidebarItems = registry.getAll('fileSidebar')
+    console.log('sidebarItems', sidebarItems)
+    if (!sidebarItems || !sidebarItems.length) return null
+    return (
+      <div>
+        { sidebarItems.map((item, i) => (
+          <div key={i}>
+            <Heading>{item.opts.title}</Heading>
+            <item.component stat={file} archive={archive} path={path} />
+          </div>
+        ))}
+      </div>
+    )
+  }
+
 }
 
 // const Sidebar = (props) => {

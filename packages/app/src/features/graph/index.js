@@ -3,7 +3,7 @@ import Tag, { TagOverview } from './Tag'
 import { registerElement, registerRoute } from '../../lib/router.js'
 import registry from '../../lib/component-registry'
 
-registry.add('fileSidebar', Tag, { title: 'Tags' })
+registry.add('fileSidebar', Tag, { title: 'Metadata' })
 
 registerRoute('archive/:archive/tags', TagOverview, { wrap: true })
 

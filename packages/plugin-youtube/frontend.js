@@ -2,6 +2,43 @@ import React from 'react'
 import { Heading, Button } from '@archipel/ui'
 import pretty from 'pretty-bytes'
 
+import { registerRoute, registerElement } from '@archipel/app/src/lib/router'
+import { useFile } from '@archipel/app/src/features/drive/file'
+
+registerRoute(
+  'archive/:archive/youtube',
+  (props) => <YoutubeImportScreen {...props} />,
+  { wrap: true }
+)
+
+registerElement('archive/:archive', {
+  link: { name: 'Youtube', href: 'archive/:archive/youtube', weight: 8 }
+})
+
+registerElement({
+  route: 'archive/:archive/files/*',
+  panel: { name: 'youtube', YoutubePanel },
+  action: { name: 'youtube', YoutubeImportAction }
+})
+
+function YoutubeImportAction (props) {
+  const { params, context } = useRouter()
+  if (context.file && context.file.isDirectory) {
+    return <ActionLink onClick={e => alert('go!')}>Import from youtube!</ActionLink>
+  }
+  return null
+}
+
+function ActionLink (props) {
+  return (
+    <a {...props} className={cls}>{children}</a>
+  )
+}
+
+function YoutubePanel () {
+  return <em>Hi!</em>
+}
+
 export default {
   name: 'import-youtube',
   plugin
@@ -12,7 +49,7 @@ async function plugin (core) {
   core.components.add('fileViewer', Player, {
     stream: true,
     match: (file) => {
-      return file.mimetype.match(/video\/.*/)
+      return file.mimetype && file.mimetype.match(/video\/.*/)
     }
   })
 }
