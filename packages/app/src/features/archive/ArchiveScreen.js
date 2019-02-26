@@ -30,8 +30,8 @@ export default function ArchiveScreen (props) {
     return (
       <div className='flex flex-1'>
         <div className='flex-no-shrink w-65'>
+          <ArchiveActions />
           <ArchiveList archives={archives} selected={selected} onSelect={onArchiveSelect} />
-          <AuthorizationMenu />
         </div>
         <div className='flex-1 p-4'>
           { !archive && <NoArchive /> }
@@ -65,13 +65,21 @@ function ArchiveList (props) {
   const { archives, selected, onSelect } = props
   return (
     <>
-      <CreateArchive />
-      <AddArchive />
       <ListArchives
         archives={archives}
         isSelected={item => item === selected}
         onSelect={onSelect}
       />
+    </>
+  )
+}
+
+function ArchiveActions (props) {
+  return (
+    <>
+      <CreateArchive />
+      <AddArchive />
+      <AuthorizationMenu />
     </>
   )
 }
