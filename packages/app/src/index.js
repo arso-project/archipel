@@ -6,6 +6,7 @@ import { Router, registerRoute, registerElement } from './lib/router'
 import ArchiveScreen from './features/archive/ArchiveScreen.js'
 
 import ArchiveInfo from './features/archive/ArchiveInfo'
+import ArchiveInfoNew from './features/archive/ArchiveInfoNew'
 import ArchiveSharing from './features/archive/ArchiveSharing'
 
 import FsScreen from './features/drive/FsScreen.js'
@@ -19,6 +20,7 @@ import '@archipel/ui/tailwind.pcss'
 registerRoute('/', ArchiveScreen)
 registerRoute('archive', ArchiveScreen)
 registerRoute('archive/:archive', ArchiveInfo, { wrap: true })
+registerRoute('archive/:archive/info', ArchiveInfoNew, { wrap: true })
 registerRoute('archive/:archive/share', ArchiveSharing, { wrap: true })
 
 registerRoute('archive/:archive/file', FsScreen, { wrap: true })

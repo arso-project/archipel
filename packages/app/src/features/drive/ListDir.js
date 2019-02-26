@@ -4,7 +4,6 @@ import { MdFolder, MdInsertDriveFile, MdExpandLess, MdExpandMore } from 'react-i
 import { useFile, useFiles } from './file'
 
 export default function ListDir (props) {
-  console.log('listdir', props)
   if (props.grid) return <FileGrid {...props} />
   else return <FileTree {...props} />
 }
