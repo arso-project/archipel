@@ -1,6 +1,6 @@
 
 .chb {
-  @apply flex mt-2 mb-2 cursor-pointer text-grey-dark;
+  @apply flex p-1 mt-1 mb-1 cursor-pointer text-grey-dark;
 }
 
 /* Hide the browser's default checkbox */
@@ -24,5 +24,15 @@
   @apply text-teal-light border-teal-light;
 }
 
-.chb span {
+.chb[disabled] {
+  @apply bg-grey-lightest border-none rounded p-1;
+  pointer-events: none;
+}
+
+.chb[disabled] [size] {
+  @apply border-grey-light
+}
+
+.chb[disabled] span {
+  @apply text-grey-light
 }

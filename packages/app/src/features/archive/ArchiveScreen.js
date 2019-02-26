@@ -7,6 +7,7 @@ import { useToggle } from '../../lib/hooks'
 import { useRouter, Link, getElements } from '../../lib/router'
 
 import ListArchives from './ListArchives'
+import AuthorizationMenu from './AuthorizationMenu'
 import CreateArchive from './CreateArchive'
 import AddArchive from './AddArchive'
 
@@ -30,6 +31,7 @@ export default function ArchiveScreen (props) {
       <div className='flex flex-1'>
         <div className='flex-no-shrink w-65'>
           <ArchiveList archives={archives} selected={selected} onSelect={onArchiveSelect} />
+          <AuthorizationMenu />
         </div>
         <div className='flex-1 p-4'>
           { !archive && <NoArchive /> }
