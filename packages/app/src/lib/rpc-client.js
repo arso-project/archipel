@@ -4,7 +4,7 @@ import rpc from '@archipel/common/rpc'
 import streambus from '@archipel/common/rpc/streambus'
 import { prom, withTimeout } from '@archipel/common/util/async'
 
-const TIMEOUT = 1000
+const TIMEOUT = 5000
 
 const [api, setApi] = prom()
 let created = false
@@ -12,7 +12,7 @@ let created = false
 export async function openApi (opts) {
   opts = opts || {}
   created = true
-  opts.timeout = opts.timeout || 1000
+  opts.timeout = opts.timeout || TIMEOUT
 
   const websocketUrl = opts.websocketUrl
     || window.ARCHIPEL_WEBSOCKET_URL
@@ -23,7 +23,7 @@ export async function openApi (opts) {
   pump(stream, transport.stream, stream)
 
   const client = rpc()
-  const peer = await withTimeout(client.addPeer(transport), TIMEOUT)
+  const peer = await withTimeout(client.addPeer(transport), opts.timeout)
   const api = peer.api
 
   await api.hyperlib.open('lib') // todo: workspaces

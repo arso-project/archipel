@@ -56,16 +56,21 @@ export function useCounter () {
 export function useForm (defaultValue) {
   defaultValue = defaultValue || {}
   const [state, setState] = useState(defaultValue)
+  const [didChange, setDidChange] = useState(false)
   return {
     state,
     itemProps,
     makeField,
-    setState
+    setState,
+    didChange
   }
 
   function itemProps (name, defaultValue) {
     let value = state[name] === undefined ? defaultValue : state[name]
-    let onChange = e => setState({ ...state, [name]: e.target.value })
+    function onChange (e) {
+      setDidChange(true)
+      setState({ ...state, [name]: e.target.value })
+    }
     return { name, value, onChange }
   }
 
