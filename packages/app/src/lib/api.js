@@ -20,6 +20,16 @@ export function useApi (fn, inputs) {
   return state
 }
 
+export function useApiCall (fn, inputs) {
+  inputs = inputs || []
+  const state = useAsyncEffect(async () => {
+    const api = await getApi()
+    let res = fn(api)
+    return Promise.resolve(res)
+  }, inputs)
+  return state
+}
+
 export function withApi (Component) {
   return props => (
     <WithApi>
