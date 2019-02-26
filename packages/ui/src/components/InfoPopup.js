@@ -7,11 +7,12 @@ import './InfoPopup.pcss'
 let clss = ['tooltip']
 
 const InfoPopup = (props) => {
-  let { info, ...rest } = props
+  let { info, wInfo, ...rest } = props
+  wInfo = wInfo || 'w-auto'
   return (
     <div className={cls(rest, clss)}>
       <sup><MdInfoOutline /></sup>
-      <span className='tooltiptext'>{info}</span>
+      <p className={wInfo + ' tooltiptext'}>{info}</p>
     </div>
   )
 }

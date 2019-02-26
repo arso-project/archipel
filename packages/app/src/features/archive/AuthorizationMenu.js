@@ -8,10 +8,11 @@ class AuthorizationMenuInner extends React.Component {
   constructor (props) {
     super(props)
     this.state = {
-      selected: {},
-      notRequested: {},
       authCipher: null,
-      authObj: null
+      authObj: null,
+      archive: null,
+      selected: {},
+      notRequested: {}
     }
     this.api = this.props.api.hyperlib
     // this.onSelect = this.onSelect.bind(this)
@@ -32,6 +33,21 @@ class AuthorizationMenuInner extends React.Component {
     }
   }
 
+  async submitAuthorization () {
+    let { archive, selected, authObj, authCipher } = this.state
+    let toBeAuthorized = []
+    for (let i of Object.keys(selected)) {
+      if (selected[i]) toBeAuthorized.push(i)
+    }
+    let results = await this.api.authorizeWriter(archive.key, authObj.writerKey, toBeAuthorized)
+    if (results.length && results.length === toBeAuthorized.length) {
+      authCipher = 'Authorization successful'
+    } else {
+      authCipher = 'Auhtorization failed for unknown reasons. The cipher could be corrupted or you are not the original owner of the archive.'
+    }
+    this.setState({ authCipher, authObj: null, archive: null, selected: {}, notRequested: {} })
+  }
+
   async checklistElements (archive, authObj) {
     let notRequested = {}
     let selected = {}
@@ -49,26 +65,18 @@ class AuthorizationMenuInner extends React.Component {
     this.setState({ selected })
   }
 
-  async submitAuthorization () {
-    let { archive, selected, authObj } = this.state
-    let toBeAuthorized = []
-    for (let i of Object.keys(selected)) {
-      if (selected[i]) toBeAuthorized.push(i)
-    }
-    let results = await this.api.authorizeWriter(archive.key, authObj.writerKey, toBeAuthorized)
-  }
-
   render () {
     let { authCipher, authObj, archive, notRequested, selected } = this.state
     let foldHeading = 'Authentify Writer'
     if (!authObj) {
+      // Enter Authorization Cypher
       return (
         <Foldable heading={foldHeading}>
           <div className='flex flex-col w-40'>
             <strong htmlFor='inputAuthorizationCipher'
               className='m-1 mb-2'>
               Enter cipher:
-              <InfoPopup info='To authorize others to write to your archives, they need to generate a request cipher. If you received one, you may enter it below.' />
+              <InfoPopup wInfo='w-48' info='To authorize others to write to your archives, they need to generate a request cipher. If you received one, you may enter it below.' />
             </strong>
             <textarea id='inputAuthorizationCipher' name='inputAuthorizationCipher'
               placeholder='Authorization Cipher'
@@ -88,6 +96,7 @@ class AuthorizationMenuInner extends React.Component {
         </Foldable>
       )
     } else if (!archive) {
+      // something went wrong
       return (
         <Foldable heading={foldHeading} open>
           <div className='w-full flex flex-col'>
@@ -99,27 +108,30 @@ class AuthorizationMenuInner extends React.Component {
         </Foldable>
       )
     } else {
+      // choose structures for authorization
       return (
         <Foldable heading={foldHeading} open>
           <div className='flex flex-col'>
             { authObj.userMessage
               ? <div className='flex flex-col'>
                 <strong className='pl-1 pt-1 pb-1'>User Message:</strong>
-                <textarea readOnly className='w-40'>{authObj.userMessage}</textarea>
+                <textarea readOnly className='w-40' value={authObj.userMessage} />
               </div>
               : <span>no user message</span>}
             <strong className='pl-1 pt-1 pb-1'>
             Please select:
-              <InfoPopup info='Select those structures you would like to give authorization for and klick "Authorize". If some are greyed out, they were not requested.' />
+              <InfoPopup wInfo='w-48' info='Select those structures you would like to give authorization for and klick "Authorize". If some are greyed out, they were not requested.' />
             </strong>
-            <Checkbox id='authMenuPrimCheck' label={archive.info.title + '/' + archive.type}
-              checked={selected[archive.key] || false}
-              onChange={(e) => this.onSelect(e.target.checked, archive.key)} disabled={notRequested[archive.key]} />
-            <div className='pl-4'>
-              <StructuresCheckList structures={archive.structures}
-                idSub='authMenuItems'
-                onSelect={this.onSelect.bind(this)}
-                disabled={notRequested} selected={selected} />
+            <div className='flex flex-col p-1 m-1 bg-white border-none rounded'>
+              <Checkbox id='authMenuPrimCheck' label={archive.info.title + '/' + archive.type}
+                checked={selected[archive.key] || false}
+                onChange={(e) => this.onSelect(e.target.checked, archive.key)} disabled={notRequested[archive.key]} />
+              <div className='pl-4'>
+                <StructuresCheckList structures={archive.structures}
+                  idSub='authMenuItems'
+                  onSelect={this.onSelect.bind(this)}
+                  disabled={notRequested} selected={selected} />
+              </div>
             </div>
           </div>
           <div className='flex'>
@@ -132,9 +144,6 @@ class AuthorizationMenuInner extends React.Component {
               Authorize
             </Button>
           </div>
-          {/* <p className='w-32 break-word'>
-            {JSON.stringify(authObj)}
-          </p> */}
         </Foldable>
       )
     }
