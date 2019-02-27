@@ -67,7 +67,7 @@ class AuthorizationMenuInner extends React.Component {
 
   render () {
     let { authCipher, authObj, archive, notRequested, selected } = this.state
-    let foldHeading = 'Authentify Writer'
+    let foldHeading = 'Authorize write access'
     if (!authObj) {
       // Enter Authorization Cypher
       return (

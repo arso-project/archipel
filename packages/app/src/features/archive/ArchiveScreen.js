@@ -51,12 +51,18 @@ export default function ArchiveScreen (props) {
 
 function NoArchive (props) {
   return (
-    <div className='p-16 text-3xl text-grey italic text-center leading-loose md:w-1/2 mx-auto my-auto'>
-      <span className='text-4xl'><MdSubdirectoryArrowLeft /></span>
-      <br />
-      No archive selected.
-      <br />
-      Chose or create an archive at the left!
+    <div className='p-16 md:w-1/2 mx-auto my-auto'>
+      <div className='my-8 text-center'>
+        <img className='mr-6' src='/archipel-logo-1.svg' />
+        <div className='text-5xl font-bold'>Archipel</div>
+      </div>
+      <div className='text-3xl text-grey italic text-center'>
+        <span className='text-4xl'><MdSubdirectoryArrowLeft /></span>
+        <br />
+        No archive selected.
+        <br />
+        Chose or create an archive at the left!
+      </div>
     </div>
   )
 }
