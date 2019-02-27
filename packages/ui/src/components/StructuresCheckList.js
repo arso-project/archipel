@@ -5,7 +5,6 @@ const StructuresCheckList = (props) => {
   let { structures, onSelect, selected, disabled, idSub, indent, expanded, ...rest } = props
 
   if (expanded === undefined || expanded === null) expanded = true
-  console.log(expanded)
   if (!structures) return ''
 
   let listItems = structures.map(i => <li key={'reqAuthItem' + i.key}>

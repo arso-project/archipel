@@ -180,7 +180,6 @@ class ReqAuthorizationInner extends React.Component {
 
   render () {
     const { selected, res, expanded } = this.state
-    console.log(expanded, res)
     const { archive } = this.props
     return (
       <div className='flex flex-col'>
