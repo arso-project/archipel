@@ -11,6 +11,8 @@ export { default as Button, FloatingButton } from './components/Button'
 // C
 export { default as Card } from './components/Card'
 export { default as Checkbox } from './components/Checkbox'
+// E
+export { default as ExpandButton } from './components/ExpandButton'
 // F
 export { default as Foldable } from './components/Foldable'
 // H

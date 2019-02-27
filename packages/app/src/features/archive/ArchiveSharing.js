@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Consumer, WithCore } from 'ucore/react'
-import { Button, Checkbox, SettingsCard, StructuresCheckList } from '@archipel/ui'
+import { Button, Checkbox, SettingsCard, StructuresCheckList, ExpandButton } from '@archipel/ui'
 
 import { withApi } from '../../lib/api.js'
 import { HttpPublisher } from 'electron-publish';
@@ -68,14 +68,14 @@ const ClickToCopy = ({ archiveKey, onClick }) => {
 //   constructor (props) {
 //     super(props)
 //     this.inputRef = React.createRef()
-//     this.onSubmit = this.onSubmit.bind(this)
+//     this.submit = this.submit.bind(this)
 //     this.state = { res: null }
 //   }
 
-//   async onSubmit (e) {
+//   async submit (e) {
 //     let val = this.inputRef.current.value
 //     if (val) {
-//       let res = await this.props.onSubmit({ key: this.props.archive, writerKey: val })
+//       let res = await this.props.submit({ key: this.props.archive, writerKey: val })
 //       this.setState({ res })
 //     }
 //   }
@@ -86,7 +86,7 @@ const ClickToCopy = ({ archiveKey, onClick }) => {
 //       <div>
 //         <div className='flex'>
 //           <input type='text' ref={this.inputRef} />
-//           <Button onClick={this.onSubmit}>OK</Button>
+//           <Button onClick={this.submit}>OK</Button>
 //         </div>
 //         { res && <div>{JSON.stringify(res)}</div>}
 //       </div>
@@ -112,19 +112,26 @@ const ClickToCopy = ({ archiveKey, onClick }) => {
 class ReqAuthorizationInner extends React.Component {
   constructor (props) {
     super(props)
-    this.onSubmit = this.onSubmit.bind(this)
+    this.submit = this.submit.bind(this)
     this.StructuresCheckList = StructuresCheckList.bind(this)
     this.promptMsg = 'please select structures!'
     this.state = {
       selected: {},
+      expanded: false,
       userMsg: null,
-      res: this.promptMsg
+      res: null
     }
+    // this.onExpand = this.onExpand.bind(this)
   }
 
-  async onSubmit (e) {
+  async componentDidMount () {
+    await this.switchAll()
+    this.submit()
+  }
+
+  async submit () {
     const { archive } = this.props
-    const { selected, userMsg } = this.state
+    let { selected, userMsg, expanded } = this.state
     const { requestAuthorizationMsg } = this.props.api.hyperlib
 
     let requestItems = []
@@ -133,45 +140,80 @@ class ReqAuthorizationInner extends React.Component {
     }
 
     if (requestItems.length > 0) {
-      // let res = await this.props.onSubmit(selected)
+      // let res = await this.props.submit(selected)
       const res = await requestAuthorizationMsg(archive.key, requestItems, userMsg)
-      this.setState({ res, selected: {} })
+      if (expanded) selected = {}
+      this.setState({ res, selected })
     } else {
       this.setState({ res: this.promptMsg })
     }
   }
 
   async onSelect (bool, key) {
-    let { selected } = this.state
+    let { selected, expanded } = this.state
+    if (!expanded) return this.switchAll()
     selected[key] = bool
     this.setState({ selected })
   }
 
+  async switchAll (toBeState) {
+    let { selected } = this.state
+    let { archive } = this.props
+
+    if (toBeState === undefined || toBeState === null) {
+      toBeState = !selected[archive.key]
+    }
+
+    selected[archive.key] = toBeState
+    for (let i of archive.structures) {
+      selected[i.key] = toBeState
+    }
+    await this.setState({ selected })
+  }
+
+  onExpand () {
+    let { expanded, selected } = this.state
+    let { archive } = this.props
+    this.setState({ expanded: !expanded })
+    this.switchAll(selected[archive.key])
+  }
+
   render () {
-    const { selected, res } = this.state
+    const { selected, res, expanded } = this.state
+    console.log(expanded, res)
     const { archive } = this.props
     return (
       <div className='flex flex-col'>
         <div className='flex flex-col '>
-          <Checkbox id='authPrimCheck' label={archive.info.title + '/' + archive.type}
-            checked={selected[archive.key] || false}
-            onChange={(e) => this.onSelect(e.target.checked, archive.key)} />
-          <div className='pl-4'>
-            <StructuresCheckList structures={archive.structures}
-              idSub='authReqItems'
-              onSelect={this.onSelect.bind(this)}
-              selected={selected} />
+          <div className='flex'>
+            <Checkbox className='flex-1 text-lg'
+              id='authPrimCheck' label={archive.info.title + (expanded ? '/' + archive.type : '')}
+              checked={selected[archive.key] || false}
+              onChange={(e) => this.onSelect(e.target.checked, archive.key)} />
+            <ExpandButton expanded={expanded} size={24} onClick={() => this.onExpand()} />
           </div>
+          <StructuresCheckList
+            indent='4'
+            expanded={expanded}
+            structures={archive.structures}
+            idSub='authReqItems'
+            onSelect={this.onSelect.bind(this)}
+            selected={selected} />
         </div>
-        <textarea className='w-56 m-1' placeholder='Add a custom message to the request'
+        <textarea className='w-auto m-2' placeholder='Add a custom message to the request'
+          rows='1'
           onChange={(e) => this.setState({ userMsg: e.target.value })} />
-        <Button className='w-auto' onClick={() => this.onSubmit()}>Generate Cipher</Button>
-        <textarea className='m-1' readOnly placeholder='Authentification Message'
-          value={res} cols='20' rows='8' />
+        {/* <textarea className='bg-transparent resize-none m-2' readOnly placeholder='Authentification Message'
+          value={res} rows='3' /> */}
+        <Button className='flex-1 w-auto h-auto m-2 ml-2 p-1' onClick={this.submit}>
+          Regenerate Token</Button>
+        <Button className='flex-1 w-auto h-auto m-2 mr-2 p-1' onClick={e => copyToClipboard(res)}>
+          Copy to Clipboard </Button>
       </div>
     )
   }
 }
+
 
 const ReqAuthorization = withApi(ReqAuthorizationInner)
 
@@ -206,7 +248,7 @@ const Sharing = ({ archive, onShare /*, authorizeWriter*/}) => {
           settingsprops='w-40 md:w-40'
           explanation={copied ? 'copied to clipboard!' : 'click to copy:'}
           setting={
-            <ClickToCopy archiveKey={key} onClick={e => onCopyClick()}/>
+            <ClickToCopy archiveKey={key} onClick={e => onCopyClick()} />
           }
           warning='Only send to trusted people and over trustworthy encrypted channels!'>
           <TextCopyAchiveKey />
@@ -215,7 +257,7 @@ const Sharing = ({ archive, onShare /*, authorizeWriter*/}) => {
 
       {/* {state.share
         ? <SettingsCard title='3. Authorize others back and sync their changes.'
-          setting={<Authorize onSubmit={authorizeWriter} archive={key} />}
+          setting={<Authorize submit={authorizeWriter} archive={key} />}
           explanation='Enter ArchiveKey to authorize:'>
           <TextAuthorize />
         </SettingsCard>
@@ -224,7 +266,7 @@ const Sharing = ({ archive, onShare /*, authorizeWriter*/}) => {
       {state.share
         ? <SettingsCard title='Request write access'
           setting={<ReqAuthorization archive={archive} />}
-          explanation='Select Structures:'
+          explanation='Authorization Message for'
           warning='Only the original archive creator can decrypt the cypher.'>
           <TextRequestAuthorization />
         </SettingsCard>

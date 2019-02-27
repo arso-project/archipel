@@ -2,8 +2,12 @@ import React from 'react'
 import { Checkbox } from '..'
 
 const StructuresCheckList = (props) => {
-  let { structures, onSelect, selected, disabled, idSub, ...rest } = props
+  let { structures, onSelect, selected, disabled, idSub, indent, expanded, ...rest } = props
+
+  if (expanded === undefined || expanded === null) expanded = true
+  console.log(expanded)
   if (!structures) return ''
+
   let listItems = structures.map(i => <li key={'reqAuthItem' + i.key}>
     <Checkbox id={idSub + i.key} label={i.type}
       checked={selected[i.key] || false}
@@ -11,11 +15,17 @@ const StructuresCheckList = (props) => {
       onChange={(e) => onSelect(e.target.checked, i.key)} />
   </li>)
 
-  return (
-    <ul className='list-reset'>
-      {listItems}
-    </ul>
-  )
+  if (expanded) {
+    return (
+      <div className={'pl-' + indent} >
+        <ul className='list-reset'>
+          {listItems}
+        </ul>
+      </div>
+    )
+  }
+
+  return null
 }
 
 export default StructuresCheckList
