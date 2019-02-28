@@ -40,7 +40,7 @@ export class Store {
   }
 
   ids () {
-    return this.res
+    return Object.keys(this.res) || []
   }
 
   get (id) {
