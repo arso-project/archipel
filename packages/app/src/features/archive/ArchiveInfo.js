@@ -2,7 +2,7 @@ import React from 'react'
 import { Button } from '@archipel/ui'
 import ToggleButton from 'react-toggle-button'
 import { MdCheck, MdCancel } from 'react-icons/md'
-import NetStats from './NetStats'
+// import NetStats from './NetStats'
 
 import { useToggle } from '../../lib/hooks'
 import { getApi } from '../../lib/api'
@@ -93,7 +93,7 @@ function ArchiveInfo (props) {
             value={state.share}
             // onToggle={() => shareArchive(key, !state.share)}
           />
-          <NetStats className='flex-1 px-2' />
+          {/* <NetStats className='flex-1 px-2' /> */}
         </div>
       </Item>
       <Item label='Authorized'><YesNo>{state.writable}</YesNo></Item>

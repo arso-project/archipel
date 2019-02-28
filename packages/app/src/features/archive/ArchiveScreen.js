@@ -12,6 +12,7 @@ import { useArchive } from './archive'
 import ListArchives from './ListArchives'
 import AuthorizationMenu from './AuthorizationMenu'
 import CreateArchive from './CreateArchive'
+import NetStats from './NetStatsComp'
 
 export function ArchiveListWrapper (props) {
   const { children } = props
@@ -145,6 +146,7 @@ export function ArchiveTabsWrapper (props) {
           <h2 className='text-2xl flex-1'>
             {archive.info.title}
           </h2>
+          <NetStats className='mr-2' archive={archive} />
           <div className=''>
             <ArchiveActions archive={archiveKey} />
           </div>
