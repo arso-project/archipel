@@ -3,6 +3,7 @@ const p = require('path')
 
 module.exports = {
   hex,
+  hexToBuf,
   nestStorage,
   discoveryKey,
   keyPair,
@@ -18,12 +19,17 @@ function nestStorage (storage, ...prefixes) {
 }
 
 function discoveryKey (publicKey) {
-  return crypto.discoveryKey(datenc.toBuf(publicKey)).toString('hex')
+  return hex(crypto.discoveryKey(hexToBuf(publicKey)))
 }
 
 function hex (buf) {
   if (!Buffer.isBuffer(buf)) return buf
   return buf.toString('hex')
+}
+
+function hexToBuf (hex) {
+  if (Buffer.isBuffer(hex)) return hex
+  return Buffer.from(hex, 'hex')
 }
 
 function keyPair () {

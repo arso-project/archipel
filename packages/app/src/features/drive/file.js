@@ -14,7 +14,8 @@ export function init () {
     let watchStream = await api.hyperdrive.createWatchStream()
     // todo: this is really inefficient.
     watchStream.on('data', info => {
-      const keys = files.ids().filter(id => id.split('/')[0] === info.key)
+      let ids = files.ids()
+      const keys = ids.filter(id => id.split('/')[0] === info.key)
       keys.forEach(key => files.set(key, () => ({})))
       loadFile(info.key, '/')
     })

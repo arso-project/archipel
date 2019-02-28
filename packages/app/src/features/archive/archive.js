@@ -14,10 +14,6 @@ export function init () {
     archiveStream.on('data', archive => {
       archives.set(archive.key, archive)
     })
-    let networkStream = await api.hyperlib.createStatsStream()
-    networkStream.on('data', data => {
-      console.log('data', data)
-    })
   }
 }
 
@@ -27,6 +23,20 @@ export function getArchive (key) {
 
 export function getArchives () {
   return archives.all()
+}
+
+export function discoToKey (dkey) {
+  // todo: optimize by caching the index globally.
+  let structures = archives.all().reduce((acc, archive) => {
+    archive.structures.forEach(s => {
+      acc[s.key] = { ...s, archive: archive.key }
+    })
+    return acc
+  }, {})
+
+  let match = Object.values(structures).filter(a => a.discoveryKey === dkey)
+  if (match && match.length) return match[0].archive
+  return null
 }
 
 export function useArchive (key) {

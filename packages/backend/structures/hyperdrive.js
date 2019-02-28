@@ -180,6 +180,7 @@ exports.structure = (opts, api) => {
       let state = {
         type: 'hyperdrive',
         key: hex(drive.key),
+        discoveryKey: hex(drive.discoveryKey),
         writable: self.writable
       }
       if (includeFeeds) state.feeds = self.getFeedState()
