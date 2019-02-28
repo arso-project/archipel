@@ -72,7 +72,6 @@ export default function Sidebar (props) {
 
   function OtherItems () {
     let sidebarItems = registry.getAll('fileSidebar')
-    console.log('sidebarItems', sidebarItems)
     if (!sidebarItems || !sidebarItems.length) return null
     return (
       <div>
@@ -85,32 +84,5 @@ export default function Sidebar (props) {
       </div>
     )
   }
-
 }
-
-// const Sidebar = (props) => {
-  // const { archive, path, setVersion } = props
-  // return (
-    // <Consumer store='fs' select='getStat' archive={archive} path={path}>
-      // {(stat, store) => {
-        // if (!stat || stat.isDirectory) return null
-        // let sidebarItems = store.core.components.getAll('fileSidebar')
-        // return (
-          // <div>
-            // <SidebarWidget {...props} stat={stat}>
-              // { sidebarItems && sidebarItems.map((item, i) => (
-                // <div key={i}>
-                  // <Heading>{item.opts.title}</Heading>
-                  // <item.component stat={stat} archive={archive} path={path} />
-                // </div>
-              // ))}
-            // </SidebarWidget>
-          // </div>
-        // )
-      // }}
-    // </Consumer>
-  // )
-// }
-
-// export default Sidebar
 

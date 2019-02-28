@@ -14,14 +14,14 @@ export function FileGrid (props) {
 
   const children = useMemo(() => {
     if (!file.children || !file.children.length) return null
-    return file.children.sort()
+    let sorted = file.children.sort()
+    return sorted.map((path, i) => <FileGridItem key={i} archive={archive} path={path} onSelect={onSelect} />)
   }, [file.children])
 
-  if (!children) return 'This folder is empty.'
-  console.log('original', file.children, 'sorted', children)
+  if (!children) return <div className='text-xl italic text-grey-dark m-auto text-center'>This folder is empty.</div>
 
   return (
-    <div>{children.map((path, i) => <FileGridItem key={i} archive={archive} path={path} onSelect={onSelect} />)}</div>
+    <div>{children}</div>
   )
 }
 
@@ -70,16 +70,28 @@ export function FileTreeItem (props) {
   let path = file.path
   const [expand, setExpand] = useState(false)
 
-  const expanded = useMemo((args) => {
-    let base = selected.substring(0, selected.lastIndexOf('/'))
+  const expanded = useMemo(() => {
+    let base = selected.substring(0, selected.lastIndexOf('/')) || '/'
     if (base.startsWith(path)) return true
     return expand
   }, [expand, selected, path])
 
+  // todo: debug why the memo does not work.
+  const treeChildren = useMemo(() => {
+    if (!expanded) return null
+    let cls = ''
+    if (path !== '/') cls += 'pl-4'
+    return (
+      <div className={cls}>
+        <FileTreeChildren archive={archive} paths={file.children} selected={selected} onSelect={onSelect} />
+      </div>
+    )
+  }, [file.children, path, selected, expanded])
+
   if (!file) return null
 
   // special case for root folder.
-  if (path === '/') return children(true)
+  if (path === '/') return treeChildren
 
   let expandable = file.isDirectory
   let expander = (
@@ -97,34 +109,24 @@ export function FileTreeItem (props) {
 
   return (
     <div>
-      <div className={cls} onClick={onClick}>
+      <div className={cls} onClick={e => onSelect(path)}>
         {expander}
         <span className='w-6 flex-0'><Icon /></span>
         <span className='truncate flex-1'>{file.name}</span>
       </div>
-      { expanded && children()}
+      {treeChildren}
     </div>
   )
-
-  function children (noindent) {
-    return <FileTreeChildren archive={archive} paths={file.children} selected={selected} onSelect={onSelect} noindent={noindent} />
-  }
-
-  function onClick (e) {
-    onSelect(path)
-  }
 }
 
 function FileTreeChildren (props) {
-  const { archive, paths, noindent, selected, onSelect } = props
+  const { archive, paths, selected, onSelect } = props
   const files = useFiles(archive, paths)
 
   if (!paths || !paths.length) return null
 
-  let cls = ''
-  if (!noindent) cls += 'pl-4'
   return (
-    <div className={cls}>
+    <div>
       {files.map((path, i) => {
         return <FileTreeItem key={i} archive={archive} file={path} selected={selected} onSelect={onSelect} />
       })}

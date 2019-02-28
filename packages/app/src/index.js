@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 
 import { useKey } from './lib/hooks'
-import { Router, registerRoute, registerElement } from './lib/router'
+import { Router, useRouter, registerRoute, registerElement, getWrappers } from './lib/router'
 
-import ArchiveScreen from './features/archive/ArchiveScreen.js'
+import { ArchiveWrapper, NoArchive } from './features/archive/ArchiveScreen.js'
 
 import { MdShare, MdInfoOutline } from 'react-icons/md'
 
@@ -19,19 +19,17 @@ import '@archipel/ui/tailwind.pcss'
 
 import './features/drive/index.js'
 
-// registerRoute('/', ArchiveScreen)
-registerRoute('/', ArchiveScreen)
-registerRoute('archive', ArchiveScreen)
-registerRoute('archive/:archive', ArchiveInfo, { wrap: true })
+registerRoute('/', NoArchive, {
+  Wrapper: ArchiveWrapper
+})
+  // Wrapper: Wrapper
+// })
+registerRoute('archive', NoArchive)
+registerRoute('archive/:archive', ArchiveInfo, {
+  // Wrapper: ArchiveWrapper
+})
 registerRoute('archive/:archive/info', ArchiveInfoNew, { wrap: true })
 registerRoute('archive/:archive/share', ArchiveSharing, { wrap: true })
-
-// registerElement('archive', {
-  // actions: [
-    // { name: 'Info', href: 'archive/:archive', weight: -10 },
-    // { name: 'Share', href: 'archive/:archive/share', weight: -9 }
-  // ]
-// })
 
 registerElement('archive', {
   actions: [
@@ -47,32 +45,45 @@ registerRoute('/404', () => <strong>404 Not Found</strong>)
 export function App (props) {
   return (
     <div>
-      <Router attach global Wrap={Wrapper} />
+      <Router attach global Wrapper={Wrapper} />
     </div>
   )
 }
 
 function Wrapper (props) {
-  let { children, params, wrap } = props
-  const [chrome, setChrome] = useState(true)
-  /* let color = 'pink' */
-  /* if (params.archive) color = 'blue' */
+  const { children, router } = props
+  const { route } = router
 
-  let color
-  color = chrome ? 'blue' : 'pink'
+  const [zoom, setZoom] = useState(0)
 
-  useKey('Z', ev => {
-    setChrome(c => !c)
-  })
+  useKey('+', e => zoomIn())
+  useKey('-', e => zoomOut())
 
-  if (chrome && wrap && params.archive) {
-    children = <ArchiveScreen>{children}</ArchiveScreen>
+  function zoomIn () {
+    let wrappers = getWrappers(route)
+    setZoom(zoom => zoom < wrappers.length ? zoom + 1 : zoom)
   }
+  function zoomOut () {
+    setZoom(zoom => zoom > 0 ? zoom - 1 : zoom)
+  }
+
+  // todo: do something with color.
+  let color = 'blue'
+  if (zoom) color = 'pink'
+  if (zoom > 1) color = 'black'
+
+  let rendered = children
+  let wrappers = getWrappers(route)
+  let filteredWrappers = wrappers.slice(0, wrappers.length - zoom)
+
+  filteredWrappers.forEach(Wrapper => {
+    rendered = <Wrapper router={router}>{rendered}</Wrapper>
+  })
 
   return (
     <div className='flex flex-col h-screen font-sans'>
       <div className={`flex-1 border-8 border-${color}-dark p-4`}>
-        {children}
+        {rendered}
       </div>
       <div className='flex-0 max-w-1/2'>
         <Debug />

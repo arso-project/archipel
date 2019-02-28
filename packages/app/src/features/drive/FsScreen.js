@@ -1,41 +1,67 @@
-import React, { useState, useEffect, useMemo } from 'react'
-import { Heading, Modal } from '@archipel/ui'
-import { MdFlashOn } from 'react-icons/md'
+import React, { useMemo } from 'react'
+import { Modal } from '@archipel/ui'
 
-import { useRouter, getElements, Link } from '../../lib/router'
+import { getElements } from '../../lib/router'
 import { Error } from '../../lib/result'
 
 import { useFile } from './file'
 import ListDir from './ListDir'
-import CreateDir from './CreateDir'
-import UploadFile from './UploadFile'
 import ViewFile from './ViewFile'
 import FileSidebar from './Sidebar'
 
-export default function FileScreen () {
-  const { goto, params } = useRouter()
+function fileRouteParams (props) {
+  const { goto, params } = props
   const { archive, wildcard } = params
-
   let path = wildcard || '/'
+
+  return { archive, path, gotoFile }
 
   function gotoFile (fileOrPath, version) {
     let path = typeof fileOrPath === 'object' ? fileOrPath.path : fileOrPath
     goto(['archive', archive, 'file', path])
   }
+}
 
+export function FilePage (props) {
+  const { archive, path, gotoFile } = fileRouteParams(props)
+  return <File archive={archive} path={path} onSelect={gotoFile} />
+}
+
+export function FilePageWrapper (props) {
+  const { children, router } = props
+  const { archive, path, gotoFile } = fileRouteParams(router)
+  return <FileWrapper children={children} archive={archive} path={path} onSelect={gotoFile} />
+}
+
+export function File (props) {
+  const { archive, path, onSelect } = props
+  const file = useFile(archive, path)
+  if (file.error) return <Error error={file.error} />
+
+  if (!file.path) return null
+
+  if (file.isDirectory) {
+    return <ListDir archive={archive} path={path} onSelect={onSelect} grid />
+  } else {
+    return <ViewFile archive={archive} path={path} stat={file} />
+  }
+}
+
+export function FileWrapper (props) {
+  const { children, archive, path, onSelect } = props
   return (
     <div>
       <div className='flex max-w-full'>
         <div className='flex-0 w-64 p-4 sm:hidden'>
-          <ListDir archive={archive} path={path} onSelect={gotoFile} focus />
+          <ListDir archive={archive} path={path} onSelect={onSelect} focus />
         </div>
         <div className='flex-1 px-2 py-4'>
           {path && path !== '/' && (
             <div className='mb-4'>
-              <Breadcrumb path={path} onSelect={gotoFile} />
+              <Breadcrumb path={path} onSelect={onSelect} />
             </div>
           )}
-          <File archive={archive} path={path} onSelect={gotoFile} sidebar />
+          {children}
         </div>
         <div className='w-80 flex-0 p-4'>
           <Sidebar archive={archive} path={path} />
@@ -76,7 +102,7 @@ function Breadcrumb (props) {
 }
 
 function getFileActions (file) {
-  let actions = getElements('file').actions
+  let actions = getElements('archive/:archive/file').actions
   if (actions) {
     actions = actions.filter(action => {
       if (!action.match) return true
@@ -133,38 +159,5 @@ function Sidebar (props) {
       {renderedActions}
       {widgets}
     </div>
-  )
-}
-
-function File (props) {
-  const { archive, path, onSelect } = props
-  const file = useFile(archive, path)
-  if (file.error) return <Error error={file.error} />
-
-  if (!file.path) return null
-
-  const { isDirectory } = file
-
-  return (
-    <>
-      {isDirectory
-        ? <ListDir archive={archive} path={path} onSelect={onSelect} grid />
-        : <ViewFile archive={archive} path={path} stat={file} />
-      }
-    </>
-  )
-}
-
-function DirActions (props) {
-  let { archive, path } = props
-  path = path || '/'
-  let Toggle = props => (
-    <span {...props} className='bg-purple-lightest border-1 border-purple-lighter cursor-pointer hover:bg-purple-dark hover:text-purple-lightest text-purple-dark rounded-sm inline-block p-2 font-bold italic'><MdFlashOn />Actions</span>
-  )
-  return (
-    <Modal Toggle={Toggle}>
-      <CreateDir archive={archive} path={path} />
-      <UploadFile archive={archive} path={path} />
-    </Modal>
   )
 }

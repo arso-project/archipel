@@ -19,20 +19,26 @@ const elements = {}
  *   link: Register a link with this name or { name, icon }
  */
 export function registerRoute (route, component, opts) {
+  if (route.charAt(0) !== '/') route = '/' + route
   opts = opts || {}
   if (typeof route === 'function') route = route()
   else if (component) route = { route, component, ...opts }
 
-  let elementKeys = ['link', 'panel']
-  for (let key of elementKeys) {
-    if (opts[key]) registerElement(route.route, { [key]: opts[key] })
-  }
+  // let elementKeys = ['link', 'panel']
+  // for (let key of elementKeys) {
+    // if (opts[key]) registerElement(route.route, { [key]: opts[key] })
+  // }
 
   routes[route.route] = route
 }
 
 export function getRoutes () {
   return routes
+}
+
+export function getRoute (route) {
+  if (route.charAt(0) !== '/') route = '/' + route
+  return routes[route]
 }
 
 export function registerElement (route, opts) {
@@ -54,49 +60,64 @@ export function getElements (route) {
 }
 
 export function getWrappers (route) {
-  let parts = route.split('/')
-  let cur = ''
+  let parts = route.split('/').filter(e => e)
   let wrappers = []
+
+  checkRoute('/')
+
+  let cur = ''
   parts.forEach(part => {
     cur = cur + '/' + part
-    let element = getElements(cur)
-    if (!element || !element.wrap) return
-    wrappers.push(element.wrap)
+    checkRoute(cur)
   })
+
+  function checkRoute (path) {
+    let route = getRoute(path)
+    if (!route || !route.Wrapper) return
+    wrappers.push(route.Wrapper)
+  }
+
+  // Innermost wrapper should come first.
+  wrappers.reverse()
+
   return wrappers
 }
 
-export function initRouter (routes, onRoute) {
+export function initRouter (routes, onRoute, attach) {
   const router = wayfarer('/404')
 
+  let currentPath = null
+  let currentRoute = null
+
   for (let route of Object.values(routes)) {
-    router.on(route.route, params => {
-      console.log('ok', route, params)
-      if (route.redirect) return goto(route.redirect)
-
-      let elements = getElements(route.route)
-
-      let data = { ...route, params, elements }
-
-      if (elements.middleware) {
-        elements.middleware.forEach(cb => {
-          data = cb(data)
-        })
-      }
-
-      onRoute(data)
-    })
+    router.on(route.route, params => applyRoute(route, params))
   }
 
-  let current = null
-
-  window.onpopstate = ev => {
+  if (attach) {
+    window.onpopstate = ev => goto(window.location.hash)
     goto(window.location.hash)
   }
 
   return {
     router,
-    goto
+    goto,
+    setParams
+  }
+
+  function applyRoute (route, params) {
+    if (route.redirect) return goto(route.redirect)
+
+    let elements = getElements(route.route)
+
+    let data = { ...route, params, elements }
+
+    if (elements.middleware) {
+      elements.middleware.forEach(cb => {
+        data = cb(data)
+      })
+    }
+    currentRoute = data
+    onRoute(data)
   }
 
   function goto (link) {
@@ -104,15 +125,20 @@ export function initRouter (routes, onRoute) {
       link = '/' + link.join('/')
     }
     link = hashMatch(link)
-    if (link === current) return
-    current = link
+    if (link === currentPath) return
+    currentPath = link
     try {
-      window.location = '#' + link
-      // console.log('goto', link)
+      if (attach) window.location = '#' + link
       router(link)
     } catch (e) {
       console.error('Unregistered link: ' + link)
     }
+  }
+
+  function setParams (params) {
+    params = Object.assign({}, currentRoute.params, params)
+    let link = buildLink(currentRoute.route, params)
+    goto(link)
   }
 }
 
@@ -128,7 +154,7 @@ function mergeRoutes (lists) {
 export const RouterContext = React.createContext()
 
 export function Router (props) {
-  const { children, attach, fallback, Wrap, routes, global } = props
+  const { children, attach, fallback, routes, global, Wrapper, applyWrappers } = props
   const [route, setRoute] = useState({})
   const routerRef = useRef({})
 
@@ -148,13 +174,8 @@ export function Router (props) {
 
     let mergedRoutes = mergeRoutes([globalRoutes, childRoutes, routes])
 
-    const { router, goto } = initRouter(mergedRoutes, setRoute)
-    routerRef.current = { router, goto }
-
-    if (attach) {
-      goto(window.location.hash)
-      window.onpopstate = ev => goto(window.location.hash)
-    }
+    const router = initRouter(mergedRoutes, setRoute, attach)
+    routerRef.current = router
   }, [])
 
   const context = useMemo(() => {
@@ -172,11 +193,16 @@ export function Router (props) {
 
   let rendered = <Route {...context} />
 
+  if (applyWrappers) {
   // Apply both global and route-specific wrappers.
-  let wrappers = []
-  if (route.Wrap) wrappers.push(route.Wrap)
-  if (Wrap) wrappers.push(Wrap)
-  wrappers.forEach(Wrap => rendered = <Wrap {...context}>{rendered}</Wrap>)
+    getWrappers(route.route).forEach(Wrapper => {
+      rendered = <Wrapper router={context}>{rendered}</Wrapper>
+    })
+  }
+
+  if (Wrapper) {
+    rendered = <Wrapper router={context}>{rendered}</Wrapper>
+  }
 
   return (
     <RouterContext.Provider value={context}>
@@ -185,8 +211,11 @@ export function Router (props) {
   )
 }
 
+export function applyWrappers (router, route) {
+}
+
 function buildLink (route, params) {
-  if (typeof route === 'string') route = route.split('/')
+  if (typeof route === 'string') route = route.split('/').filter(e => e)
   return route.map(el => {
     if (el.startsWith(':') && params.hasOwnProperty(el.substring(1))) {
       return params[el.substring(1)]
@@ -220,7 +249,7 @@ export function useRouter (props) {
 }
 
 function Element (props) {
-  const { element, params } = props
+  const { element } = props
   return <div ref={setRef} />
   function setRef (el) {
     if (el) el.appendChild(element)
@@ -228,18 +257,18 @@ function Element (props) {
 }
 
 function hashMatch (hash, prefix) {
-  var pre = prefix || '/';
-  if (hash.length === 0) return pre;
-  hash = hash.replace('#', '');
+  var pre = prefix || '/'
+  if (hash.length === 0) return pre
+  hash = hash.replace('#', '')
   hash = hash.replace(/\/$/, '')
-  if (hash.indexOf('/') != 0) hash = '/' + hash;
-  if (pre == '/') return hash;
-  else return hash.replace(pre, '');
+  if (hash.indexOf('/') !== 0) hash = '/' + hash
+  if (pre === '/') return hash
+  else return hash.replace(pre, '')
 }
 
-function isElement (element) {
- return element instanceof Element || element instanceof HTMLElement
-}
+// function isElement (element) {
+ // return element instanceof Element || element instanceof HTMLElement
+// }
 
 // function parseLink (link) {
   // let regex = /arso:\/\/([0-9a-f]+)\/?(.*)?/
@@ -251,4 +280,3 @@ function isElement (element) {
   // }
   // return res
 // }
-

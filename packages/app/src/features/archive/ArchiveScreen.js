@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 
 import { MdMenu, MdClose, MdSubdirectoryArrowLeft } from 'react-icons/md'
 import { Consumer } from 'ucore/react'
@@ -11,27 +11,29 @@ import { useRouter, Link, getElements } from '../../lib/router'
 import ListArchives from './ListArchives'
 import AuthorizationMenu from './AuthorizationMenu'
 import CreateArchive from './CreateArchive'
-import AddArchive from './AddArchive'
 
-export default function ArchiveScreen (props) {
+export function ArchiveWrapper (props) {
   const { children } = props
-  const { params, goto, route } = useRouter()
+  const { params, goto, route, setParams } = useRouter()
 
   // todo: Change onSelect syntax in List to be a single function.
-  return <ArchiveUcoreLoader Render={ArchiveScreen} changeprop={params.archive} changeprop2={route} />
+  return <ArchiveUcoreLoader Render={ArchiveScreen} changeprop={params.archive} changeprop2={{}} />
 
   function ArchiveScreen (props) {
     const { archives, selected, onSelect } = props
+    // const { archives } = props
+    // const [selected, onSelect] = useState()
 
     useEffect(() => {
       if (params.archive !== archive) onSelect(params.archive)
     }, [params.archive])
 
     const archive = selected ? selected.key : null
+    // const archive = selected
 
     return (
       <div className='flex flex-1'>
-        <div className='flex-no-shrink w-65'>
+        <div className='flex-no-shrink w-65 mr-4'>
           <ArchiveGlobalActions />
           <ArchiveList archives={archives} selected={selected} onSelect={onArchiveSelect} />
         </div>
@@ -45,13 +47,14 @@ export default function ArchiveScreen (props) {
     function onArchiveSelect (item, i) {
       return (e) => {
         onSelect(item.key)
+        // setParams({ archive: item.key })
         goto('archive/' + item.key)
       }
     }
   }
 }
 
-function NoArchive (props) {
+export function NoArchive (props) {
   return (
     <div className='p-16 md:w-1/2 mx-auto my-auto'>
       <div className='my-8 text-center'>
