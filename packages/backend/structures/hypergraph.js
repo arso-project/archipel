@@ -49,7 +49,7 @@ exports.structure = (opts, api) => {
   const key = opts.key
   const db = hypergraph(api.storage, key, opts)
 
-  const structure = {
+  const self = {
     async ready () {
       const [promise, done] = prom()
       db.ready(() => {
@@ -73,11 +73,15 @@ exports.structure = (opts, api) => {
       return [...hyperdb.feeds, hyperdb.contentFeeds]
     },
 
-    getState () {
-      return {
+    getState (includeFeeds) {
+      let state = {
         type: 'hypergraph',
-        key: hex(db.db.key)
+        key: hex(db.db.key),
+        discoveryKey: hex(db.discoveryKey),
+        writable: self.writable
       }
+      if (includeFeeds) state.feeds = self.getFeedState()
+      return state
     },
 
     authorized (key) {
@@ -128,9 +132,9 @@ exports.structure = (opts, api) => {
   // Todo: Document available api.
   const asyncFuncs = ['ready', 'put', 'get']
   asyncFuncs.forEach(func => {
-    structure.api[func] = pify(db[func].bind(db))
+    self.api[func] = pify(db[func].bind(db))
   })
 
-  return structure
+  return self
 }
 

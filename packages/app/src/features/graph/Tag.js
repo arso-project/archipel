@@ -5,130 +5,33 @@ import { Heading, Button, Status } from '@archipel/ui'
 import { withApi } from '../../lib/api'
 import { useAsyncEffect, useToggle, useForm } from '../../lib/hooks'
 import { useRouter } from '../../lib/router'
-import { triplesToThings } from './store'
+import { useArchive, discoToKey } from '../archive/archive'
+// import { triplesToThings } from './store'
+import { Metadata } from './Metadata'
 
-function makeFileLink (archive, path) {
-  if (path.charAt(0) !== '/') path = '/' + path
-  return 'arso://' + archive + path
-}
-
-function parseLink (str) {
-  str = str.substring(7)
-  let [key, ...path] = str.split('/')
-  return { archive: key, path: path.join('/') }
-}
-
-function spo(s, p, o) {
-  return { subject: s, predicate: p, object: o }
-}
-
-function TagItem (props) {
-  let { tag, className } = props
-  className = className || ''
-  let cls = 'inline-block p-2 text-pink-dark font-bold ' + className
-  return <div className={cls}><span className='text-grey italic'>#</span>{tag}</div>
-}
-
-function Tags (props) {
-  const { archive, link, api, update } = props
-  let res = useAsyncEffect(async () => {
-    let triples =  await api.hypergraph.get(archive, { subject: link })
-    let things = triplesToThings({}, triples)
-    return things[link]
-  }, [link, update])
-
-  if (!res.data) return <Status {...res} />
-  let item = res.data
-  if (!item.tag || !item.tag.length) return 'No tags.'
-  return (
-    <div className='mb-2'>
-      {res.data.tag.map((tag, i) => <TagItem key={i} tag={tag} />)}
-    </div>
-  )
-}
+import { makeLink, parseLink } from '@archipel/common/util/triples'
+import { spo, triplesToThings, useQuery } from './triples'
+export default withApi(Sidebar)
 
 function Sidebar (props) {
-  const { archive, path, api } = props
-  let link = makeFileLink(archive, path)
+  const { archive: archiveKey, path, api } = props
+  let archive = useArchive(archiveKey)
+  // TODO: deal with structures properly.
+  let structure = archive.structures[0]
+  let link = makeLink(structure.discoveryKey, path)
   return (
     <div>
       <div className='mb-2'>
         <Metadata archive={archive} link={link} api={api} />
       </div>
-      <Tag archive={archive} link={link} api={api} />
+      <TagWidget archive={archive} link={link} api={api} />
     </div>
   )
 }
 
-const FIELDS = {
-  title: {
-    label: 'Title',
-    type: 'string'
-  },
-
-  description: {
-    label: 'Description',
-    type: 'text'
-  }
-}
-
-function Metadata (props) {
+function TagWidget (props) {
   const { archive, link, api } = props
-  const [update, triggerUpdate] = useToggle()
-  let res = useAsyncEffect(async () => {
-    let triples = await api.hypergraph.get(archive, spo(link))
-    // console.log('load triples', triples)
-    let subjects = toSubjects(triples)
-    // console.log('load subjects', subjects)
-    // console.log('load ret', subjects[link])
-    return subjects[link] || {}
-  }, [link, update])
-
-  if (!res.data) return <Status {...res} />
-
-  return <MetadataEditor {...props} data={res.data} onSubmit={onSubmit} />
-
-  async function onSubmit (values) {
-    let triples = []
-    Object.keys(values).forEach(key => {
-      triples.push(spo(link, key, values[key]))
-    })
-    // console.log('triples', triples)
-    await api.hypergraph.put(archive, triples)
-    triggerUpdate()
-  }
-}
-
-function MetadataEditor (props) {
-  const { archive, link, api, data, onSubmit } = props
-  const { state, setState, makeField, fieldProps, didChange } = useForm(data)
-  // console.log('editor', data)
-
-  let els = []
-  for (let [key, info] of Object.entries(FIELDS)) {
-    els.push((
-      <div key={key}>{makeField({ name: key, title: info.label })}</div>
-    ))
-  }
-  return (
-    <form onSubmit={onSubmitForm}>
-      <div>
-        {els}
-      </div>
-      {didChange && <Button type='submit'>Save</Button>}
-    </form>
-  )
-
-  async function onSubmitForm (e) {
-    e.preventDefault()
-    console.log('form values', state)
-    onSubmit(state)
-    // onSubmit(formValues)
-  }
-}
-
-function Tag (props) {
-  const { archive, link, api } = props
+  const { key: archiveKey } = archive
 
   const [input, setInput] = useState('')
   const [saved, setSaved] = useToggle()
@@ -146,14 +49,39 @@ function Tag (props) {
   )
 
   async function onSave () {
-    console.log('save', input, api, props)
     let triples = []
     let prop = 'tag'
     triples.push(spo(link, prop, input))
-    let res = await api.hypergraph.put(archive, triples)
+    let res = await api.hypergraph.put(archiveKey, triples)
     setInput('')
     setSaved()
   }
+}
+
+function Tags (props) {
+  const { archive, link, api, update } = props
+  const { key: archiveKey } = archive
+  let res = useAsyncEffect(async () => {
+    let triples =  await api.hypergraph.get(archiveKey, { subject: link })
+    let things = triplesToThings({}, triples)
+    return things[link]
+  }, [link, update])
+
+  if (!res.data) return <Status {...res} />
+  let item = res.data
+  if (!item.tag || !item.tag.length) return 'No tags.'
+  return (
+    <div className='mb-2'>
+      {res.data.tag.map((tag, i) => <TagItem key={i} tag={tag} />)}
+    </div>
+  )
+}
+
+function TagItem (props) {
+  let { tag, className } = props
+  className = className || ''
+  let cls = 'inline-block p-2 text-pink-dark font-bold ' + className
+  return <div className={cls}><span className='text-grey italic'>#</span>{tag}</div>
 }
 
 export const TagOverview = withApi(function TagOverview (props) {
@@ -190,7 +118,7 @@ function TagCard (props) {
   return (
     <div>
       <TagItem tag={tag} className='text-2xl' />
-      <div>
+      <div className='flex flex-wrap'>
         {items.map((item, i) => <Subject key={i} link={item} />)}
       </div>
     </div>
@@ -198,12 +126,75 @@ function TagCard (props) {
 }
 
 function Subject (props) {
-  const { link, entity } = props
-  const { goto } = useRouter()
-  let parts = link.substring(7).split('/')
-  let uiLink = ['archive', parts.shift(), 'file', parts.join('/')]
+  const TYPE = 'file' // todo.
+
+  const { link } = props
+  const { archiveKey, path } = resolveLink(link)
+  const archive = useArchive(archiveKey)
+  const result = useQuery(archiveKey, spo(link))
+  if (!result.data) return null
+  const entity = result.data[link]
+
+  if (!entity) return null
+
+  const filename = path.substring(path.lastIndexOf('/'))
+  const title = getSingle(entity, 'title', filename)
+  const desc = getSingle(entity, 'description', null)
+  let meta = (
+    <div>
+      <em className='mr-2 bg-grey-lightest text-grey-dark w-64 truncate'>{archive.info.title}</em>
+      {filename}
+    </div>
+  )
+
   return (
-    <a className='display-block cursor-pointer' onClick={e => goto(uiLink)}>{link}</em>
+    <div className='lg:w-1/3 p-2'>
+      <SubjectLink link={link}>
+        <Card title={title} description={desc} meta={meta} />
+      </SubjectLink>
+    </div>
+  )
+}
+
+function Card (props) {
+  const { title, description, meta } = props
+  return (
+    <div className='lg:w-1/3 border-2 border-blue-dark'>
+      <h2 className='text-lg text-blue-dark p-4 border-b-2 border-blue-dark'>
+        {title}
+      </h2>
+      {description && <p className='p-4'>{description}</p>}
+      <div className='text-s bg-grey-lightest px-4 py-2'>
+        {meta}
+      </div>
+    </div>
+  )
+}
+
+function getSingle (entity, prop, defaultValue) {
+  if (entity[prop] && entity[prop][0]) return entity[prop][0]
+  return defaultValue
+}
+
+function resolveLink (link) {
+  let { key: discoveryKey, path } = parseLink(link)
+  let archiveKey = discoToKey(discoveryKey)
+  return { archiveKey, discoveryKey, path }
+}
+
+function SubjectLink (props) {
+  const { link, children } = props
+  const { goto } = useRouter()
+
+  let { key: discoveryKey, path } = parseLink(link)
+  let archiveKey = discoToKey(discoveryKey)
+
+  let uiLink = ['archive', archiveKey, 'file', path]
+
+  return (
+    <a className='cursor-pointer' onClick={e => goto(uiLink)}>
+      {children}
+    </a>
   )
 }
 
@@ -234,5 +225,4 @@ function toSubjects (triples) {
   // })
 // }
 
-export default withApi(Sidebar)
 
