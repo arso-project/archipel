@@ -14,6 +14,10 @@ export function init () {
     archiveStream.on('data', archive => {
       archives.set(archive.key, archive)
     })
+    let networkStream = await api.hyperlib.createStatsStream()
+    networkStream.on('data', data => {
+      console.log('data', data)
+    })
   }
 }
 

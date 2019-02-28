@@ -347,8 +347,7 @@ class Archive extends EventEmitter {
   async serialize () {
     let structures = []
     this.structures.forEach(([key, s]) => {
-      if (s !== this.primary) structures.push({ ...s.getState(), key })
-      // structures.push({ ...s.getState(), key })
+      structures.push({ ...s.getState(), key })
     })
 
     let state = this.getState()

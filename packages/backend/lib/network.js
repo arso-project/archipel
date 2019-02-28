@@ -74,8 +74,11 @@ class Network {
           downTotal: speed.downloadTotal,
           upTotal: speed.uploadTotal
         }
-      })
+      }).reduce((acc, obj) => {
+        acc[obj.key] = obj
+        delete obj.key
+        return acc
+      }, {})
     }
   }
 }
-
