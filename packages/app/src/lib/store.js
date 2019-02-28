@@ -1,4 +1,5 @@
 export const S = Symbol('state')
+import { MapOfSets } from '@archipel/common/util/map'
 
 // export const _stores = []
 
@@ -6,34 +7,49 @@ export class Store {
   constructor (name) {
     this.name = name
     this.res = {}
-    this.subscribers = {}
+    this.subscribers = new MapOfSets()
+    this.listSubscribers = new Set()
     // _stores.push(this)
   }
 
   watch (id, fn, init) {
-    this.subscribers[id] = this.subscribers[id] || []
-    this.subscribers[id].push(fn)
+    this.subscribers.add(id, fn)
     if (init) fn(this.get(id))
   }
 
   unwatch (id, fn) {
-    if (!this.subscribers[id]) return
-    this.subscribers[id] = this.subscribers[id].filter(cb => cb !== fn)
+    this.subscribers.delete(id, fn)
+  }
+
+  watchList (fn) {
+    this.listSubscribers.add(fn)
+  }
+
+  unwatchList (fn) {
+    this.listSubscribers.delete(fn)
   }
 
   trigger (id) {
-    if (!this.subscribers[id]) return
+    if (!this.subscribers.has(id)) return
     let res = this.get(id)
-    this.subscribers[id].forEach(fn => fn(res, id))
+    this.subscribers.get(id).forEach(fn => fn(res, id))
+  }
+
+  triggerList () {
+    this.listSubscribers.forEach(fn => fn(this.all()))
   }
 
   ids () {
-    return Object.keys(this.res)
+    return this.res
   }
 
   get (id) {
     if (!this.res[id]) this.res[id] = {}
     return this.res[id]
+  }
+
+  all () {
+    return Object.values(this.res)
   }
 
   set (id, obj) {
@@ -48,6 +64,7 @@ export class Store {
     }
     this.res[id] = next
     this.trigger(id)
+    this.triggerList()
   }
 
   delete (id, skipTrigger) {

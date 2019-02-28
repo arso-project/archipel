@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { useKey } from './lib/hooks'
 import { Router, useRouter, registerRoute, registerElement, getWrappers } from './lib/router'
 
-import { ArchiveWrapper, NoArchive } from './features/archive/ArchiveScreen.js'
+import { ArchiveListWrapper, ArchiveTabsWrapper, NoArchive } from './features/archive/ArchiveScreen.js'
 
 import { MdShare, MdInfoOutline } from 'react-icons/md'
 
@@ -20,14 +20,15 @@ import '@archipel/ui/tailwind.pcss'
 import './features/drive/index.js'
 
 registerRoute('/', NoArchive, {
-  Wrapper: ArchiveWrapper
+  Wrapper: ArchiveListWrapper
 })
-  // Wrapper: Wrapper
-// })
+
 registerRoute('archive', NoArchive)
+
 registerRoute('archive/:archive', ArchiveInfo, {
-  // Wrapper: ArchiveWrapper
+  Wrapper: ArchiveTabsWrapper
 })
+
 registerRoute('archive/:archive/info', ArchiveInfoNew, { wrap: true })
 registerRoute('archive/:archive/share', ArchiveSharing, { wrap: true })
 

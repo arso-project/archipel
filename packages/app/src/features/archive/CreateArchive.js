@@ -1,68 +1,81 @@
 import React from 'react'
-import { Heading, Button, Foldable, Input } from '@archipel/ui'
-import { Consumer } from 'ucore/react'
+import { Button, Input, Checkbox } from '@archipel/ui'
+import { useForm } from '../../lib/hooks'
+import { getApi } from '../../lib/api'
+import { useMessage } from '../../lib/message'
 
-import AddArchive from './AddArchive'
+const TYPE = 'hyperdrive'
 
 export default function NewArchive (props) {
-  let wrapperCls = 'p-4 border-black border mb-4'
   return (
-    <div>
-      <div className={wrapperCls}>
-        <h2 className='text-xl mb-2'>Create new archive</h2>
-        <CreateArchiveWidget />
+    <>
+      <div className='border p-4 mb-4'>
+        <Heading>Create archive</Heading>
+        <CreateArchive />
       </div>
-      <div className={wrapperCls}>
-        <h2 className='text-xl mb-2'>Add archive by key</h2>
+      <div className='border p-4'>
+        <Heading>Add archive</Heading>
         <AddArchive />
       </div>
-    </div>
+    </>
   )
 }
 
-class CreateArchiveWidget extends React.PureComponent {
-  constructor () {
-    super()
-    this.state = { title: '' }
-    this.onCreate = this.onCreate.bind(this)
-  }
+export function AddArchive (props) {
+  const { state, itemProps, checkboxItemProps } = useForm()
+  const { push, Messages } = useMessage()
+  return (
+    <form>
+      <Messages />
+      <Checkbox id='selectSparse' label='Sparse' info='If an Archive is set to sparse mode it downloads content only on request'
+        {...checkboxItemProps('sparse', false)}
+      />
+      <Input {...itemProps('key', '')} />
+      <Button type='submit' onClick={onSubmit}>Add Archive</Button>
+    </form>
+  )
 
-  onCreate (e) {
-    if (this.state.title) {
-      this.props.onCreate(this.state.title)
-      this.setState({ title: '' })
+  async function onSubmit (e) {
+    e.preventDefault()
+    const api = await getApi()
+    try {
+      await api.hyperlib.openArchive({ type: TYPE, key: state.key, sparse: !!state.sparse })
+      push('success', 'Archive added.')
+    } catch (e) {
+      push('error', e)
     }
   }
+}
 
-  render () {
-    return (
-      <div>
-        <div className='flex mb-4'>
-          <Input placeholder='Title'
-            onChange={(e) => this.setState({title: e.target.value})}
-          />
-        </div>
-        <Button onClick={this.onCreate}>Create Archive</Button>
-      </div>
-    )
+export function CreateArchive (props) {
+  const { state, itemProps } = useForm()
+  const { push, Messages } = useMessage()
+  return (
+    <form>
+      <Messages />
+      <Input {...itemProps('title', '')} />
+      <Button type='submit' onClick={onSubmit}>Create Archive</Button>
+    </form>
+  )
+
+  async function onSubmit (e) {
+    e.preventDefault()
+    if (!state.title) return
+    let info = { title: state.title }
+    const api = await getApi()
+    try {
+      await api.hyperlib.openArchive({ type: TYPE, info })
+      push('success', 'Archive added.')
+    } catch (e) {
+      push('error', e)
+    }
   }
 }
 
-const CreateArchive = () => {
-  return <Consumer store='archive' select={state => null}>
-    {(state, { createArchive }) => {
-      return <CreateArchiveWidget onCreate={title => createArchive(title)} />
-    }}
-  </Consumer>
+function Heading (props) {
+  const { children } = props
+  let cls = 'text-xl mb-4'
+  return (
+    <h2 className={cls}>{children}</h2>
+  )
 }
-
-/*
-const mapState = (state, props) => ({
-})
-
-const mapDispatch = dispatch => ({
-  onCreateArchive: (title) => dispatch(actions.createArchive(title))
-})
-
-export default connect(mapState, mapDispatch)(CreateArchive)
-*/

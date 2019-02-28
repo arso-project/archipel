@@ -9,7 +9,6 @@ import pump from 'pump'
 
 import { Button, Heading, List } from '@archipel/ui'
 
-// import { withCore } from 'ucore/react'
 import { withApi } from '../../lib/api.js'
 
 function updateAt (arr, i, put) {

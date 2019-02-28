@@ -11,7 +11,7 @@ class MapOfSets {
   delete (key, value) {
     if (value === undefined) this.map.delete(key)
     if (!this.map.has(key)) return
-    this.map.set(key, this.map.get(key).delete(value))
+    this.map.get(key).delete(value)
   }
 
   get (key) {

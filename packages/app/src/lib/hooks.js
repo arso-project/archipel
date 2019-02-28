@@ -60,6 +60,7 @@ export function useForm (defaultValue) {
   return {
     state,
     itemProps,
+    checkboxItemProps,
     makeField,
     setState,
     didChange
@@ -74,12 +75,25 @@ export function useForm (defaultValue) {
     return { name, value, onChange }
   }
 
+  function checkboxItemProps (name, defaultValue) {
+    let checked = state[name] === undefined ? defaultValue : state[name]
+    function onChange (e) {
+      setDidChange(true)
+      setState({ ...state, [name]: e.target.checked })
+    }
+    return { name, checked, onChange }
+  }
+
   function makeField ({ title, name, defaultValue, type }) {
     defaultValue = defaultValue || ''
+    type = type || 'input'
+    let props
+    if (type === 'input') props = itemProps(name, defaultValue)
+    else if (type === 'checkbox') props = checkboxItemProps(name, defaultValue)
     return (
       <>
         {title && <label htmlFor={name}>{title}</label> }
-        <Input type={type} {...itemProps(name, defaultValue)} />
+        <Input type={type} {...props} />
       </>
     )
   }
@@ -96,9 +110,11 @@ export function useRerender () {
   return rerender
 }
 
-export function useKey (key, cb) {
+export function useKey (key, cb, opts) {
+  opts = opts || {}
   useEffect(() => {
     function onKeydown (e) {
+      if (!opts.allTargets && e.target !== document.body) return
       if (e.key === key) cb(e)
     }
     document.addEventListener('keydown', onKeydown)

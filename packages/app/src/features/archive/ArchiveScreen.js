@@ -1,56 +1,37 @@
 import React, { useState, useEffect } from 'react'
 
 import { MdMenu, MdClose, MdSubdirectoryArrowLeft } from 'react-icons/md'
-import { Consumer } from 'ucore/react'
 
 import { Modal } from '@archipel/ui'
 
 import { useToggle } from '../../lib/hooks'
 import { useRouter, Link, getElements } from '../../lib/router'
 
+import { useArchive } from './archive'
+
 import ListArchives from './ListArchives'
 import AuthorizationMenu from './AuthorizationMenu'
 import CreateArchive from './CreateArchive'
 
-export function ArchiveWrapper (props) {
+export function ArchiveListWrapper (props) {
   const { children } = props
   const { params, goto, route, setParams } = useRouter()
+  const { archive } = params
 
-  // todo: Change onSelect syntax in List to be a single function.
-  return <ArchiveUcoreLoader Render={ArchiveScreen} changeprop={params.archive} changeprop2={{}} />
-
-  function ArchiveScreen (props) {
-    const { archives, selected, onSelect } = props
-    // const { archives } = props
-    // const [selected, onSelect] = useState()
-
-    useEffect(() => {
-      if (params.archive !== archive) onSelect(params.archive)
-    }, [params.archive])
-
-    const archive = selected ? selected.key : null
-    // const archive = selected
-
-    return (
-      <div className='flex flex-1'>
-        <div className='flex-no-shrink w-65 mr-4'>
-          <ArchiveGlobalActions />
-          <ArchiveList archives={archives} selected={selected} onSelect={onArchiveSelect} />
-        </div>
-        <div className='flex-1 p-4'>
-          { !archive && <NoArchive /> }
-          { archive && <ArchiveAppScreen archive={archive} loadedArchive={selected} children={children} /> }
-        </div>
+  return (
+    <div className='flex flex-1'>
+      <div className='flex-no-shrink w-65 mr-4'>
+        <ArchiveGlobalActions />
+        <ListArchives selected={archive} onSelect={onArchiveSelect} />
       </div>
-    )
+      <div className='flex-1 p-4'>
+        {children}
+      </div>
+    </div>
+  )
 
-    function onArchiveSelect (item, i) {
-      return (e) => {
-        onSelect(item.key)
-        // setParams({ archive: item.key })
-        goto('archive/' + item.key)
-      }
-    }
+  function onArchiveSelect (key) {
+    goto('archive/' + key)
   }
 }
 
@@ -69,19 +50,6 @@ export function NoArchive (props) {
         Chose or create an archive at the left!
       </div>
     </div>
-  )
-}
-
-function ArchiveList (props) {
-  const { archives, selected, onSelect } = props
-  return (
-    <>
-      <ListArchives
-        archives={archives}
-        isSelected={item => item === selected}
-        onSelect={onSelect}
-      />
-    </>
   )
 }
 
@@ -159,26 +127,26 @@ function ArchiveTabLinks () {
   }
 }
 
-function ArchiveAppScreen (props) {
-  const { archive, loadedArchive, children } = props
-  // const [menu, toggleMenu] = useToggle(true)
+export function ArchiveTabsWrapper (props) {
+  const { children, router } = props
+  const { archive: archiveKey } = router.params
+  const archive = useArchive(archiveKey)
+
+  if (!archive.info) return children
 
   let color = 'pink'
   let cls = `border-${color} border flex bg-white`
   let hcls = `border-${color} border-b text-2xl m-0 px-2 py-4 text-${color} flex`
-
-  // let MenuIcon = menu ? MdClose : MdMenu
-  // <span onClick={e => toggleMenu()} className='cursor-pointer'><MenuIcon /></span>
 
   return (
     <div className={cls}>
       <div className='flex-1'>
         <div className={hcls}>
           <h2 className='text-2xl flex-1'>
-            {loadedArchive.info.title}
+            {archive.info.title}
           </h2>
           <div className=''>
-            <ArchiveActions archive={archive} />
+            <ArchiveActions archive={archiveKey} />
           </div>
         </div>
         <div className='flex'>
@@ -192,14 +160,3 @@ function ArchiveAppScreen (props) {
   )
 }
 
-function ArchiveUcoreLoader (props) {
-  const { Render, ...rest } = props
-  return (
-    <Consumer store='archive' select={['sortedByName', 'selectedArchive']} {...rest}>
-      {([archives, selectedArchive], store) => {
-        if (!store.get().started) store.loadArchives()
-        return <Render archives={archives} selected={selectedArchive} onSelect={store.selectArchive} />
-      }}
-    </Consumer>
-  )
-}

@@ -1,46 +1,51 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { List } from '@archipel/ui'
-import PropTypes from 'proptypes'
 import { MdExpandMore, MdExpandLess, MdVpnKey, MdCloud } from 'react-icons/md'
+import { useArchives } from './archive'
 
-const Key = ({ string }) => (
-  <span className='text-sm text-grey bg-grey-lightest px-1 rounded inline-block'>
-    {string.substring(0, 4)}…
-  </span>
-)
-
-function StructureState (props) {
-  const { structure } = props
-  const { key } = structure
-  const { writable, share } = structure.state
-  let cls = val => {
-    let color = val ? 'grey-dark' : 'grey-light'
-    return `text-${color} ml-1`
-  }
+export default function ListArchives (props) {
+  const { onSelect, selected } = props
+  const archives = useArchives()
+  const sortedArchives = useMemo(() => {
+    return Object.values(archives).filter(a => a.info)
+  }, [archives])
   return (
-    <span className='text-s pl-2 inline-block h-4'>
-      <MdVpnKey className={cls(writable)} />
-      <MdCloud className={cls(share)} />
-    </span>
+    <List
+      items={sortedArchives}
+      onSelect={onListSelect}
+      isSelected={isSelected}
+      // focus
+      renderItem={item => <Archive item={item} />}
+    />
   )
+
+  function isSelected (archive) {
+    return archive.key === selected
+  }
+
+  function onListSelect (archive) {
+    return e => onSelect(archive.key)
+  }
 }
 
-const Archive = ({ item, selected }) => {
+export function Archive (props) {
+  const { item } = props
   const [expand, setExpand] = useState(false)
 
-  let Icon = expand ? MdExpandLess : MdExpandMore
-  let icon = <span onClick={onExpand} className='w-4 inline-block h-4'><Icon /></span>
-  let title = item.info.title
-  if (!title) title = <em>{item.key.substring(0, 6)}…</em>
+  const ExpandIcon = expand ? MdExpandLess : MdExpandMore
+  let title = item.info.title || <em>{item.key.substring(0, 6)}…</em>
+
   return (
     <div>
       <div className='flex'>
+        <div className='w-4 h-4 flex-0' onClick={onExpand}>
+          <ExpandIcon />
+        </div>
         <div className='flex-1'>
-          {icon}
           {title}
         </div>
         <div className='flex-0'>
-          <StructureState structure={item} />
+          <StructureStateIcons structure={item} />
         </div>
       </div>
       {expand && <Structures archive={item} />}
@@ -51,6 +56,22 @@ const Archive = ({ item, selected }) => {
     e.stopPropagation()
     setExpand(state => !state)
   }
+}
+
+function StructureStateIcons (props) {
+  const { structure } = props
+  const { state, key } = structure
+  const { writable, share } = state
+  let cls = val => {
+    let color = val ? 'grey-dark' : 'grey-light'
+    return `text-${color} ml-1`
+  }
+  return (
+    <span className='text-s pl-2 inline-block h-4'>
+      <MdVpnKey className={cls(writable)} />
+      <MdCloud className={cls(share)} />
+    </span>
+  )
 }
 
 function Structures (props) {
@@ -68,19 +89,11 @@ function Structures (props) {
   )
 }
 
-const ListArchives = ({ archives, onSelect, isSelected }) => {
+function Key (props) {
+  const { string } = props
   return (
-    <List
-      items={archives}
-      onSelect={onSelect}
-      isSelected={isSelected}
-      // focus
-      renderItem={item => <Archive item={item} />} />
+    <span className='text-sm text-grey bg-grey-lightest px-1 rounded inline-block'>
+      {string.substring(0, 4)}…
+    </span>
   )
 }
-
-ListArchives.propTypes = {
-  onSelect: PropTypes.func
-}
-
-export default ListArchives

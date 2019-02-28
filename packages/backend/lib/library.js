@@ -7,7 +7,7 @@ const network = require('./network')
 
 const { IndexedMap } = require('@archipel/common/util/map')
 const { asyncThunky, prom, withTimeout } = require('@archipel/common/util/async')
-const { nestStorage, keyPair, hex } = require('@archipel/common/util/hyperstack')
+const { nestStorage, keyPair, hex, validateKey } = require('@archipel/common/util/hyperstack')
 const { createAuthCypher, decipherAuthRequest } = require('@archipel/common/util/authMessage')
 
 const debug = require('debug')('library')
@@ -92,16 +92,17 @@ function rpc (api, opts) {
         objectMode: true,
         read () {}
       })
-      library.on('archive:update', async archive => {
-        stream.push(await archive.serialize())
-      })
-
       if (init) {
         library.listArchives().then(async archives => {
           archives.forEach(async archive => stream.push(await archive.serialize()))
         })
       }
-
+      library.on('archive:update', async archive => {
+        stream.push(await archive.serialize())
+      })
+      library.on('archive:add', async archive => {
+        stream.push(await archive.serialize())
+      })
       return stream
     },
 
@@ -212,13 +213,16 @@ class Library extends EventEmitter {
 
     if (!key) opts.create = true
 
+    if (key && !validateKey(key)) throw new Error(`Invalid key: ${key}`)
+
     try {
       const archive = await withTimeout(open(), 5000)
       await self.storeArchive(archive)
       return archive
-    } catch (e) { 
-      console.error(`Cannot open archive: ${type} ${key}. Reason: ${e.message}`)
-      return
+    } catch (e) {
+      let error = `Cannot open archive: ${type} ${key}. Reason: ${e.message}`
+      console.error(error)
+      throw error
     }
 
     async function open () {
@@ -244,6 +248,7 @@ class Library extends EventEmitter {
       // Forward update events.
       let updateEvents = ['state', 'structure', 'info', 'update']
       updateEvents.forEach(ev => archive.on(ev, () => self.emit('archive:update', archive)))
+      self.emit('archive:add', archive)
 
       return archive
     }

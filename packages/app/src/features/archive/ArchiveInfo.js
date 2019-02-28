@@ -1,12 +1,12 @@
 import React from 'react'
-import { Consumer, WithCore } from 'ucore/react'
-import { Heading, Button } from '@archipel/ui'
+import { Button } from '@archipel/ui'
 import ToggleButton from 'react-toggle-button'
 import { MdCheck, MdCancel } from 'react-icons/md'
 import NetStats from './NetStats'
 
 import { useToggle } from '../../lib/hooks'
 import { getApi } from '../../lib/api'
+import { useArchive } from './archive'
 
 const Item = ({ label, children }) => (
   <div className='border-grey-light border-b flex'>
@@ -71,22 +71,19 @@ class Authorize extends React.Component {
   }
 }
 
-const ArchiveInfoLoader = () => {
-  return <Consumer store='archive' select={'selectedArchive'}>
-    {(archive, { shareArchive, authorizeWriter, getNetworkStats }) => {
-      if (!archive) return null
-      let { key, state, info } = archive
-      let actions = { shareArchive, authorizeWriter, getNetworkStats }
-      return <ArchiveInfo archive={archive} actions={actions} />
-    }}
-  </Consumer>
+export default function ArchiveInfoPage (props) {
+  const { params } = props
+  const { archive: archiveKey } = params
+  const archive = useArchive(archiveKey)
+  if (!archive.info) return <em>Loading</em>
+  return <ArchiveInfo archive={archive} />
 }
 
 function ArchiveInfo (props) {
   const [debug, toggleDebug] = useToggle(false)
-  const { archive, actions } = props
+  const { archive } = props
   let { key, state, info } = archive
-  let { shareArchive, authorizeWriter, getNetworkStats } = actions
+  // let { shareArchive, authorizeWriter, getNetworkStats } = actions
   return (
     <div>
       <Item label='Key'><ClickToCopy>{key}</ClickToCopy></Item>
@@ -94,7 +91,7 @@ function ArchiveInfo (props) {
         <div className='flex flex-row'>
           <ToggleButton className='flex-1 px-2' inactiveLabel='NO' activeLabel='YES'
             value={state.share}
-            onToggle={() => shareArchive(key, !state.share)}
+            // onToggle={() => shareArchive(key, !state.share)}
           />
           <NetStats className='flex-1 px-2' />
         </div>
@@ -125,5 +122,4 @@ function ArchiveInfo (props) {
   }
 }
 
-export default ArchiveInfoLoader
 
