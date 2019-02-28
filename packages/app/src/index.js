@@ -5,11 +5,11 @@ import { Router, registerRoute, registerElement } from './lib/router'
 
 import ArchiveScreen from './features/archive/ArchiveScreen.js'
 
+import { MdShare, MdInfoOutline } from 'react-icons/md'
+
 import ArchiveInfo from './features/archive/ArchiveInfo'
 import ArchiveInfoNew from './features/archive/ArchiveInfoNew'
 import ArchiveSharing from './features/archive/ArchiveSharing'
-
-import FsScreen from './features/drive/FsScreen.js'
 
 import Debug from './features/debug/Debug'
 import Tags from './foo/tags'
@@ -17,20 +17,26 @@ import Panels from './foo/panels'
 
 import '@archipel/ui/tailwind.pcss'
 
+import './features/drive/index.js'
+
+// registerRoute('/', ArchiveScreen)
 registerRoute('/', ArchiveScreen)
 registerRoute('archive', ArchiveScreen)
 registerRoute('archive/:archive', ArchiveInfo, { wrap: true })
 registerRoute('archive/:archive/info', ArchiveInfoNew, { wrap: true })
 registerRoute('archive/:archive/share', ArchiveSharing, { wrap: true })
 
-registerRoute('archive/:archive/file', FsScreen, { wrap: true })
-registerRoute('archive/:archive/file/*', FsScreen, { wrap: true })
+// registerElement('archive', {
+  // actions: [
+    // { name: 'Info', href: 'archive/:archive', weight: -10 },
+    // { name: 'Share', href: 'archive/:archive/share', weight: -9 }
+  // ]
+// })
 
-registerElement('archive/:archive', {
-  link: [
-    { name: 'Info', href: 'archive/:archive', weight: -10 },
-    { name: 'Share', href: 'archive/:archive/share', weight: -9 },
-    { name: 'Files', href: 'archive/:archive/file', weight: -8 }
+registerElement('archive', {
+  actions: [
+    { name: 'Info', href: 'archive/:archive', icon: MdInfoOutline },
+    { name: 'Share', href: 'archive/:archive/share', icon: MdShare }
   ]
 })
 

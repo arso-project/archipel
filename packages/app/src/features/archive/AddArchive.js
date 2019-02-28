@@ -25,7 +25,7 @@ class AddArchiveWidget extends React.PureComponent {
 
   render () {
     return (
-      <Foldable heading='Add archive'>
+      <>
         <Checkbox id='selectSparse' label='Sparse' info='If an Archive is set to sparse mode it downloads content only on request'
           onChange={(e) => this.setState({ sparse: e.target.checked })} />
         <div className='flex mb-4'>
@@ -33,8 +33,8 @@ class AddArchiveWidget extends React.PureComponent {
             onChange={(e) => this.setState({ key: e.target.value })}
           />
         </div>
-        <Button className='w-full' onClick={this.onAdd}>Add Archive</Button>
-      </Foldable>
+        <Button onClick={this.onAdd}>Add Archive</Button>
+      </>
     )
   }
 }

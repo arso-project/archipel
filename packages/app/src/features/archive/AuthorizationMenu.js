@@ -67,11 +67,12 @@ class AuthorizationMenuInner extends React.Component {
 
   render () {
     let { authCipher, authObj, archive, notRequested, selected } = this.state
-    let foldHeading = 'Authorize write access'
+    let heading = 'Authorize write access'
+    let content
     if (!authObj) {
       // Enter Authorization Cypher
-      return (
-        <Foldable heading={foldHeading}>
+      content = (
+        <div>
           <div className='flex flex-col w-40'>
             <strong htmlFor='inputAuthorizationCipher'
               className='m-1 mb-2'>
@@ -87,30 +88,26 @@ class AuthorizationMenuInner extends React.Component {
               Submit
             </Button>
           </div>
-        </Foldable>
+        </div>
       )
     } else if (!notRequested) {
-      return (
-        <Foldable heading={foldHeading} open>
-          <span>loading...</span>
-        </Foldable>
+      content = (
+        <span>loading...</span>
       )
     } else if (!archive) {
       // something went wrong
-      return (
-        <Foldable heading={foldHeading} open>
-          <div className='w-full flex flex-col'>
-            <strong className='w-32 break-normal'>{authObj}</strong>
-            <Button className='p-1 m-1' onClick={() => this.setState({ authObj: null })}>
-              Back
-            </Button>
-          </div>
-        </Foldable>
+      content = (
+        <div className='w-full flex flex-col'>
+          <strong className='w-32 break-normal'>{authObj}</strong>
+          <Button className='p-1 m-1' onClick={() => this.setState({ authObj: null })}>
+            Back
+          </Button>
+        </div>
       )
     } else {
       // choose structures for authorization
-      return (
-        <Foldable heading={foldHeading} open>
+      content = (
+        <>
           <div className='flex flex-col'>
             { authObj.userMessage
               ? <div className='flex flex-col'>
@@ -144,9 +141,15 @@ class AuthorizationMenuInner extends React.Component {
               Authorize
             </Button>
           </div>
-        </Foldable>
+        </>
       )
     }
+    return (
+      <div>
+        <h2 className='text-xl mb-2'>{heading}</h2>
+        {content}
+      </div>
+    )
   }
 }
 

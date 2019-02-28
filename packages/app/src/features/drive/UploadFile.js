@@ -7,7 +7,7 @@ import speedometer from 'speedometer'
 import through from 'through2'
 import pump from 'pump'
 
-import { Button, Foldable, List } from '@archipel/ui'
+import { Button, Heading, List } from '@archipel/ui'
 
 // import { withCore } from 'ucore/react'
 import { withApi } from '../../lib/api.js'
@@ -164,30 +164,34 @@ class UploadFile extends React.Component {
   }
 
   render () {
+    const { path, archive } = this.props
     return (
-      <Foldable heading='Upload file'>
-        <div className='flex mb-2'>
-          <input type='checkbox' name='uploadDir' onChange={this.setUploadDir} />
-          <label htmlFor='uploadDir'>Upload Directory</label>
+      <>
+        <Heading className='text-pink'>Upload file</Heading>
+        {path !== '/' && <div className='mb-2'>Parent folder: <strong>{path}</strong></div>}
+        <div className='p-4 bg-grey-lighter '>
+          <div className='flex mb-4'>
+            <input type='checkbox' name='uploadDir' onChange={this.setUploadDir} />
+            <label htmlFor='uploadDir'>Upload Directory</label>
+          </div>
+          { this.state.uploadDir ?
+            <div className='flex mb-2'>
+              <input type='file' webkitdirectory='foo' multiple
+                onChange={this.onChange} ref={this.uploadRef} />
+            </div> :
+            <div className='flex mb-2'>
+              <input type='file' multiple
+                onChange={this.onChange} ref={this.uploadRef} />
+            </div> }
+          <Button onClick={this.onUpload}>Upload</Button>
         </div>
-        { this.state.uploadDir ?
-          <div className='flex mb-2'>
-            <input type='file' webkitdirectory='foo' multiple
-              onChange={this.onChange} ref={this.uploadRef} />
-          </div> :
-          <div className='flex mb-2'>
-            <input type='file' multiple
-              onChange={this.onChange} ref={this.uploadRef} />
-          </div> }
-        <Button onClick={this.onUpload}>Upload</Button>
         <div className='pt-1'>
-          Status:
-          { this.state.pending && <em>Uploading...</em> }
-          { this.state.done && <em>Done.</em> }
-          { this.state.res && <strong>{ this.state.res }</strong>}
+          { this.state.pending && <em>Status: Uploading...</em> }
+          { this.state.done && <em>Status: Done.</em> }
+          { this.state.res && <strong>Status: { this.state.res }</strong>}
           <List items={this.state.files} renderItem={(file) => FileListItem(file)} />
         </div>
-      </Foldable>
+      </>
     )
   }
 }

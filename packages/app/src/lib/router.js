@@ -37,7 +37,8 @@ export function getRoutes () {
 
 export function registerElement (route, opts) {
   if (!opts) return
-  /* if (route.charAt(0) === '/') route = route.substring(1) */
+  if (route.charAt(0) !== '/') route = '/' + route
+
   if (!elements[route]) elements[route] = {}
   for (let [key, value] of Object.entries(opts)) {
     if (!elements[route][key]) elements[route][key] = []
@@ -47,8 +48,22 @@ export function registerElement (route, opts) {
 }
 
 export function getElements (route) {
+  if (route.charAt(0) !== '/') route = '/' + route
   /* if (route.charAt(0) === '/') route = route.substring(1) */
   return elements[route] || {}
+}
+
+export function getWrappers (route) {
+  let parts = route.split('/')
+  let cur = ''
+  let wrappers = []
+  parts.forEach(part => {
+    cur = cur + '/' + part
+    let element = getElements(cur)
+    if (!element || !element.wrap) return
+    wrappers.push(element.wrap)
+  })
+  return wrappers
 }
 
 export function initRouter (routes, onRoute) {
@@ -56,13 +71,19 @@ export function initRouter (routes, onRoute) {
 
   for (let route of Object.values(routes)) {
     router.on(route.route, params => {
-      // console.log('route!', route.route, params)
-      // if (route.middleware) context = route.onopen(params)
-      let elements = getElements(route)
+      console.log('ok', route, params)
+      if (route.redirect) return goto(route.redirect)
+
+      let elements = getElements(route.route)
+
       let data = { ...route, params, elements }
-      if (elements.middleware) elements.middleware.forEach(cb => {
-        data = cb(data)
-      })
+
+      if (elements.middleware) {
+        elements.middleware.forEach(cb => {
+          data = cb(data)
+        })
+      }
+
       onRoute(data)
     })
   }
@@ -177,9 +198,9 @@ function buildLink (route, params) {
 }
 
 export function Link (props) {
-  let { link, children } = props
-
-  const { goto, params } = useRouter()
+  let { link, children, params } = props
+  const { goto, params: routerParams } = useRouter()
+  params = Object.assign({}, routerParams, params || {})
   let resolvedLink = buildLink(link, params)
   let href = '/#/' + resolvedLink.join('/')
 

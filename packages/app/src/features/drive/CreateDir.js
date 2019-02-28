@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Button, Foldable } from '@archipel/ui'
+import { Heading, Button, Foldable } from '@archipel/ui'
 
 import { withApi } from '../../lib/api.js'
 import { useResult } from '../../lib/result.js'
@@ -10,8 +10,10 @@ function CreateDir (props) {
   const R = useResult()
 
   return (
-    <Foldable heading='Create folder'>
-      <div className='flex mb-2'>
+    <>
+      <div className=''>
+        <Heading className='text-pink'>Create directory</Heading>
+        {path !== '/' && <div className='mb-2'>Parent: <strong>{path}</strong></div>}
         <input type='text'
           className='p-1 border-2'
           placeholder='name'
@@ -20,7 +22,7 @@ function CreateDir (props) {
         <Button onClick={onCreate}>Create folder</Button>
       </div>
       <R.Result />
-    </Foldable>
+    </>
   )
 
   async function onCreate () {

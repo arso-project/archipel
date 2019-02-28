@@ -62,7 +62,8 @@ let colors = {
   'grey': '#999',
   'grey-light': '#ccc',
   'grey-lighter': '#eee',
-  'grey-lightest': '#f0f0f0',
+  // 'grey-lightest': '#f0f0f0',
+  'grey-lightest': '#f8f8f8',
 
   'white': '#fff',
 
@@ -520,7 +521,8 @@ module.exports = {
     '1/6': '16.66667%',
     '5/6': '83.33333%',
     'full': '100%',
-    'screen': '100vw'
+    'screen': '100vw',
+    'main': '50rem'
   },
 
 

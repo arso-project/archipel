@@ -6,8 +6,12 @@ const ModalElement = ({ children, onClose }) => (
   <React.Fragment>
     <div className='z-40 fixed pin overflow-auto bg-smoke flex text-black'>
       <div className='relative p-4 bg-white w-full max-w-md m-auto flex-col flex'>
-        <span className='absolute pin-r pin-t m-8 cursor-pointer' onClick={onClose}>Close</span>
-        {children}
+        <div className='text-right mb-2'>
+          <span className='cursor-pointer text-s' onClick={onClose}>Close</span>
+        </div>
+        <div className='flex-1'>
+          {children}
+        </div>
       </div>
     </div>
   </React.Fragment>
@@ -39,7 +43,7 @@ class Modal extends React.Component {
 
   render () {
     let { toggle, Toggle, children } = this.props
-    if (typeof toggle === 'string') Toggle = (props) => <Button {...props}>{toggle}</Button>
+    if (typeof toggle === 'string') Toggle = (props) => <div className='font-bold text-purple cursor-pointer' {...props}>{toggle}</div>
     return (
       <React.Fragment>
         <Toggle onClick={this.onClick} />

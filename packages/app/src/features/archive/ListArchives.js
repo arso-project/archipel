@@ -13,11 +13,14 @@ function StructureState (props) {
   const { structure } = props
   const { key } = structure
   const { writable, share } = structure.state
-  let cls = 'text-grey-light'
+  let cls = val => {
+    let color = val ? 'grey-dark' : 'grey-light'
+    return `text-${color} ml-1`
+  }
   return (
     <span className='text-s pl-2 inline-block h-4'>
-      {writable && <MdVpnKey className={cls} />}
-      {share && <MdCloud className={cls} />}
+      <MdVpnKey className={cls(writable)} />
+      <MdCloud className={cls(share)} />
     </span>
   )
 }
@@ -30,12 +33,18 @@ const Archive = ({ item, selected }) => {
   let title = item.info.title
   if (!title) title = <em>{item.key.substring(0, 6)}…</em>
   return (
-    <span>
-      {icon}
-      {title}
-      <StructureState structure={item} />
+    <div>
+      <div className='flex'>
+        <div className='flex-1'>
+          {icon}
+          {title}
+        </div>
+        <div className='flex-0'>
+          <StructureState structure={item} />
+        </div>
+      </div>
       {expand && <Structures archive={item} />}
-    </span>
+    </div>
   )
 
   function onExpand (e) {

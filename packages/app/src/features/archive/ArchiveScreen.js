@@ -3,6 +3,8 @@ import React, { useEffect } from 'react'
 import { MdMenu, MdClose, MdSubdirectoryArrowLeft } from 'react-icons/md'
 import { Consumer } from 'ucore/react'
 
+import { Modal } from '@archipel/ui'
+
 import { useToggle } from '../../lib/hooks'
 import { useRouter, Link, getElements } from '../../lib/router'
 
@@ -30,7 +32,7 @@ export default function ArchiveScreen (props) {
     return (
       <div className='flex flex-1'>
         <div className='flex-no-shrink w-65'>
-          <ArchiveActions />
+          <ArchiveGlobalActions />
           <ArchiveList archives={archives} selected={selected} onSelect={onArchiveSelect} />
         </div>
         <div className='flex-1 p-4'>
@@ -80,13 +82,46 @@ function ArchiveList (props) {
   )
 }
 
-function ArchiveActions (props) {
+function ArchiveGlobalActions (props) {
   return (
     <>
-      <CreateArchive />
-      <AddArchive />
-      <AuthorizationMenu />
+      <div className='mb-4'>
+        <Modal toggle='New archive'>
+          <CreateArchive />
+        </Modal>
+      </div>
+      <div className='mb-4'>
+        <Modal toggle='Grant access'>
+          <AuthorizationMenu />
+        </Modal>
+      </div>
     </>
+  )
+}
+
+function ArchiveActions (props) {
+  const { archive } = props
+  let actions = getElements('archive').actions
+  return (
+    <div className='flex'>
+      {actions.map((action, i) => (
+        <Link key={i} link={action.href} params={{ archive }}>
+          <ActionLink name={action.name} Icon={action.icon} />
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+export function ActionLink (props) {
+  let { Icon, name, color } = props
+  color = color || 'pink'
+  let clsHeader = `cursor-pointer flex text-lg text-${color} mx-2`
+  return (
+    <div className={clsHeader}>
+      { Icon && <Icon className='mr-1 w-8 flex-0' size={24} /> }
+      <span className='self-center'>{name}</span>
+    </div>
   )
 }
 
@@ -123,24 +158,31 @@ function ArchiveTabLinks () {
 
 function ArchiveAppScreen (props) {
   const { archive, loadedArchive, children } = props
-  const [menu, toggleMenu] = useToggle(true)
+  // const [menu, toggleMenu] = useToggle(true)
 
   let color = 'pink'
-  let cls = `border-${color} border flex`
-  let hcls = `border-${color} border-b text-2xl m-0 px-2 py-4 text-${color}`
+  let cls = `border-${color} border flex bg-white`
+  let hcls = `border-${color} border-b text-2xl m-0 px-2 py-4 text-${color} flex`
 
-  let MenuIcon = menu ? MdClose : MdMenu
+  // let MenuIcon = menu ? MdClose : MdMenu
+  // <span onClick={e => toggleMenu()} className='cursor-pointer'><MenuIcon /></span>
 
   return (
     <div className={cls}>
-      {menu && <ArchiveTabLinks />}
       <div className='flex-1'>
-        <h2 className={hcls}>
-          <span onClick={e => toggleMenu()} className='cursor-pointer'><MenuIcon /></span>
-          {loadedArchive.info.title}
-        </h2>
-        <div>
-          {children}
+        <div className={hcls}>
+          <h2 className='text-2xl flex-1'>
+            {loadedArchive.info.title}
+          </h2>
+          <div className=''>
+            <ArchiveActions archive={archive} />
+          </div>
+        </div>
+        <div className='flex'>
+          <ArchiveTabLinks />
+          <div className='flex-1'>
+            {children}
+          </div>
         </div>
       </div>
     </div>

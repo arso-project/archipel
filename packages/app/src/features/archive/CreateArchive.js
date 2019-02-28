@@ -1,9 +1,24 @@
 import React from 'react'
-// import { connect } from 'react-redux'
-import { Button, Foldable, Input } from '@archipel/ui'
+import { Heading, Button, Foldable, Input } from '@archipel/ui'
 import { Consumer } from 'ucore/react'
 
-// import { actions } from './duck'
+import AddArchive from './AddArchive'
+
+export default function NewArchive (props) {
+  let wrapperCls = 'p-4 border-black border mb-4'
+  return (
+    <div>
+      <div className={wrapperCls}>
+        <h2 className='text-xl mb-2'>Create new archive</h2>
+        <CreateArchiveWidget />
+      </div>
+      <div className={wrapperCls}>
+        <h2 className='text-xl mb-2'>Add archive by key</h2>
+        <AddArchive />
+      </div>
+    </div>
+  )
+}
 
 class CreateArchiveWidget extends React.PureComponent {
   constructor () {
@@ -21,14 +36,14 @@ class CreateArchiveWidget extends React.PureComponent {
 
   render () {
     return (
-      <Foldable heading='Create archive'>
+      <div>
         <div className='flex mb-4'>
           <Input placeholder='Title'
             onChange={(e) => this.setState({title: e.target.value})}
           />
         </div>
-        <Button className='w-full' onClick={this.onCreate}>Create Archive</Button>
-      </Foldable>
+        <Button onClick={this.onCreate}>Create Archive</Button>
+      </div>
     )
   }
 }
@@ -51,4 +66,3 @@ const mapDispatch = dispatch => ({
 
 export default connect(mapState, mapDispatch)(CreateArchive)
 */
-export default CreateArchive

@@ -125,6 +125,6 @@ export function useFiles (archive, paths, sort) {
   return files || []
 }
 
-function defaultSort (list) {
+export function defaultSort (list) {
   return sortByProps(list, ['isDirectory:desc', 'name'])
 }

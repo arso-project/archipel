@@ -11,9 +11,17 @@ export default function ListDir (props) {
 export function FileGrid (props) {
   const { archive, path, onSelect } = props
   const file = useFile(archive, path, 1)
-  if (!file.children || !file.children.length) return 'This folder is empty.'
+
+  const children = useMemo(() => {
+    if (!file.children || !file.children.length) return null
+    return file.children.sort()
+  }, [file.children])
+
+  if (!children) return 'This folder is empty.'
+  console.log('original', file.children, 'sorted', children)
+
   return (
-    <div>{file.children.map((path, i) => <FileGridItem key={i} archive={archive} path={path} onSelect={onSelect} />)}</div>
+    <div>{children.map((path, i) => <FileGridItem key={i} archive={archive} path={path} onSelect={onSelect} />)}</div>
   )
 }
 
@@ -21,13 +29,13 @@ export function FileGridItem (props) {
   const { archive, path, onSelect } = props
   const file = useFile(archive, path, 1)
   if (!file) return null
-  let color = file.isDirectory ? 'blue' : 'grey-dark'
+  let color = file.isDirectory ? 'blue' : 'grey-darkest'
   let Icon = fileIcon(file)
   let cls = `text-center float-left p-2 m-2 w-32 h-32 overflow-hidden 
-      text-${color} bg-grey-lightest hover:bg-grey-light rounded cursor-pointer`
+      text-${color} hover:bg-grey-lighter rounded cursor-pointer`
   return (
     <div className={cls} onClick={e => onSelect(file.path)}>
-      <div className='mb-1'><Icon size='48' /></div>
+      <div className='mb-1'><Icon size='64' /></div>
       {file.name}
     </div>
   )
@@ -132,7 +140,7 @@ function itemClass (select, focus, color) {
   } else if (focus) {
     cls += ' bg-grey-lighter border-green border '
   } else {
-    cls += ' bg-white '
+    cls += ' '
   }
   return cls
 }
