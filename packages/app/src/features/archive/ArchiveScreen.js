@@ -5,7 +5,7 @@ import { MdMenu, MdClose, MdSubdirectoryArrowLeft } from 'react-icons/md'
 import { Modal } from '@archipel/ui'
 
 import { useToggle } from '../../lib/hooks'
-import { useRouter, Link, getElements } from '../../lib/router'
+import { useRouter, Link, getElements, isInPath } from '../../lib/router'
 
 import { useArchive } from './archive'
 
@@ -116,7 +116,7 @@ function ArchiveTabLinks () {
     const { el } = props
     let color = 'pink'
     let cls = `p-2 cursor-pointer text-${color}-dark`
-    if (el.href === route || el.href + '/*' === route) cls += ` bg-${color}-lightest`
+    if (isInPath(el.href, route)) cls += ` bg-${color}-lightest`
     else cls += ` hover:bg-${color}-lightest`
     return (
       <Link link={el.href}>

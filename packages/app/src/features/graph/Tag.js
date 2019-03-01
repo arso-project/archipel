@@ -4,16 +4,15 @@ import { Heading, Button, Status } from '@archipel/ui'
 
 import { withApi } from '../../lib/api'
 import { useAsyncEffect, useToggle, useForm } from '../../lib/hooks'
-import { useRouter } from '../../lib/router'
+import { useRouter, Link } from '../../lib/router'
 import { useArchive, discoToKey } from '../archive/archive'
 // import { triplesToThings } from './store'
 import { Metadata } from './Metadata'
 
 import { makeLink, parseLink } from '@archipel/common/util/triples'
 import { spo, triplesToThings, useQuery } from './triples'
-export default withApi(Sidebar)
 
-function Sidebar (props) {
+export const TagSidebar = withApi(function TagSidebar (props) {
   const { archive: archiveKey, path, api } = props
   let archive = useArchive(archiveKey)
   // TODO: deal with structures properly.
@@ -27,7 +26,7 @@ function Sidebar (props) {
       <TagWidget archive={archive} link={link} api={api} />
     </div>
   )
-}
+})
 
 function TagWidget (props) {
   const { archive, link, api } = props
@@ -39,16 +38,19 @@ function TagWidget (props) {
   return (
     <div>
       <Tags link={link} api={api} archive={archive} update={saved} />
-      <input
-        placeholder='Tag...'
-        className='p-2 border-black border font-xl'
-        onChange={e => setInput(e.target.value)} type='text'
-      />
-      <Button onClick={e => onSave()}>OK</Button>
+      <form>
+        <input
+          placeholder='Tag...'
+          className='p-2 border-black border font-xl'
+          onChange={e => setInput(e.target.value)} type='text'
+        />
+        <Button type='submit' onClick={onSave}>OK</Button>
+      </form>
     </div>
   )
 
-  async function onSave () {
+  async function onSave (e) {
+    e.preventDefault()
     let triples = []
     let prop = 'tag'
     triples.push(spo(link, prop, input))
@@ -81,7 +83,12 @@ function TagItem (props) {
   let { tag, className } = props
   className = className || ''
   let cls = 'inline-block p-2 text-pink-dark font-bold ' + className
-  return <div className={cls}><span className='text-grey italic'>#</span>{tag}</div>
+  let link = 'archive/:archive/tags/' + tag
+  return (
+    <Link link={link}>
+      <div className={cls}><span className='text-grey italic'>#</span>{tag}</div>
+    </Link>
+  )
 }
 
 export const TagOverview = withApi(function TagOverview (props) {
@@ -111,6 +118,15 @@ export const TagOverview = withApi(function TagOverview (props) {
       </div>
     </div>
   )
+})
+
+export const TagPage = withApi(function TagPage (props) {
+  const { params } = props
+  const { archive, tag } = params
+  const result = useQuery(archive, { object: tag })
+  if (!result.data) return <em>Tag {tag} not found.</em>
+  let items = Object.keys(result.data)
+  return <TagCard tag={tag} items={items} />
 })
 
 function TagCard (props) {

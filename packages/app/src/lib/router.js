@@ -19,7 +19,7 @@ const elements = {}
  *   link: Register a link with this name or { name, icon }
  */
 export function registerRoute (route, component, opts) {
-  if (route.charAt(0) !== '/') route = '/' + route
+  route = cleanRoute(route)
   opts = opts || {}
   if (typeof route === 'function') route = route()
   else if (component) route = { route, component, ...opts }
@@ -37,13 +37,13 @@ export function getRoutes () {
 }
 
 export function getRoute (route) {
-  if (route.charAt(0) !== '/') route = '/' + route
+  route = cleanRoute(route)
   return routes[route]
 }
 
 export function registerElement (route, opts) {
   if (!opts) return
-  if (route.charAt(0) !== '/') route = '/' + route
+  route = cleanRoute(route)
 
   if (!elements[route]) elements[route] = {}
   for (let [key, value] of Object.entries(opts)) {
@@ -51,6 +51,11 @@ export function registerElement (route, opts) {
     if (!Array.isArray(value)) value = [value]
     elements[route][key] = [...elements[route][key], ...value]
   }
+}
+
+function cleanRoute (route) {
+  if (route.charAt(0) !== '/') route = '/' + route
+  return route
 }
 
 export function getElements (route) {
@@ -81,6 +86,13 @@ export function getWrappers (route) {
   wrappers.reverse()
 
   return wrappers
+}
+
+export function isInPath (href, route) {
+  route = cleanRoute(route)
+  href = cleanRoute(href)
+  if (route.startsWith(href)) return true
+  return false
 }
 
 export function initRouter (routes, onRoute, attach) {
