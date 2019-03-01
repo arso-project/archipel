@@ -30,8 +30,10 @@ export function AddArchive (props) {
       <Checkbox id='selectSparse' label='Sparse' info='If an Archive is set to sparse mode it downloads content only on request'
         {...checkboxItemProps('sparse', false)}
       />
-      <Input {...itemProps('key', '')} />
-      <Button type='submit' onClick={onSubmit}>Add Archive</Button>
+      <div className='flex'>
+        <Input className='w-2/3 mr-2' {...itemProps('key', '')} />
+        <Button type='submit' onClick={onSubmit}>Add Archive</Button>
+      </div>
     </form>
   )
 
@@ -53,8 +55,10 @@ export function CreateArchive (props) {
   return (
     <form>
       <Messages />
-      <Input {...itemProps('title', '')} />
-      <Button type='submit' onClick={onSubmit}>Create Archive</Button>
+      <div className='flex'>
+        <Input className='w-2/3 mr-2' {...itemProps('title', '')} />
+        <Button type='submit' onClick={onSubmit}>Create Archive</Button>
+      </div>
     </form>
   )
 
