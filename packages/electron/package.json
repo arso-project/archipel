@@ -1,10 +1,14 @@
 {
   "name": "@archipel/electron",
-  "productName": "Archipel",
-  "version": "2.0.1",
+  "productName": "archipel",
+  "version": "0.1",
   "license": "MIT",
   "description": "Archipel Desktop App",
-  "author": "Archipel:Somoco Team",
+  "author": {
+    "name": "Archipel:Somoco Team",
+    "email": "archipel@riseup.net"
+  },
+  "homepage": "https://arso.xyz/archipel",
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=development electron .",

@@ -34,8 +34,8 @@ function open (websocketUrl) {
   process.env.ARCHIPEL_WEBSOCKET_URL = websocketUrl
   win = new BrowserWindow({
     // Extending the size of the browserwindow to make sure that the developer bar is visible.
-    width: 800 + (isDev ? 50 : 0),
-    height: 600 + (isDev ? 200 : 0),
+    width: 1280 + (isDev ? 50 : 0),
+    height: 768 + (isDev ? 200 : 0),
     titleBarStyle: 'hiddenInset',
     minWidth: 640,
     minHeight: 395,
