@@ -70,3 +70,44 @@ tape('basic', t => {
   }
 })
 
+tape('network', t => {
+  
+  start()
+
+  async function start () {
+    try {
+      const client1 = await setup()
+      const client2 = await setup()
+
+      let hyperlib1 = client1.api.hyperlib
+      let hyperlib2 = client2.api.hyperlib
+      let hyperdrive1 = client1.api.hyperdrive
+      let hyperdrive2 = client2.api.hyperdrive
+
+      await hyperlib1.open('lib1')
+      await hyperlib2.open('lib2')
+      
+      let buf = Buffer.from('world')
+      let name = 'hello'
+      let archive1 = await hyperlib1.openArchive({ type: 'hyperdrive' })
+
+      await hyperdrive1.writeFile(archive1.key, name, buf)
+      let read1 = await hyperdrive1.readFile(archive1.key, name)
+      t.equal(read1.toString(), 'world', 'read1 ok')
+
+      let archive2 = await hyperlib2.openArchive({ key: archive1.key, type: 'hyperdrive' })
+      t.equal(archive1.key, archive2.key, 'remote archive identity ok')
+      t.notEqual(archive2.key, archive2.localWriterKey, 'remote archive instance ok')
+
+      await hyperlib1.share(archive1.key)
+
+      let read2 = await hyperdrive2.readFile(archive2.key, name)
+      console.log(read2)
+      t.equal(read2.toString(), 'world', 'read2 ok')
+      t.end()
+    } catch (e) {
+      console.log('err:', e)
+      t.end()
+    }
+  }
+})
