@@ -7,9 +7,8 @@ function NetStats (props) {
   if (!archive) return null
   const stats = useArchiveStats(archive)
   if (!stats) return null
-
   function sum (stats) {
-    let sum = Object.values(stats).reduce((acc, val) => {
+    let sum = Object.values(stats).filter(a => (a !== undefined)).reduce((acc, val) => {
       // makes max of peers sense? or sum? or min > 0?
       acc.peers = val.peers > acc.pee ? val.peers : acc.peers
       acc.upSpeed += val.upSpeed
