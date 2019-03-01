@@ -13,7 +13,7 @@ script:
 
 deploy:
   provider: script
-  script: npm run dist-electron
+  script: npm run ci-release
   on:
     branch: master
   skip_cleanup: true

@@ -13,7 +13,7 @@
     "watch": "cd packages/app; npm run watch",
     "build": "cd packages/app; npm run build",
     "dev": "NODE_ENV=development npm-run-all -p watch server electron",
-    "dist-electron": "npm run bootstrap; cd packages/electron; npm run dist",
+    "ci-release": "cd packages/electron; npm run ci-release",
     "lint": "standard",
     "heroku-postbuild": "npm run bootstrap && npm run build",
     "test": "cd packages/backend; npm run test"

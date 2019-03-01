@@ -20,7 +20,8 @@
     "pack:all": "electron-builder --dir -- --linux --mac --win",
     "dist": "npm run build && npm run dist:all",
     "dist:os": "electron-builder",
-    "dist:all": "electron-builder --linux --mac --win"
+    "dist:all": "electron-builder --linux --mac --win",
+    "ci-release": "npm run build && electron-builder --linux --mac --win --publish=onTagOrDraft"
   },
   "dependencies": {
     "@archipel/backend": "^0.1.0",
