@@ -137,7 +137,7 @@ export function ArchiveTabsWrapper (props) {
 
   let color = 'pink'
   let cls = `border-${color} border flex bg-white`
-  let hcls = `border-${color} border-b text-2xl m-0 px-2 py-4 text-${color} flex`
+  let hcls = `border-${color} border-b  m-0 px-2 py-4 text-${color} flex`
 
   return (
     <div className={cls}>
@@ -146,8 +146,10 @@ export function ArchiveTabsWrapper (props) {
           <h2 className='text-2xl flex-1'>
             {archive.info.title}
           </h2>
-          <NetStats className='mr-2' archive={archive} />
-          <div className=''>
+          <div className='flex mr-4'>
+            <NetStats archive={archive} />
+          </div>
+          <div className='text-2xl'>
             <ArchiveActions archive={archiveKey} />
           </div>
         </div>

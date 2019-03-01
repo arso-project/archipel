@@ -1,5 +1,4 @@
 import React from 'react'
-// Todo: Remove ucore.
 import { useArchiveStats } from './netStatsStore'
 import { MdRepeat, MdArrowDownward, MdArrowUpward, MdFileDownload, MdFileUpload } from 'react-icons/md'
 
@@ -28,16 +27,29 @@ function NetStats (props) {
   upSpeed = sizeUnits(upSpeed, 'speed')
   downTotal = sizeUnits(downTotal, 'amount')
   upTotal = sizeUnits(upTotal, 'amount')
+
+  let size = 24
+  let cls = 'self-center flex-0 mr-1'
+
   return (
-    <div className='flex'>
-      <div className='inline-flex p-2' >
-        <div className='flex-none -mb-2'><MdRepeat /></div>
-        <span className='self-center'>{peers}</span>
-      </div>
-      <div className='p-2' ><MdArrowDownward />{downSpeed}</div>
-      <div className='p-2' ><MdArrowUpward />{upSpeed}</div>
-      <div className='p-2' ><MdFileDownload />{downTotal}</div>
-      <div className='p-2' ><MdFileUpload />{upTotal}</div>
+    <div className='flex text-base text-grey'>
+      <Container Icon={<MdRepeat className={cls} size={size} />} content={peers} />
+      <Container Icon={<MdArrowDownward className={cls} size={size} />} content={downSpeed} />
+      <Container Icon={<MdArrowUpward className={cls} size={size} />} content={upSpeed} />
+      <Container Icon={<MdFileDownload className={cls} size={size} />} content={downTotal} />
+      <Container Icon={<MdFileUpload className={cls} size={size} />} content={upTotal} />
+    </div>
+  )
+}
+
+function Container (props) {
+  let { Icon, content } = props
+  // console.log(Icon, content)
+  return (
+    <div className='inline-flex mr-2'>
+      {/* <div className='self-center flex-none mr-1'>{Icon}</div> */}
+      {Icon}
+      <span className='self-center'>{content}</span>
     </div>
   )
 }
