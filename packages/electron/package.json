@@ -68,8 +68,7 @@
     "linux": {
       "category": "Utility",
       "target": [
-        "AppImage",
-        "deb"
+        "AppImage"
       ]
     },
     "win": {

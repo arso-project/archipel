@@ -1,26 +1,19 @@
 dist: trusty
 language: node_js
 node_js:
-  - 8
+  - 11
   
 os:
   - osx
   - linux
-addons:
-  apt:
-    packages:
-      - icnsutils
-      - graphicsmagick
-      - xz-utils
-      - xvfb
-env:
-  - DISPLAY=":99.0"
-install:
-  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-  - npm install
+
+script:
+  - npm run bootstrap
+  - npm test
+
 deploy:
   provider: script
-  script: npm run dist
+  script: npm run dist-electron
   on:
     branch: master
   skip_cleanup: true
