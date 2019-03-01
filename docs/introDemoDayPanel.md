@@ -1,6 +1,6 @@
-# Zu erwänende Inhalte (3 Minuten)
+# DemoDay Intro
 
-## Volltext:
+## Volltext (3 min):
 
 Wenn es darum geht private und geteilte web-Inhalte zu erhalten, dann hat die Vergangenheit deutlich gezeigt, dass zentralisierte Services ein Problem sind.  Platformen, Webseiten und Blogs kommen und gehen. Platformen, wie MySpace, Picasa, oder GeoCities waren groß und populär und gehören heute der Vergangenheit an. Die dort gespeichert Inhalte sind oft dauerhaft verloren gegangen. Diesem Problem sollte unserer Meinung nach mit Dezentralisierung begegnet werden und wir machen einen ersten Schritt in diese Richtung.
 
@@ -13,6 +13,52 @@ Wo stehen wir damit? Wir haben einen Prototypen! Archipel basiert auf dat, einem
 Archipel läuft dabei entweder als Software auf meinem PC oder als Webapp auf einem Server. Mit letzterer werden Inhalte dann auch dauerhaft online gehalten. Entscheidend für den archivarischen Aspekt ist, dass es sehr leicht möglich ist, die erstellten Archive zwischen verschiedenen Knotenpunkten zu spiegeln. Die Kopien werden dabei automatisch synchron und up-to-date gehalten. Wenn ich etwas an meinem Archiv ändere, werden alle Kopien live aktualisiert.
 
 Wie soll es weiter gehen? Der Prototypefund ist um, wir haben einen Prototypen - und werden weitermachen. Wir sind in regem Austausch mit potentiellen Nutzer*innen und der Open-Source-Community rund um das Dat-Projekt. Wer mitmachen möchte, uns auf erhaltenswerte Medienarchive hinweisen will, Ideen für eine Anschlussfinanzierung hat, oder einfach Hallo sagen möchte,  kann uns gerne an unserem Tisch besuchen oder sich per E-Mail melden. Wir sind überzeugt, dass es für eine Geschichte von unten gute Werkzeuge zur dezentralen Veröffentlichung und Archivierung braucht - und werden die nächsten Schritte gehen, gerne mit vielen weiteren Interessierten zusammen. Vielen Dank!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Stichpunkte
 
