@@ -3,59 +3,38 @@ import { Heading, Button } from '@archipel/ui'
 import pretty from 'pretty-bytes'
 
 import { registerRoute, registerElement } from '@archipel/app/src/lib/router'
-import { useFile } from '@archipel/app/src/features/drive/file'
+import registry from '@archipel/app/src/lib/component-registry'
 
-registerRoute(
-  'archive/:archive/youtube',
-  (props) => <YoutubeImportScreen {...props} />,
-  { wrap: true }
-)
+function videoMatcher (file) {
+  return file.mimetype && file.mimetype.match(/video\/.*/)
+}
 
-registerElement('archive/:archive', {
-  link: { name: 'Youtube', href: 'archive/:archive/youtube', weight: 8 }
-})
+export default function init () {
+  return {
+    routes: [
+      {
+        route: 'archive/:archive/youtube',
+        component: YoutubeImportScreen
+      }
+    ],
 
-registerElement({
-  route: 'archive/:archive/files/*',
-  panel: { name: 'youtube', YoutubePanel },
-  action: { name: 'youtube', YoutubeImportAction }
-})
+    links: [
+      {
+        parent: 'archive/:archive',
+        name: 'Youtube',
+        link: 'archive/:archive/youtube',
+        weight: 8
+      }
+    ],
 
-function YoutubeImportAction (props) {
-  const { params, context } = useRouter()
-  if (context.file && context.file.isDirectory) {
-    return <ActionLink onClick={e => alert('go!')}>Import from youtube!</ActionLink>
+    fileViewer: [
+      {
+        component: Player,
+        stream: true,
+        match: videoMatcher
+      }
+    ]
   }
-  return null
-}
-
-function ActionLink (props) {
-  return (
-    <a {...props} className={cls}>{children}</a>
-  )
-}
-
-function YoutubePanel () {
-  return <em>Hi!</em>
-}
-
-export default {
-  name: 'import-youtube',
-  plugin
-}
-
-async function plugin (core) {
-  core.components.add('archiveTabs', wrapper(core, YoutubeImportScreen), { title: 'Youtube' })
-  core.components.add('fileViewer', Player, {
-    stream: true,
-    match: (file) => {
-      return file.mimetype && file.mimetype.match(/video\/.*/)
-    }
-  })
-}
-
-function wrapper (core, Component) {
-  return (props) => <Component {...props} core={core} />
 }
 
 class YoutubeImportScreen extends React.Component {

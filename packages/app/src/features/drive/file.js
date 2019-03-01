@@ -5,19 +5,19 @@ import { sortByProps } from '../../lib/state-utils'
 
 const files = new StatefulStore('files')
 
-init()
-
 export function init () {
-  getApi().then(api => go(api))
+  files.reset()
 
+  // Start watch stream.
+  getApi().then(api => go(api))
   async function go (api) {
     let watchStream = await api.hyperdrive.createWatchStream()
     // todo: this is really inefficient.
     watchStream.on('data', info => {
       let ids = files.ids()
       const keys = ids.filter(id => id.split('/')[0] === info.key)
-      keys.forEach(key => files.set(key, () => ({})))
-      loadFile(info.key, '/')
+      // keys.forEach(key => files.set(key, () => ({})))
+      // loadFile(info.key, '/')
     })
   }
 }

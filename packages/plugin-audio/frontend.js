@@ -5,17 +5,13 @@ import { Button, List } from '@archipel/ui'
 import './AudioControls.css'
 import { MdPause, MdPlayArrow, MdStop, MdVolumeUp, MdVolumeMute } from 'react-icons/md'
 import { metadataExtractor } from './metadataExtractor'
+import registry from '@archipel/app/src/lib/component-registry'
 
-export default {
-  name: 'audio-player',
-  plugin
-}
-
-async function plugin (core) {
-  core.components.add('fileViewer', AudioPlayer, {
+export default function start () {
+  registry.add('fileViewer', AudioPlayer, {
     stream: false,
-    match: ({ mimetype }) => {
-      return mimetype && mimetype.match(/audio\/.*/)
+    match: (file) => {
+      return file.mimetype && file.mimetype.match(/audio\/.*/)
     }
   })
 }
@@ -63,8 +59,8 @@ export class AudioPlayer extends React.Component {
 
   componentDidUpdate (prevProps) {
     if (prevProps.content !== this.props.content) {
-      console.log(prevProps)
-      console.log(this.props)
+      // console.log(prevProps)
+      // console.log(this.props)
       this.setState({ loaded: false })
       this.onStop()
       let metadata = metadataExtractor(this.props.content)
@@ -237,7 +233,7 @@ const MetadataList = function ({ metadata }) {
   //   { Object.keys(metadata).map(key => <li key={key}>{key}: {metadata[key]}</li>) }
   // </ul>
   const { picture, ...rest } = metadata
-  console.log(picture)
+  // console.log(picture)
   return (
     <div className='flex flex-column'>
       <img src={picture} className='w-1/2' />

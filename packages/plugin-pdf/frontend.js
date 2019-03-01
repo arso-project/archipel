@@ -1,30 +1,25 @@
-'use strict'
-
-// TODO: Discard PDF at newload
-
 // Inspired by: https://github.com/javascriptiscoolpl/npm-simple-react-pdf/blob/master/src/index.js
 import React from 'react'
-// import ReactDOM from 'react-dom'
 import { PDFViewControl } from '@archipel/ui'
-
 import PDFjs from 'pdfjs-dist'
+
+import registry from '@archipel/app/src/lib/component-registry'
+
 // IMPORTANT: node_modules/pdfjs-dist/build/pdf.worker.js needs to be simlinked
 // to the localhost:8080 basefolder. At the time of writing this, it was
 // packages/app/dist/
 PDFjs.GlobalWorkerOptions.workerSrc = './pdf.worker.js'
 
-export default {
-  name: 'pdf-viewer',
-  plugin
+export default function init () {
+  registry.add('fileViewer', PDFViewer, {
+    stream: false,
+    match: pdfMatcher
+  })
 }
 
-async function plugin (core) {
-  core.components.add('fileViewer', PDFViewer, {
-    stream: false,
-    match: ({ mimetype }) => {
-      return mimetype && mimetype.match(/application\/pdf/)
-    }
-  })
+function pdfMatcher (file) {
+  if (!file.mimetype) return false
+  return file.mimetype.match(/application\/pdf/)
 }
 
 export class PDFViewer extends React.Component {

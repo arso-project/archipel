@@ -12,8 +12,7 @@
   "peerDependencies": {
     "proptypes": "^1.1.0",
     "react": "^16.5.2",
-    "react-dom": "^16.5.2",
-    "ucore": "^0.3.5"
+    "react-dom": "^16.5.2"
   },
   "dependencies": {
     "ytdl-core": "^0.27.1",

@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getApi } from '../../lib/api'
 
-init()
-
 let stats = {}
 const subscribers = new Set()
 

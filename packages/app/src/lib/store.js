@@ -1,7 +1,6 @@
-export const S = Symbol('state')
 import { MapOfSets } from '@archipel/common/util/map'
 
-// export const _stores = []
+export const S = Symbol('state')
 
 export class Store {
   constructor (name) {
@@ -71,6 +70,10 @@ export class Store {
     delete this.res[id]
     delete this.subscribers[id]
   }
+
+  reset () {
+    this.res = {}
+  }
 }
 
 export class StatefulStore extends Store {
@@ -101,6 +104,11 @@ export class StatefulStore extends Store {
     let obj = super.get(id)
     if (!obj[S]) obj[S] = this.getState(id)
     return obj
+  }
+
+  reset () {
+    super.reset()
+    this.state = {}
   }
 }
 

@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react'
 import { getApi } from '../../lib/api'
 import { Store } from '../../lib/store'
 
-const archives = new Store('files')
-
-init()
+let archives = new Store('files')
 
 export function init () {
-  getApi().then(api => go(api))
+  // Reset.
+  archives.reset()
 
+  // Open archive stream.
+  getApi().then(api => go(api))
   async function go (api) {
     let archiveStream = await api.hyperlib.createArchiveStream(true)
     archiveStream.on('data', archive => {

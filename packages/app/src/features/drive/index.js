@@ -5,18 +5,24 @@ import CreateDir from './CreateDir'
 
 import { MdCreateNewFolder, MdInsertDriveFile } from 'react-icons/md'
 
-registerRoute('archive/:archive/file', FilePage, { Wrapper: FilePageWrapper })
-registerRoute('archive/:archive/file/*', FilePage)
+import { init } from './file'
 
-registerElement('archive/:archive', {
-  link: [
-    { name: 'Files', href: 'archive/:archive/file', weight: -8 }
-  ]
-})
+export default function start () {
+  registerRoute('archive/:archive/file', FilePage, { Wrapper: FilePageWrapper })
+  registerRoute('archive/:archive/file/*', FilePage)
 
-registerElement('archive/:archive/file', {
-  actions: [
-    { name: 'Upload files', component: UploadFile, icon: MdInsertDriveFile, match: file => file.isDirectory },
-    { name: 'Create directory', component: CreateDir, icon: MdCreateNewFolder, match: file => file.isDirectory }
-  ]
-})
+  registerElement('archive/:archive', {
+    link: [
+      { name: 'Files', href: 'archive/:archive/file', weight: -8 }
+    ]
+  })
+
+  registerElement('archive/:archive/file', {
+    actions: [
+      { name: 'Upload files', component: UploadFile, icon: MdInsertDriveFile, match: file => file.isDirectory },
+      { name: 'Create directory', component: CreateDir, icon: MdCreateNewFolder, match: file => file.isDirectory }
+    ]
+  })
+
+  init()
+}

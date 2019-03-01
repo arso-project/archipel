@@ -1,53 +1,54 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 import { useKey } from './lib/hooks'
-import { Router, useRouter, registerRoute, registerElement, getWrappers } from './lib/router'
-
-import { ArchiveListWrapper, ArchiveTabsWrapper, NoArchive } from './features/archive/ArchiveScreen.js'
-
-import { MdShare, MdInfoOutline } from 'react-icons/md'
-
-import ArchiveInfo from './features/archive/ArchiveInfo'
-import ArchiveInfoNew from './features/archive/ArchiveInfoNew'
-import ArchiveSharing from './features/archive/ArchiveSharing'
+import { Router, getWrappers } from './lib/router'
 
 import Debug from './features/debug/Debug'
-import Tags from './foo/tags'
-import Panels from './foo/panels'
 
 import '@archipel/ui/tailwind.pcss'
 
-import './features/drive/index.js'
+import { getApi } from './lib/api'
 
-registerRoute('/', NoArchive, {
-  Wrapper: ArchiveListWrapper
-})
+import init from './init'
 
-registerRoute('archive', NoArchive)
-
-registerRoute('archive/:archive', ArchiveInfo, {
-  Wrapper: ArchiveTabsWrapper
-})
-
-registerRoute('archive/:archive/info', ArchiveInfoNew, { wrap: true })
-registerRoute('archive/:archive/share', ArchiveSharing, { wrap: true })
-
-registerElement('archive', {
-  actions: [
-    { name: 'Info', href: 'archive/:archive', icon: MdInfoOutline },
-    { name: 'Share', href: 'archive/:archive/share', icon: MdShare }
-  ]
-})
-
-registerRoute('/tags', Tags)
-registerRoute('/panels', Panels)
-registerRoute('/404', () => <strong>404 Not Found</strong>)
+async function start (config, extensions) {
+  // This connects to the backend.
+  let api = await getApi(config)
+  // This inits the frontend (routes, elements).
+  init(extensions)
+  return api
+}
 
 export function App (props) {
+  const { config, extensions } = props
+  const [api, setApi] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    start(config, extensions)
+      .then(api => setApi(api))
+      .catch(e => setError(e))
+  }, [config])
+
+  if (error || !api) return <Fallback error={error} />
+  return <Router attach global Wrapper={Wrapper} />
+}
+
+function Fallback (props) {
+  let { error } = props
+  if (error && typeof error === 'object') {
+    console.error(error)
+    error = error.toString()
+  }
+
+  let cls = 'text-2xl mx-auto my-8'
+
   return (
-    <div>
-      <Router attach global Wrapper={Wrapper} />
-    </div>
+    <AppFrame>
+      <div className={cls}>
+        { error && <span className='text-red'>{error}</span>}
+      </div>
+    </AppFrame>
   )
 }
 
@@ -82,9 +83,18 @@ function Wrapper (props) {
   })
 
   return (
+    <AppFrame color={color}>
+      {rendered}
+    </AppFrame>
+  )
+}
+
+function AppFrame (props) {
+  const { children, color } = props
+  return (
     <div className='flex flex-col h-screen font-sans'>
       <div className={`flex-1 border-8 border-${color}-dark p-4`}>
-        {rendered}
+        {children}
       </div>
       <div className='flex-0 max-w-1/2'>
         <Debug />
@@ -92,5 +102,3 @@ function Wrapper (props) {
     </div>
   )
 }
-
-export { default as makeCore } from './core'
