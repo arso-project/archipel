@@ -20,8 +20,8 @@
     "pack:all": "electron-builder --dir -- --linux --mac --win",
     "dist": "npm run build && npm run dist:all",
     "dist:os": "electron-builder",
-    "dist:all": "electron-builder --linux --mac --win",
-    "ci-release": "npm run build && electron-builder --linux --mac --win --publish=onTagOrDraft"
+    "dist:all": "electron-builder --linux --mac",
+    "ci-release": "npm run build && electron-builder --linux --win --mac --publish=onTagOrDraft"
   },
   "dependencies": {
     "@archipel/backend": "^0.1.0",
@@ -68,12 +68,14 @@
     },
     "linux": {
       "category": "Utility",
+      "artifactName": "archipel-${version}",
       "target": [
         "AppImage"
       ]
     },
     "win": {
-      "target": "NSIS"
+      "target": "NSIS",
+      "artifactName": "archipel-${version}"
     },
     "protocols": [
       {

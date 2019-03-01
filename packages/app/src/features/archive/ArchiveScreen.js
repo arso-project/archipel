@@ -40,7 +40,7 @@ export function NoArchive (props) {
   return (
     <div className='p-16 md:w-1/2 mx-auto my-auto'>
       <div className='my-8 text-center'>
-        <img className='mr-6' src='/archipel-logo-1.svg' />
+        <img className='mr-6' src='archipel-logo-1.svg' />
         <div className='text-5xl font-bold'>Archipel</div>
       </div>
       <div className='text-3xl text-grey italic text-center'>
