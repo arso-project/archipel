@@ -208,12 +208,17 @@ class Library extends EventEmitter {
   async openArchive (opts) {
     const self = this
     const { key, type } = opts
+    opts.state = opts.state || {}
     if (key && this.archives.has(key)) return this.archives.get(key)
     if (!type) throw new Error('Type for primary structure is required.')
 
     if (!key) opts.create = true
 
     if (key && !validateKey(key)) throw new Error(`Invalid key: ${key}`)
+
+    if (key && opts.state.share === undefined) {
+      opts.state.share = true
+    }
 
     try {
       const archive = await withTimeout(open(), 5000)
@@ -230,17 +235,16 @@ class Library extends EventEmitter {
 
       archive.on('structure', s => self.structures.set(s.key, s))
 
-      await archive.ready()
-
       const key = hex(archive.key)
       self.archives.set(key, archive)
 
       // Apply initial state.
-      if (opts.state) {
-        if (opts.state.share) {
-          self.share(key)
-        }
+      if (opts.state.share) {
+        self.share(key)
       }
+
+      // Properly open archive.
+      await archive.ready()
 
       // Store info on state changes.
       archive.on('state', state => self.storeArchive(archive))
@@ -295,6 +299,7 @@ class Archive extends EventEmitter {
     this.ready = asyncThunky(this._ready.bind(this))
 
     this.primary = this._openStructure(type, opts)
+    this.key = hex(this.primary.key)
   }
 
   async _ready () {
@@ -303,7 +308,6 @@ class Archive extends EventEmitter {
     await this.primary.ready()
     // debug('primary ready')
 
-    this.key = hex(this.primary.key)
     this.localWriterKey = hex(this.primary.structure().local.key)
 
     // If creating a new archive, store initial info.
@@ -334,7 +338,7 @@ class Archive extends EventEmitter {
     })
 
     async function initFromInfo () {
-      let info = await withTimeout(self.primary.fetchInfo(), 1000)
+      let info = await withTimeout(self.primary.fetchInfo(), 5000)
       if (info.structures) {
         await self.loadStructures(info.structures)
       }
@@ -437,7 +441,7 @@ class Archive extends EventEmitter {
     }
     const key = opts.key
 
-    const api = this.api
+    let api = this.api
     if (opts.api) api = { ...api, ...opts.api }
     // todo: where should storage nesting take place?
     api.storage = nestStorage(api.storage, type, hex(key))
