@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@archipel/backend": "^0.1.0",
+    "mkdirp": "^0.5.1",
     "find-free-port": "^2.0.0"
   },
   "devDependencies": {
@@ -53,6 +54,7 @@
       "category": "public.app-category.utilities"
     },
     "dmg": {
+      "artifactName": "archipel-${version}.${ext}",
       "contents": [
         {
           "x": 220,
@@ -68,14 +70,15 @@
     },
     "linux": {
       "category": "Utility",
-      "artifactName": "archipel-${version}",
+      "artifactName": "archipel-${version}.${ext}",
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb"
       ]
     },
     "win": {
       "target": "NSIS",
-      "artifactName": "archipel-${version}.exe"
+      "artifactName": "archipel-${version}.${ext}"
     },
     "protocols": [
       {

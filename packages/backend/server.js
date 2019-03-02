@@ -19,7 +19,7 @@ module.exports = server
 
 function server (config, cb) {
   cb = cb || noop
-  const storage = name => raf(p.join('../..', config.library.path, name))
+  const storage = name => raf(p.join(config.library.path, name))
   console.log('libraries are stored at:', config.library.path)
 
   const hyperlib = libraries.make({ storage }, {

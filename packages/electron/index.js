@@ -3,6 +3,7 @@
 // const { app, session, shell, BrowserWindow, Menu } = require('electron')
 const { app, BrowserWindow, Menu } = require('electron')
 const path = require('path')
+const mkdirp = require('mkdirp')
 // const defaultMenu = require('electron-default-menu')
 
 const archipel = require('./lib/archipel.js')
@@ -10,6 +11,8 @@ const archipel = require('./lib/archipel.js')
 const isDev = process.env.NODE_ENV === 'development'
 
 const pathPrefix = process.env.ARCHIPEL_APP_PATH || isDev ? path.join(__dirname, '../app') : __dirname
+
+const libraryPath = path.join(app.getPath('appData'), 'archipel', 'library')
 
 // const menu = defaultMenu(app, shell)
 // menu[menu.length - 1].submenu.push({
@@ -26,8 +29,13 @@ app.on('ready', () => {
   // session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
   //   callback({cancel: false, responseHeaders: Object.assign({}, details.responseHeaders, cspHeader)})
   // })
-
-  archipel(websocketUrl => open(websocketUrl))
+  mkdirp(libraryPath, err => {
+    if (err) return console.error('cannot create library path: ' + libraryPath, err)
+    let config = {
+      library: { path: libraryPath }
+    }
+    archipel(config, websocketUrl => open(websocketUrl))
+  })
 })
 
 function open (websocketUrl) {
