@@ -75,7 +75,7 @@
     },
     "win": {
       "target": "NSIS",
-      "artifactName": "archipel-${version}"
+      "artifactName": "archipel-${version}.exe"
     },
     "protocols": [
       {
