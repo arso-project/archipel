@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@archipel/ui": "^1.0",
+    "@archipel/app": "^0.1.0",
     "remark": "^10.0.0",
     "remark-react": "^4.0.3"
   }
