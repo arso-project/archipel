@@ -20,7 +20,7 @@
 		"jsdom": "^11.11.0",
 		"ky-universal": "^0.1.0",
 		"ky": "^0.9.0",
-		"freeze-dry": "github:gozala/freeze-dry#beaker",
+		"freeze-dry": "github:Frando/freeze-dry#node-compat",
 		"metascraper": "^4.10.1",
 		"metascraper-author": "^4.10.1",
 		"metascraper-date": "^4.10.1",
