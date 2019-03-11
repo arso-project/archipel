@@ -309,14 +309,12 @@ exports.structure = (opts, api) => {
     async readDerivedFile (path, name) {
       let filepath = derivedPath(path, name)
       let res = await self.api.readFile(filepath)
-      console.log('read', res)
       return res
     },
 
     readFile (path) {
       const [promise, done] = prom()
       drive.readFile(path, (err, res) => {
-        console.log('read!', res)
         done(err, res)
       })
       return promise
