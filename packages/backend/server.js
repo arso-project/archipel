@@ -9,7 +9,6 @@ const websocket = require('websocket-stream')
 const rpc = require('@archipel/common/rpc')
 const streambus = require('@archipel/common/rpc/streambus')
 
-const config = require('./config')
 const libraries = require('./lib/library')
 const hyperdrive = require('./structures/hyperdrive')
 const hyperdb = require('./structures/hyperdb')
@@ -22,31 +21,43 @@ function server (config, cb) {
   const storage = name => raf(p.join(config.library.path, name))
   console.log('libraries are stored at:', config.library.path)
 
-  const hyperlib = libraries.make({ storage }, {
+  const structures = {
     hyperdrive: hyperdrive.structure,
     hyperdb: hyperdb.structure,
     hypergraph: hypergraph.structure
-  })
+  }
+
+  const hyperlib = libraries.make({ storage }, structures)
+
+  let rpcApis = {
+    hyperdrive: hyperdrive.rpc,
+    hypergraph: hypergraph.rpc,
+    hyperlib: libraries.rpc
+  }
+
+  if (config.extensions) {
+    config.extensions.forEach(ext => {
+      if (typeof ext === 'object' && ext.rpc) rpcApis = Object.assign({}, rpcApis, ext.rpc)
+    })
+  }
+
+  console.log(rpcApis)
 
   // rpc
   const api = rpc({
     api: {
       hyperlib
     },
-    rpc: {
-      hyperdrive: hyperdrive.rpc,
-      hypergraph: hypergraph.rpc,
-      hyperlib: libraries.rpc
-    }
+    rpc: rpcApis
   })
 
   // server
-  const static = ecstatic({
+  const staticServe = ecstatic({
     root: config.server.static,
     showDir: false
   })
 
-  const server = http.createServer(static)
+  const server = http.createServer(staticServe)
 
   // websocket rpc
   const wss = websocket.createServer({ server }, (stream, request) => {
@@ -62,7 +73,6 @@ function server (config, cb) {
     api.addPeer(transport).then(peer => {
       console.log('session established', peer.api)
     })
-    
   })
 
   // Handle errors gracefully.
@@ -73,7 +83,6 @@ function server (config, cb) {
     socket.on('close', (err) => console.error('socket socket: client closed connection', err))
     socket.on('error', (err) => console.error('socket socket: error', err))
   })
-
 
   // Start.
   server.listen(config.server.port, config.server.host, () => {
