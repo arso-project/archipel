@@ -61,6 +61,16 @@ exports.rpc = (api, opts) => {
       return rs
     },
 
+    async writeDerivedFile (key, path, name, buf) {
+      const drive = await getHyperdrive(this.session, key)
+      return drive.writeDerivedFile(path, name, buf)
+    },
+
+    async readDerivedFile (key, path, name) {
+      const drive = await getHyperdrive(this.session, key)
+      return drive.readDerivedFile(path, name)
+    },
+
     async history (key, path) {
       const drive = await getHyperdrive(this.session, key)
       let res = await drive.history(path)
@@ -289,12 +299,33 @@ exports.structure = (opts, api) => {
         stream.on('end', () => resolve(items))
         stream.on('error', err => reject(err))
       })
+    },
+
+    async writeDerivedFile (path, name, buf) {
+      let filepath = derivedPath(path, name)
+      return self.api.writeFile(filepath, buf)
+    },
+
+    async readDerivedFile (path, name) {
+      let filepath = derivedPath(path, name)
+      let res = await self.api.readFile(filepath)
+      console.log('read', res)
+      return res
+    },
+
+    readFile (path) {
+      const [promise, done] = prom()
+      drive.readFile(path, (err, res) => {
+        console.log('read!', res)
+        done(err, res)
+      })
+      return promise
     }
   }
 
   // Expose methods from hyperdrive as api.
   // Todo: Document available api.
-  const asyncFuncs = ['ready', 'readFile', 'writeFile', 'readdir', 'mkdir', 'stat', 'authorize']
+  const asyncFuncs = ['ready', 'writeFile', 'readdir', 'mkdir', 'stat', 'authorize']
   asyncFuncs.forEach(func => {
     self.api[func] = pify(drive[func].bind(drive))
   })
@@ -326,4 +357,11 @@ function cleanStat (stat, path, key) {
   }
   if (!info.mimetype) info.mimetype = 'archipel/unknown'
   return info
+}
+
+function derivedPath (path, name) {
+  let dir = p.dirname(path)
+  let base = p.basename(path)
+  const filepath = p.join(dir, '.archipel-meta', base, name)
+  return filepath
 }
