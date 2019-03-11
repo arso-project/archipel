@@ -129,8 +129,9 @@ const defaultViewers = [
     opts: {
       stream: false,
       format: 'utf-8',
-      match: ({ mimetype }) => {
-        return mimetype && mimetype.match(/text/)
+      match: (file) => {
+        if (file.size < 1024 * 1024 * 3) return true
+        return file.mimetype && file.mimetype.match(/text/)
       }
     }
   },
@@ -210,7 +211,10 @@ function bufToBase64 (input) {
 }
 
 function butToUtf8String (buf) {
-  return String.fromCharCode.apply(null, new Uint16Array(buf))
+  // let str = String.fromCharCode.apply(null, new Uint16Array(buf))
+  buf = Buffer.from(new Uint8Array(buf))
+  let str = buf.toString()
+  return str
 }
 
 function concatenate (bufs) {

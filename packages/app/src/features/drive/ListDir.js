@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useContext } from 'react'
 import { MdFolder, MdInsertDriveFile, MdExpandLess, MdExpandMore } from 'react-icons/md'
 
-import { useFile, useFiles } from './file'
+import { useFile, useFiles, loadFile } from './file'
 
 export default function ListDir (props) {
   if (props.grid) return <FileGrid {...props} />
@@ -25,9 +25,17 @@ export function FileGrid (props) {
   )
 }
 
+function useLoadFileChildren (archive, path, file) {
+  useEffect(() => {
+    // Load children if not yet loaded.
+    if (file.isDirectory && !file.children) loadFile(archive, path, 1)
+  }, [archive, file, path])
+}
+
 export function FileGridItem (props) {
   const { archive, path, onSelect } = props
   const file = useFile(archive, path, 1)
+  useLoadFileChildren(archive, path, file)
   if (!file) return null
   let color = file.isDirectory ? 'blue' : 'grey-darkest'
   let Icon = fileIcon(file)
@@ -70,11 +78,14 @@ export function FileTreeItem (props) {
   let path = file.path
   const [expand, setExpand] = useState(false)
 
+  // TODO: extract into useTreeItemExpandedState() hook.
   const expanded = useMemo(() => {
     let base = selected.substring(0, selected.lastIndexOf('/')) || '/'
     if (base.startsWith(path)) return true
     return expand
   }, [expand, selected, path])
+
+  useLoadFileChildren(archive, path, file)
 
   // todo: debug why the memo does not work.
   const treeChildren = useMemo(() => {

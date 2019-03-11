@@ -6,6 +6,7 @@ import pretty from 'pretty-bytes'
 import speedometer from 'speedometer'
 import through from 'through2'
 import pump from 'pump'
+import { prom } from '@archipel/common/util/async'
 
 import { Button, Heading, List } from '@archipel/ui'
 
@@ -108,12 +109,13 @@ class UploadFile extends React.Component {
         await this.uploadFile(files[i], i)
       } catch (e) {
         this.setState({ error: e })
-        break
       }
     }
   }
 
   async uploadFile (file, i) {
+    const [promise, done] = prom()
+
     const updateState = newState => this.setState(state => (
       { files: updateAt(state.files, i, newState) }
     ))
@@ -156,7 +158,10 @@ class UploadFile extends React.Component {
     ws.on('finish', () => {
       clearInterval(debounce)
       updateState({ pending: false, done: true, written, speed })
+      done()
     })
+
+    return promise
 
     // todo: is this clean enough?
     // core.getStore('fs').fetchStats({ archive: key, path: this.props.path})
