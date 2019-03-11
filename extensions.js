@@ -2,11 +2,13 @@
 const markdown = require('./packages/plugin-markdown')
 const audio = require('./packages/plugin-audio')
 const pdf = require('./packages/plugin-pdf')
+const importer = require('./packages/plugin-import')
 
 module.exports = [
   // youtube,
   markdown,
   audio,
-  pdf
+  pdf,
+  importer,
 ]
 
