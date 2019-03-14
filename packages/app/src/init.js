@@ -1,3 +1,5 @@
+import React from 'react'
+
 import { Router, useRouter, registerRoute, registerElement, getWrappers } from './lib/router'
 
 import Tags from './foo/tags'
