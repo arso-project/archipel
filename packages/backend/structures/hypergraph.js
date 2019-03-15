@@ -27,7 +27,22 @@ exports.rpc = (api, opts) => {
 
     async put (key, triples) {
       const db = await getHypergraph(this.session, key)
-      return db.put(triples)
+      return db.put(triples, (err, res) => {
+        if (err) console.warn('Error putting entries:', err)
+        console.log('Put entries:', res)
+      })
+    },
+
+    async del (key, triples) {
+      const db = await getHypergraph(this.session, key)
+      db.del(triples, (err, res) => {
+        if (err) return console.warn('Error deleting entries:', err)
+        console.log('Deleted Entries:', res)
+      })
+      // return db.put(newTriples, (err, res) => {
+      //   if (err) console.warn('Error putting entries:', err)
+      //   console.log('Put entries:', res)
+      // })
     }
   }
 
@@ -35,7 +50,7 @@ exports.rpc = (api, opts) => {
     if (!session.library) throw new Error('No library open.')
     const library = await api.hyperlib.get(session.library)
     const archive = await library.getArchive(key)
-    let structure = await archive.getStructure({ type: 'hypergraph'})
+    let structure = await archive.getStructure({ type: 'hypergraph' })
     if (!structure) {
       structure = await archive.createStructure('hypergraph')
     }
@@ -130,7 +145,7 @@ exports.structure = (opts, api) => {
 
   // Expose methods from hypergraph as api.
   // Todo: Document available api.
-  const asyncFuncs = ['ready', 'put', 'get']
+  const asyncFuncs = ['ready', 'put', 'get', 'del']
   asyncFuncs.forEach(func => {
     self.api[func] = pify(db[func].bind(db))
   })

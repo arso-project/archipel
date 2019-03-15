@@ -11,8 +11,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@archipel/ui": "^1.0",
     "@archipel/common": "^0.1",
+    "@archipel/ui": "^1.0",
     "filereader-stream": "^2.0.0",
     "pretty-bytes": "^5.1.0",
     "proptypes": "^1.1.0",
@@ -21,6 +21,7 @@
     "react-icons": "^3.2.2",
     "react-toggle-button": "^2.2.0",
     "react-values": "^0.3.0",
+    "simpl-schema": "^1.5.5",
     "speedometer": "^1.1.0",
     "through2": "^2.0.3",
     "wayfarer": "^6.6.4"
