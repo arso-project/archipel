@@ -1,42 +1,45 @@
 import { useState, useEffect } from 'react'
 import { Store } from '../../lib/store'
 
-let actualMetadata = new Store('actualMetadata')
-let toBeMetadata = new Store('toBeMetadata')
+let metadataStore = new Store('actualMetadata')
 
-export function _setActualMetadata (id, metadata) {
+export function _initialSetMetadata (fileID, metadata) {
   // console.log('setM', metadata)
-  actualMetadata.set(id, metadata)
+  metadataStore.set(fileID, metadata)
 }
 
-export function setToBeMetadata (id, metadata) {
-  // console.log('setM', metadata)
-  toBeMetadata.set(id, metadata)
+export function _setMetadataActualValue (fileID, entryID, actualValue) {
+  if (!Array.isArray(actualValue)) throw new Error('Metadata entries have to be arrays!')
+  let metadata = metadataStore.get(fileID)
+  if (!metadata[entryID]) metadata[entryID] = {}
+  metadata[entryID].actualValue = actualValue
+  metadataStore.set(fileID, metadata)
 }
 
-export function getActualMetadata (id) {
-  return actualMetadata.get(id)
+export function _setMetadataToBeValue (fileID, entryID, toBeValue) {
+  if (!Array.isArray(toBeValue)) throw new Error('Metadata entries have to be arrays!')
+  let metadata = metadataStore.get(fileID)
+  if (!metadata[entryID]) metadata[entryID] = {}
+  metadata[entryID].toBeValue = toBeValue
+  console.log(fileID, metadata)
+  metadataStore.set(fileID, metadata)
 }
 
-export function getToBeMetadata (id) {
-  return toBeMetadata.get(id)
+export function getMetadata (fileID) {
+  return metadataStore.get(fileID)
 }
 
-export function watchActualMetadata (id, cb, init) {
-  actualMetadata.watch(id, cb, init)
+export function watchMetadata (fileID, cb, init) {
+  metadataStore.watch(fileID, cb, init)
 }
 
-export function watchToBeMetadata (id, cb, init) {
-  toBeMetadata.watch(id, cb, init)
-}
-
-export function useActualMetadata (id) {
-  const [state, setState] = useState(() => actualMetadata.get(id))
+export function useMetadata (fileID) {
+  const [state, setState] = useState(() => metadataStore.get(fileID))
   // console.log('useActualMetadata')
   useEffect(() => {
     // console.log('useEffect')
-    actualMetadata.watch(id, watcher, true)
-    return () => actualMetadata.unwatch(id, watcher)
+    metadataStore.watch(fileID, watcher, true)
+    return () => metadataStore.unwatch(fileID, watcher)
 
     function watcher (value) {
       // console.log('watcher')
@@ -46,17 +49,17 @@ export function useActualMetadata (id) {
   return state || {}
 }
 
-export function useToBeMetadata (id) {
-  const [state, setState] = useState(() => toBeMetadata.get(id))
-  useEffect(() => {
-    toBeMetadata.watch(id, watcher, true)
-    return () => toBeMetadata.unwatch(id, watcher)
+// export function useToBeMetadata (fileID) {
+//   const [state, setState] = useState(() => toBeMetadata.get(fileID))
+//   useEffect(() => {
+//     toBeMetadata.watch(fileID, watcher, true)
+//     return () => toBeMetadata.unwatch(fileID, watcher)
 
-    function watcher (value) { setState(value) }
-  }, [state])
-  return state || {}
-}
+//     function watcher (value) { setState(value) }
+//   }, [state])
+//   return state || {}
+// }
 
-// export function fileid (archive, path) {
+// export function filefileID (archive, path) {
 //   return `${archive}/${path}`
 // }

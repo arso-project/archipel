@@ -1,4 +1,5 @@
 import SimplSchema from 'simpl-schema'
+import { match } from 'sucrase/dist/parser/tokenizer';
 
 const Categories = [
   'resource', 'file', 'image'
@@ -15,9 +16,23 @@ export default function Schemas (category) {
   }
 }
 
+// function singleType () {
+//   this.key = 'singleType'
+//   // I'm just a placeholder to allow adding this as a custom property
+// }
+
+// SimplSchema.addValidator(singleType)
+SimplSchema.extendOptions({
+  singleType: Boolean
+})
+
 const resourceSchema = new SimplSchema({
   hasLabel: String,
-  hasDescription: String
+  hasDescription: String,
+  tag: {
+    type: String,
+    label: 'Tags'
+  }
 })
 
 const adressSchema = new SimplSchema({
@@ -58,7 +73,8 @@ personSchema.extend(resourceSchema)
 const imageSchema = new SimplSchema({
   hasTitle: {
     type: String,
-    label: 'Title' },
+    label: 'Title',
+    singleType: true },
   hasLocalOrigin: {
     type: String,
     label: 'Location' },

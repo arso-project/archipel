@@ -27,10 +27,13 @@ exports.rpc = (api, opts) => {
 
     async put (key, triples) {
       const db = await getHypergraph(this.session, key)
-      return db.put(triples, (err, res) => {
-        if (err) console.warn('Error putting entries:', err)
-        console.log('Put entries:', res)
-      })
+      // db.put(triples, (err, res) => {
+      //   if (err) console.warn('Error putting entries:', err)
+      //   console.log('Put entries:', res)
+      // })
+      let res = await db.put(triples)
+      console.log('PUTres:', res)
+      return res
     },
 
     async del (key, triples) {
