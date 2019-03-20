@@ -1,14 +1,13 @@
 import { getApi } from '../../lib/api'
 // import { makeLink, parseLink } from '@archipel/common/util/triples'
 import { _initialSetMetadata, _setMetadataToBeValue, getMetadata } from './store'
-import Schemas, { getCategoryFromMimeType, validCategory } from './schemas'
+import getSchema, { getCategoryFromMimeType, validCategory } from './schemas'
 
 // TODO: getMetadata should return fileType specific metadata.
 // TODO: adjust such that the Controller can watch react hooks using store
 const CATEGORY = 'ofCategory'
 
 export function FileMetadataController (props) {
-  console.log(`FMC inintiated the ${props.count} time`)
   this._ready = false
   this.controllerName = props.name
   this.constants = {
@@ -19,25 +18,20 @@ export function FileMetadataController (props) {
   this.state = {
     category: null
   }
-  // this.writeChanges = this.writeChanges.bind(this)
   this.init()
-  // this.log = setInterval(() => console.log('CONT:', 'constant:', this.constants), 2000)
 }
 
 FileMetadataController.prototype.init = async function () {
-  // let { fileID } = this.constants
   if (this._ready) return
+  if (!this.constants.fileID) throw new Error('No fileID!')
   let tripleStore = await getApi().then((apis) => apis.hypergraph)
   if (!tripleStore) throw new Error('Can not connect to TripleStore')
   this.constants.tripleStore = tripleStore
-  // this.toBeMetadata = useToBeMetadata(fileID)
-  // this.actualMetadata = useActualMetadata(fileID)
-  if (!this._ready) {
-    await this.getCategory()
-    await this.getSchema()
-    await this.genPlaceholders()
-    await this.getMetadata()
-  }
+
+  await this.getCategory()
+  await this.getSchema()
+  // await this.genPlaceholders()
+  await this._getActualMetadata()
   this._ready = true
 }
 
@@ -50,19 +44,17 @@ FileMetadataController.prototype.setState = function (props) {
       _initialSetMetadata(fileID, props[i])
       continue
     }
-    // if (i === 'toBeMetadata') {
-    //   setToBeMetadata(fileID, props[i])
-    //   continue
-    // }
     this.state[i] = props[i]
   }
 }
 
+// Needs to be sync
 FileMetadataController.prototype.category = function () {
-  return this.state.category
+  return this.state.category || null
 }
 
 FileMetadataController.prototype.getCategory = async function () {
+  if (this.state.category) return this.state.category
   let { tripleStore, archiveKey, fileID } = this.constants
 
   let queryRes = await tripleStore.get(
@@ -91,12 +83,11 @@ FileMetadataController.prototype._setDefaultCategory = async function () {
     mimetype = 'resource'
   }
   let category = getCategoryFromMimeType(mimetype)
-  await this.setCategory(category)
+  await this._setCategory(category)
   return category
 }
 
-FileMetadataController.prototype.setCategory = async function (category) {
-  // console.log('Category', category, validCategory(category))
+FileMetadataController.prototype._setCategory = async function (category) {
   if (!validCategory(category)) return this._setDefaultCategory()
   let { tripleStore, archiveKey, fileID } = this.constants
   await tripleStore.put(archiveKey,
@@ -104,46 +95,44 @@ FileMetadataController.prototype.setCategory = async function (category) {
   this.setState({ category })
 }
 
-FileMetadataController.prototype.getSchema = async function () {
-  if (this.Schema) return this.Schema
-  if (!this.state.category) await this.getCategory()
-  this.Schema = Schemas(this.state.category)
-  return this.Schema
+FileMetadataController.prototype.setCategory = async function (category) {
+  await this._setCategory(category)
+  this._newSchema()
 }
 
-FileMetadataController.prototype.genPlaceholders = function (metadata) {
-  let labels = this.Schema.label()
-  if (!metadata) metadata = {}
-  // console.log('genPlaceholdres, metadta', metadata)
-  // console.log('genPlaceholdres, labels', labels)
-  for (let i of Object.keys(labels)) {
-    if (!metadata[i]) {
-      metadata[i] = {}
-      metadata[i].label = labels[i]
-      metadata[i].actualValue = null
-      metadata[i].toBeValue = null
-      metadata[i].type = this.Schema.getQuickTypeForKey(i)
-    }
+FileMetadataController.prototype.getSchema = async function () {
+  if (this.schema) return this.schema
+  if (!this.state.category) await this.getCategory()
+  this.schema = getSchema(this.state.category)
+  return this.schema
+}
+
+FileMetadataController.prototype._newSchema = async function () {
+  if (!this.state.category) await this.getCategory()
+  this.schema = getSchema(this.state.category)
+  let metadata = this.schema
+  let oldMetadata = getMetadata(this.constants.fileID)
+  for (let entryKey of Object.keys(oldMetadata)) {
+    if (!metadata[entryKey]) metadata[entryKey] = {}
+    metadata[entryKey].actualValue = oldMetadata[entryKey].actualValue
   }
   this.setState({ metadata })
 }
 
-FileMetadataController.prototype.getMetadata = async function (clearToBeValues) {
+FileMetadataController.prototype._getActualMetadata = async function (clearToBeValues) {
   let { tripleStore, archiveKey, fileID } = this.constants
+  let metadata = await getMetadata(fileID)
   let fileTriples = await tripleStore.get(archiveKey, { subject: fileID })
-  let metadata = triplesToMetadata(fileTriples, this.Schema, 'actualValue')
+  metadata = triplesToMetadata(fileTriples, metadata || this.schema, 'actualValue')
   if (clearToBeValues) {
-    metadata = this.clearToBeValues(metadata) 
+    metadata = this.clearToBeValues(metadata)
   }
-  // this.setState({ metadata })
-  // TODO: rewrite to not genPlaceholders on every call.
-  this.genPlaceholders(metadata)
+  this.setState({ metadata })
 }
 
 FileMetadataController.prototype.setToBeValue = async function (entryKey, toBeValue) {
-  console.log('FileMetadataController.setToBeValue clicked with:', entryKey, toBeValue)
+  if (!entryKey || !toBeValue) return
   let { fileID } = this.constants
-  console.log(fileID)
   // TODO check Schema for entryKey and if not present use some so far not existing general preset
   if (!Array.isArray(toBeValue) &&
     (typeof toBeValue === 'string' || typeof toBeValue === 'number')) {
@@ -157,66 +146,50 @@ FileMetadataController.prototype.writeChanges = async function (props) {
   if (!props) props = {}
   let { onUnmount } = props
   let { archiveKey, fileID, tripleStore } = this.constants
-  let { writeTriples, deleteTriples } = metadataToTriples(fileID, await getMetadata(fileID), 'toBeValue', this.Schema.schema())
+  let { writeTriples, deleteTriples } = metadataToTriples(fileID, await getMetadata(fileID), 'toBeValue', this.schema)
   await tripleStore.put(archiveKey, writeTriples)
   await tripleStore.del(archiveKey, deleteTriples)
   // TODO: Clear toBeValues
-  if (!onUnmount) this.getMetadata(true)
+  if (!onUnmount) this._getActualMetadata(true)
 }
 
 FileMetadataController.prototype.clearToBeValues = function (metadata) {
   for (let entryKey of Object.keys(metadata)) {
     metadata[entryKey].toBeValue = []
   }
-  console.log('cleared:', metadata)
-  return metadata
 }
 
-FileMetadataController.prototype.howSchema = function () {
-  console.log('schema.allowsKey', this.Schema.allowsKey('location'))
-  console.log('schema.get', this.Schema.get('location'))
-  console.log('schema.getDefinition', this.Schema.getDefinition())
-  console.log('schema.getObjectSchema', this.Schema.getObjectSchema())
-  console.log('schema.label', this.Schema.label())
-  console.log('schema.labels', this.Schema.labels('fileName'))
-  console.log('schema.schema', this.Schema.schema())
-}
-
-function triplesToMetadata (triples, schema, valueTempState) {
+function triplesToMetadata (triples, metadata, valueTempState) {
   if (!valueTempState) throw new Error('Need information on the temporal state of the metadata value!')
-  let metadata = {}
-  let labels = schema.label()
+  let metadataValues = {}
   for (let triple of triples) {
-    // console.log('triplesToMetadata', triple)
-    if (!metadata[triple.predicate]) metadata[triple.predicate] = {}
+    if (!metadataValues[triple.predicate]) metadataValues[triple.predicate] = {}
     // ToDo Makes this values!!! apriori unclear how many.
-    if (!metadata[triple.predicate][valueTempState]) metadata[triple.predicate][valueTempState] = []
-    metadata[triple.predicate][valueTempState].push(triple.object)
-    if (labels[triple.predicate]) {
-      metadata[triple.predicate].label = labels[triple.predicate]
-      continue
-    }
-    metadata[triple.predicate].label = triple.predicate
+    if (!metadataValues[triple.predicate][valueTempState]) metadataValues[triple.predicate][valueTempState] = []
+    metadataValues[triple.predicate][valueTempState].push(triple.object)
+    metadataValues[triple.predicate].label = metadataValues[triple.predicate].label || triple.predicate
+  }
+  for (let entryKey of Object.keys(metadataValues)) {
+    if (!metadata[entryKey]) metadata[entryKey] = {}
+    metadata[entryKey][valueTempState] = metadataValues[entryKey][valueTempState]
   }
   if (metadata[CATEGORY]) delete metadata[CATEGORY]
   return metadata
 }
 
-function metadataToTriples (fileID, metadata, valueTempState, schema) {
-  console.log(schema)
+function metadataToTriples (subject, metadata, valueTempState, schema) {
   if (!valueTempState) valueTempState = 'toBeValue'
-  console.log('metadataToTriples', metadata)
   let writeTriples = []
   let deleteTriples = []
   for (let entryKey of Object.keys(metadata)) {
     if (metadata[entryKey][valueTempState]) {
       for (let value of metadata[entryKey][valueTempState]) {
-        writeTriples.push({ subject: fileID, predicate: entryKey, object: value })
+        writeTriples.push({ subject: subject, predicate: entryKey, object: value })
       }
 
-      if (schema[entryKey].singleType) {
+      if (schema[entryKey].singleType && metadata[entryKey].actualValue) {
         for (let value of metadata[entryKey].actualValue) {
-          deleteTriples.push({ subject: fileID, predicate: entryKey, object: value })
+          deleteTriples.push({ subject: subject, predicate: entryKey, object: value })
         }
       }
     }

@@ -4,12 +4,54 @@ Indendet to be used in a Sidebar next
   - to a file
   - to a folder, to allow mass editing of childs metadata by directory structure.
 */
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
+import { MdExpandMore, MdExpandLess } from 'react-icons/md'
+import { Button } from '@archipel/ui'
 import MetadataLink from './MetadataLink'
 import { FileMetadataController } from './controller'
 import { makeLink, parseLink } from '@archipel/common/util/triples'
 import { useMetadata } from './store'
 import { getArchive } from '../archive/archive'
+import { Categories } from './schemas'
+
+function ShowAndSetCategory (props) {
+  const { controller } = props
+  const [category, setCategory] = useState(controller.category())
+  const [expanded, setExpand] = useState(false)
+
+  const ExpandIcon = expanded ? MdExpandLess : MdExpandMore
+  return (
+    <div className='bg-grey-lighter flex-none p-1'>
+      <div className='inline-flex cursor-pointer' onClick={onExpand}>
+        <span className='flex-none font-bold mr-2'>Category: </span>
+        <span className='flex-1'>{Categories.getLabel(category)}</span>
+        <div className='w-4 h-4 flex-0'>
+          <ExpandIcon />
+        </div>
+      </div>
+      {expanded && <ul className='list-reset pl-4'>
+        {Categories.getLabel(-1).map(
+          (label) => <li className='p-1 cursor-pointer'
+            key={label}
+            onClick={() => asyncSetCategory(
+              Categories.getID(label))}>
+            {label}
+          </li>
+        )}
+      </ul>}
+    </div>
+  )
+
+  async function asyncSetCategory (category) {
+    await controller.setCategory(category)
+    setCategory(controller.category())
+  }
+
+  function onExpand (e) {
+    e.stopPropagation()
+    setExpand(state => !state)
+  }
+}
 
 function ListAndEditMetadata (props) {
   const { metadata, setToBeValue } = props
@@ -17,44 +59,22 @@ function ListAndEditMetadata (props) {
   if (typeof metadata !== 'object') return metadata
   return <ul className='list-reset'>
     { Object.keys(metadata).map(
-      (entryKey) => <MetadataListEntry key={`${entryKey}+${keyIndex++}`} entryKey={entryKey} metadataEntry={metadata[entryKey]} setToBeValue={setToBeValue} />
+      (entryKey) => <MetadataListEntry
+        key={`${entryKey}+${keyIndex++}`}
+        entryKey={entryKey}
+        metadataEntry={metadata[entryKey]}
+        setToBeValue={setToBeValue} />
     )}
   </ul>
 }
 
-// function metadataEntryToListEntry (entryKey, metadataEntry) {
-//   console.log('metadatEntry...:', entryKey, metadataEntry)
-//   // if (!metadataEntry.type) {
-//   // }
-//   switch (metadataEntry.type) {
-//     case 'string':
-//       return <MetadataListEntry entryKey={entryKey}
-//         label={metadataEntry.label}
-//         actualValue={metadataEntry.actualValue || null}
-//         Input={<InputText />}
-//       />
-//     case 'date':
-//       return <MetadataListEntry entryKey={entryKey}
-//         label={metadataEntry.label}
-//         actualValue={metadataEntry.actualValue || null}
-//         Input={<InputDate />}
-//       />
-//     default:
-//       return <MetadataListEntry key={entryKey}
-//         label={metadataEntry.label}
-//         actualValue={metadataEntry.actualValue || null}
-//         Input={<InputDate />}
-//       />
-//   }
-// }
-
 function MetadataListEntry (props) {
   const { entryKey, metadataEntry, setToBeValue } = props
-  return <li >
-    <div className='flex flex-col'>
-      <span>{`${metadataEntry.label}:`}</span>
-      <span className='pl-2'>{metadataEntry.actualValue}</span>
-      <div className='pl-2'><Input entryKey={entryKey} toBeValue={metadataEntry.toBeValue} valueType={metadataEntry.type} setToBeValue={setToBeValue} /></div>
+  return <li className='flex flex-col mb-1 mt-1'>
+    <span className='font-bold'>{`${metadataEntry.label}:`}</span>
+    <ul className='list-reset mx-2'>{metadataEntry.actualValue.map((item) => <li key={`actualValue${item}`}>{item}</li>)}</ul>
+    <div className='pl-2'>
+      <Input entryKey={entryKey} toBeValue={metadataEntry.toBeValue} valueType={metadataEntry.type} setToBeValue={setToBeValue} />
     </div>
   </li>
 }
@@ -62,24 +82,16 @@ function MetadataListEntry (props) {
 function Input (props) {
   console.log('Input for', props.entryKey, props)
   let { entryKey, toBeValue, valueType, setToBeValue } = props
-  return <div className='inline-flex'>
-    <input type={valueType} onChange={(e) => { toBeValue = e.target.value }} />
-    <button onClick={() => setToBeValue(entryKey, toBeValue)}>1</button>
-  </div>
+  return (
+    <div className='inline-flex'>
+      <input className='p-1 border border-solid border-grey rounded'
+        type={valueType}
+        onChange={(e) => { toBeValue = e.target.value }}
+        onBlur={() => setToBeValue(entryKey, toBeValue)} />
+      {/* <button onClick={() => setToBeValue(entryKey, toBeValue)}>1</button> */}
+    </div>
+  )
 }
-
-// function InputDate (props) {
-//   return <div>
-//     <input type='date' />
-//   </div>
-// }
-// export const MetadataEditor = MetadataEditorWithApi
-// let thisfilemetadatacontroller = null
-// function initfilemetadatacontroller (props) {
-//   if (thisfilemetadatacontroller) return thisfilemetadatacontroller
-//   thisfilemetadatacontroller = new filemetadatacontroller(props)
-//   return thisfilemetadatacontroller
-// }
 
 let controller = null
 
@@ -91,24 +103,27 @@ export function MetadataEditor (props) {
   let fileID = makeLink(archive.structures[0].discoveryKey, props.path)
 
   useEffect(() => {
-    console.log('useEffect called')
     controller = new FileMetadataController({ ...props.stat, fileID })
 
     return () => controller.writeChanges({ onUnmount: true })
   }, [])
 
   const metadata = useMetadata(fileID)
-  console.log(metadata)
-  // console.log('reached')
+
   if (isObjectEmpty(metadata)) return <span>loading...</span>
   return (
     <div className='flex flex-col'>
-      <span>{fileID}</span>
-      <span>{controller.category()}</span>
-      <button onClick={() => controller.howSchema()}>Schema</button>
-      <h6>Metadata</h6>
-      <div>{ <ListAndEditMetadata metadata={metadata} setToBeValue={controller.setToBeValue.bind(controller)} /> }</div>
-      <button onClick={() => controller.writeChanges()}>Save</button>
+      <div className='mb-2'>
+        <ShowAndSetCategory controller={controller} />
+      </div>
+      <div className='pl-2 mb-2'>
+        { <ListAndEditMetadata
+          metadata={metadata}
+          setToBeValue={controller.setToBeValue.bind(controller)} /> }
+      </div>
+      { // Ad-hoc solution to allow the onBlur()
+      }
+      <Button onClick={() => setTimeout(() => controller.writeChanges(), 100)}>Save</Button>
     </div>
   )
 }

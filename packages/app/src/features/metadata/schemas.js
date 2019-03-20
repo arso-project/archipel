@@ -1,18 +1,33 @@
 import SimplSchema from 'simpl-schema'
-import { match } from 'sucrase/dist/parser/tokenizer';
 
-const Categories = [
+const CategoryIDs = [
   'resource', 'file', 'image'
 ]
+const CategoryLabels = [
+  'Resource', 'File', 'Image'
+]
+export const Categories = [CategoryIDs, CategoryLabels]
 
-export default function Schemas (category) {
+Categories.getID = function (label) {
+  if (label < 0) return this[0]
+  return this[0][this[1].findIndex(i => i === label)]
+}
+
+Categories.getLabel = function (id) {
+  if (id < 0) return this[1]
+  return this[1][this[0].findIndex(i => i === id)]
+}
+
+export default function getSchema (category) {
+  console.log('SimplSchema', SimplSchema)
+  console.log('resourceSchema', resourceSchema)
   switch (category) {
     case 'image':
-      return imageSchema
+      return shallowObjectClone(imageSchema.schema())
     case 'file':
-      return fileSchema
+      return shallowObjectClone(fileSchema.schema())
     default:
-      return resourceSchema
+      return shallowObjectClone(resourceSchema.schema())
   }
 }
 
@@ -27,8 +42,11 @@ SimplSchema.extendOptions({
 })
 
 const resourceSchema = new SimplSchema({
-  hasLabel: String,
-  hasDescription: String,
+  // hasLabel: String,
+  hasDescription: {
+    type: String,
+    label: 'Description'
+  },
   tag: {
     type: String,
     label: 'Tags'
@@ -90,10 +108,10 @@ imageSchema.extend(resourceSchema)
 const fileSchema = new SimplSchema({
   hasFileName: {
     type: String,
-    label: 'file name' },
+    label: 'File name' },
   hasPath: {
     type: String,
-    label: 'file path' },
+    label: 'File path' },
   hasCreator: {
     type: personSchema
   }
@@ -110,5 +128,9 @@ export function getCategoryFromMimeType (mime) {
 }
 
 export function validCategory (category) {
-  return Categories.includes(category)
+  return CategoryIDs.includes(category)
+}
+
+export function shallowObjectClone (object) {
+  return Object.assign({}, object)
 }
