@@ -70,24 +70,39 @@ function ListAndEditMetadata (props) {
 
 function MetadataListEntry (props) {
   const { entryKey, metadataEntry, setToBeValue } = props
+  if (!metadataEntry.actualValue) metadataEntry.actualValue = ['']
   return <li className='flex flex-col mb-1 mt-1'>
     <span className='font-bold'>{`${metadataEntry.label}:`}</span>
     <ul className='list-reset mx-2'>{metadataEntry.actualValue.map((item) => <li key={`actualValue${item}`}>{item}</li>)}</ul>
     <div className='pl-2'>
-      <Input entryKey={entryKey} toBeValue={metadataEntry.toBeValue} valueType={metadataEntry.type} setToBeValue={setToBeValue} />
+      <Input entryKey={entryKey}
+        toBeValue={metadataEntry.toBeValue}
+        valueType={metadataEntry.type}
+        setToBeValue={setToBeValue} />
     </div>
   </li>
 }
 
 function Input (props) {
   console.log('Input for', props.entryKey, props)
-  let { entryKey, toBeValue, valueType, setToBeValue } = props
+  // let { entryKey, valueType, toBeValue, setToBeValue } = props
+  let { entryKey, valueType } = props
+
+  // TODO: valueType.definitions can point to a schema by itself. Implement support!
+  valueType = valueType.definitions[0].type.name ? valueType.definitions[0].type.name.toLowerCase() : 'string'
+
+  let [toBeValue, setToBeValue] = useState(props.toBeValue)
+  useEffect(() => {
+    setToBeValue(props.toBeValue)
+  }, [props])
+
   return (
     <div className='inline-flex'>
       <input className='p-1 border border-solid border-grey rounded'
         type={valueType}
-        onChange={(e) => { toBeValue = e.target.value }}
-        onBlur={() => setToBeValue(entryKey, toBeValue)} />
+        onChange={(e) => setToBeValue(e.target.value)}
+        onBlur={() => props.setToBeValue(entryKey, toBeValue)}
+        value={toBeValue || ''} />
       {/* <button onClick={() => setToBeValue(entryKey, toBeValue)}>1</button> */}
     </div>
   )

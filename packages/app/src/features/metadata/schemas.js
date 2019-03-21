@@ -1,10 +1,10 @@
 import SimplSchema from 'simpl-schema'
 
 const CategoryIDs = [
-  'resource', 'file', 'image'
+  'resource', 'file', 'image', 'person', 'address'
 ]
 const CategoryLabels = [
-  'Resource', 'File', 'Image'
+  'Resource', 'File', 'Image', 'Person', 'Address'
 ]
 export const Categories = [CategoryIDs, CategoryLabels]
 
@@ -81,6 +81,11 @@ const personSchema = new SimplSchema({
     type: String,
     label: 'Middle names'
   },
+  hasLastName: {
+    type: String,
+    label: 'Last Name',
+    singleType: true
+  },
   hasAdress: {
     type: adressSchema,
     label: 'Adress'
@@ -98,9 +103,10 @@ const imageSchema = new SimplSchema({
     label: 'Location' },
   hasDateOfCreation: {
     type: Date,
-    label: 'Date of Creation' },
+    label: 'Date of Creation',
+    singleType: true },
   hasCreator: {
-    type: String,
+    type: personSchema,
     label: 'Creator' }
 })
 imageSchema.extend(resourceSchema)
@@ -108,12 +114,16 @@ imageSchema.extend(resourceSchema)
 const fileSchema = new SimplSchema({
   hasFileName: {
     type: String,
-    label: 'File name' },
+    label: 'File name',
+    singleType: true },
   hasPath: {
     type: String,
-    label: 'File path' },
+    label: 'File path',
+    singleType: true },
   hasCreator: {
-    type: personSchema
+    type: personSchema,
+    label: 'Creator',
+    singleType: true
   }
 })
 fileSchema.extend(resourceSchema)

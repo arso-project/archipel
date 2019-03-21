@@ -20,7 +20,9 @@ export function _setMetadataToBeValue (fileID, entryID, toBeValue) {
   if (!Array.isArray(toBeValue)) throw new Error('Metadata entries have to be arrays!')
   let metadata = metadataStore.get(fileID)
   if (!metadata[entryID]) metadata[entryID] = {}
+  // console.log('in store set:', toBeValue)
   metadata[entryID].toBeValue = toBeValue
+  // console.log('in store set', metadata)
   metadataStore.set(fileID, metadata)
 }
 
@@ -45,7 +47,7 @@ export function useMetadata (fileID) {
       setState(metadata)
     }
     return () => metadataStore.unwatch(fileID, watcher)
-  })
+  }, [state])
   return state || {}
 }
 
