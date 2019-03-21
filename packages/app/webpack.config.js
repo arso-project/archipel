@@ -27,7 +27,12 @@ const PATHS = {
       to: resolveApp('dist')
     }
   ],
-  appSrc: [resolveApp('.'), resolveApp('..')]
+  appSrc: [
+    resolveApp('.'),
+    resolveApp('..'),
+    resolveApp('../../node_modules/caracara'),
+    resolveApp('../../node_modules/typeface-roboto')
+  ]
 }
 
 const isDev = process.env.NODE_ENV === 'development'
@@ -99,15 +104,38 @@ const config = {
           },
           // Process CSS.
           {
-            test: /\.(css|pcss)$/,
+            test: /\.(css)$/,
+            include: PATHS.appSrc,
+            loader: 'style-loader!css-loader'
+
+            // use: ExtractTextPlugin.extract({
+              // fallback: 'style-loader',
+              // use: [
+                // { loader: 'css-loader', options: { importLoaders: 1 } },
+              // ],
+            // }),
+          },
+          {
+            test: /\.(pcss)$/,
+            include: PATHS.appSrc,
             use: ExtractTextPlugin.extract({
               fallback: 'style-loader',
               use: [
-                { loader: 'css-loader', options: { importLoaders: 1 } },
-                'postcss-loader',
+                {
+                  loader: 'postcss-loader',
+                  options: {
+                    config: {
+                      path: './postcss.config.js'
+                    }
+                  }
+                }
               ],
             }),
           },
+          {
+            test: /\.(jpe?g|png|ttf|eot|svg|woff(2)?)(\?[a-z0-9=&.]+)?$/,
+            use: 'base64-inline-loader'
+          }
           // "file" loader makes sure those assets get served by WebpackDevServer.
           // When you `import` an asset, you get its (virtual) filename.
           // In production, they would get copied to the `build` folder.
