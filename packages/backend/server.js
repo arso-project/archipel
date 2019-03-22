@@ -37,14 +37,15 @@ function server (config, cb) {
 
   if (config.extensions) {
     config.extensions.forEach(ext => {
-      if (typeof ext === 'object' && ext.rpc) rpcApis = Object.assign({}, rpcApis, ext.rpc)
+      if (typeof ext !== 'object') return
+      if (ext.rpc) rpcApis = Object.assign({}, rpcApis, ext.rpc)
+      // todo: refine, handle errors, deps.
+      if (ext.init) ext.init({ hyperlib, config })
     })
   }
 
-  console.log(rpcApis)
-
   // rpc
-  const api = rpc({
+  const system = rpc({
     api: {
       hyperlib
     },
@@ -70,7 +71,7 @@ function server (config, cb) {
 
     const transport = streambus()
     pump(stream, transport.stream, stream)
-    api.addPeer(transport).then(peer => {
+    system.addPeer(transport).then(peer => {
       console.log('session established', peer.api)
     })
   })
@@ -87,7 +88,7 @@ function server (config, cb) {
   // Start.
   server.listen(config.server.port, config.server.host, () => {
     console.log(`server listening on ${config.server.host}:${config.server.port}`)
-    cb({ server, websocketServer: wss, rpc: api })
+    cb({ server, websocketServer: wss, rpc: system })
   })
 }
 

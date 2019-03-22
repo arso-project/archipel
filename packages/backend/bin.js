@@ -6,6 +6,7 @@ const argv = minimist(process.argv.slice(2))
 
 if (argv.port) config.server.port = argv.port
 if (argv.host) config.server.host = argv.host
+if (argv.static) config.server.static = argv.static
 if (argv.dbpath) config.library.path = argv.dbpath
 
 const extensions = require('../../extensions')
