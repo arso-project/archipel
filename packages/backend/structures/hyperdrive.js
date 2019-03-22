@@ -2,6 +2,7 @@ const p = require('path')
 const mime = require('mime-types')
 const hyperdrive = require('hyperdrive')
 const pify = require('pify')
+const pump = require('pump')
 const { prom } = require('@archipel/common/util/async')
 const { hex } = require('@archipel/common/util/hyperstack')
 const Readable = require('stream').Readable
@@ -21,26 +22,7 @@ exports.rpc = (api, opts) => {
     async stat (key, path, depth) {
       maybeWatch(this.session, key)
       const drive = await getHyperdrive(this.session, key)
-      depth = depth || 0
-      let stat = await statPath(path, 0)
-      return stat
-
-      async function statPath (path, currentDepth) {
-        let stat = await drive.stat(path)
-        stat = cleanStat(stat, path, key)
-        if (stat.isDirectory && currentDepth < depth) {
-          stat.children = await statChildren(path, currentDepth + 1)
-        }
-        return stat
-      }
-
-      async function statChildren (path, currentDepth) {
-        let children = await drive.readdir(path)
-        children = children.filter(c => c)
-        if (!children.length) return []
-        let promises = children.map(name => statPath(joinPath(path, name), currentDepth))
-        return await Promise.all(promises)
-      }
+      return drive.stat(path, depth)
     },
 
     async mkdir (key, path) {
@@ -55,7 +37,7 @@ exports.rpc = (api, opts) => {
       return res
     },
 
-    async readFileStream (key, path) {
+    async createReadStream (key, path) {
       const drive = await getHyperdrive(this.session, key)
       const rs = drive.createReadStream(path)
       return rs
@@ -84,6 +66,11 @@ exports.rpc = (api, opts) => {
       return res
     },
 
+    async createHistoryStream (opts) {
+      const drive = await getHyperdrive(this.session, key)
+      return drive.createHistoryStream(opts)
+    },
+
     async createWriteStream (key, path) {
       const drive = await getHyperdrive(this.session, key)
       const stream = drive.createWriteStream(path)
@@ -106,7 +93,6 @@ exports.rpc = (api, opts) => {
       await maybeWatch(this.session, key)
     }
   }
-
 
   async function getHyperdrive (session, key) {
     if (!session.library) throw new Error('No library open.')
@@ -219,6 +205,10 @@ exports.structure = (opts, api) => {
       return drive.db
     },
 
+    raw () {
+      return drive
+    },
+
     feeds () {
       const feeds = [...drive.db.feeds, ...drive.db.contentFeeds]
       return feeds
@@ -301,6 +291,33 @@ exports.structure = (opts, api) => {
       })
     },
 
+    async stat (path, depth) {
+      depth = depth || 0
+      let stat = await statPath(path, 0)
+      return stat
+
+      async function statPath (path, currentDepth) {
+        let stat = await pify(drive.stat.bind(drive))(path)
+        stat = cleanStat(stat, path, key)
+        if (stat.isDirectory && currentDepth < depth) {
+          stat.children = await statChildren(path, currentDepth + 1)
+        }
+        return stat
+      }
+
+      async function statChildren (path, currentDepth) {
+        let children = await self.api.readdir(path)
+        children = children.filter(c => c)
+        if (!children.length) return []
+        let promises = children.map(name => statPath(joinPath(path, name), currentDepth))
+        return Promise.all(promises)
+      }
+    },
+
+    createHistoryStream (opts) {
+      return drive.db.createHistoryStream(opts)
+    },
+
     async writeDerivedFile (path, name, buf) {
       let filepath = derivedPath(path, name)
       return self.api.writeFile(filepath, buf)
@@ -325,7 +342,7 @@ exports.structure = (opts, api) => {
 
   // Expose methods from hyperdrive as api.
   // Todo: Document available api.
-  const asyncFuncs = ['ready', 'writeFile', 'readdir', 'mkdir', 'stat', 'authorize']
+  const asyncFuncs = ['ready', 'writeFile', 'readdir', 'mkdir', 'authorize']
   asyncFuncs.forEach(func => {
     self.api[func] = pify(drive[func].bind(drive))
   })
@@ -355,7 +372,7 @@ function cleanStat (stat, path, key) {
     mimetype: stat.isDirectory() ? 'archipel/directory' : mime.lookup(path),
     children: undefined
   }
-  if (!info.mimetype) info.mimetype = 'archipel/unknown'
+  if (!info.mimetype) info.mimetype = 'application/octet-stream'
   return info
 }
 
