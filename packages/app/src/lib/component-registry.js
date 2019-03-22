@@ -11,8 +11,7 @@ class Registry {
 
   getAll (type) {
     let list = this.map[type]
-    if (!list) return null
-    return list
+    return list || []
   }
 
   match (name, props) {
