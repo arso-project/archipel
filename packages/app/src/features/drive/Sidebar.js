@@ -1,8 +1,8 @@
 import React from 'react'
 import pretty from 'pretty-bytes'
-import { Heading, Foldable } from '@archipel/ui'
+import { Heading, Foldable, Status } from '@archipel/ui'
 
-import { useApi, Status } from '../../lib/api.js'
+import { useApi } from '../../lib/api.js'
 import { useFile } from './file'
 import registry from '../../lib/component-registry.js'
 

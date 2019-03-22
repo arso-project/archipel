@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { useApi, WithApi, withApi, Status } from '../../lib/api.js'
+import { useApi, WithApi, withApi } from '../../lib/api.js'
 import { useToggle, useKey } from '../../lib/hooks.js'
-import { Button, List } from '@archipel/ui'
+import { Button, List, Status } from '@archipel/ui'
 
 export default function ApiTest () {
   return (

@@ -3,7 +3,7 @@ import { List } from '@archipel/ui'
 import { MdExpandMore, MdExpandLess, MdVpnKey, MdCloud } from 'react-icons/md'
 import { useArchives } from './archive'
 
-export default function ListArchives (props) {
+export function ListArchives (props) {
   const { onSelect, selected } = props
   const archives = useArchives()
   const sortedArchives = useMemo(() => {
@@ -27,6 +27,8 @@ export default function ListArchives (props) {
     return e => onSelect(archive.key)
   }
 }
+
+export default ListArchives
 
 export function Archive (props) {
   const { item } = props

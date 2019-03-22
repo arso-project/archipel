@@ -5,3 +5,5 @@ export default function start () {
   initArchiveStore()
   initNetstatsStore()
 }
+
+export { default as ListArchives } from './ListArchives'

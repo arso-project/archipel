@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { useApi, WithApi, withApi, Status } from '../../lib/api.js'
+import { useApi, WithApi, withApi } from '../../lib/api.js'
 import { useToggle, useKey } from '../../lib/hooks.js'
 import { registerRoute, useRouter } from '../../lib/router.js'
-import { Button, FloatingButton, List } from '@archipel/ui'
+import { Button, FloatingButton, List, Status } from '@archipel/ui'
 import JSONTree from 'react-json-tree'
 
 

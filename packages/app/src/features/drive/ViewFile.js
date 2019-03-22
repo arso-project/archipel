@@ -2,7 +2,8 @@ import React from 'react'
 import JSONTree from 'react-json-tree'
 import registry from '../../lib/component-registry'
 
-import { useApi, Status } from '../../lib/api.js'
+import { useApi } from '../../lib/api.js'
+import { Status } from '@archipel/ui'
 
 // function extractVersion (string) {
   // let parts = string.match(/(.*)\+([0-9]+:[0-9+])/)
@@ -13,7 +14,7 @@ import { useApi, Status } from '../../lib/api.js'
 export default function FileContent (props) {
   const { archive, path, stat } = props
 
-  const state = useApi(async api => api.hyperdrive.readFileStream(archive, path), [archive, path])
+  const state = useApi(async api => api.hyperdrive.createReadStream(archive, path), [archive, path])
 
   if (!state.data) return <Status {...state} />
   const [api, stream] = state.data
