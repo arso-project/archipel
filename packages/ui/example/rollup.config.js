@@ -38,5 +38,6 @@ export default {
     sourcemaps(),
     serve('example'),
     livereload('example/dist')
-  ]
+  ],
+  external: ['react', 'react-dom']
 }

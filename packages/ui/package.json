@@ -2,17 +2,20 @@
   "name": "@archipel/ui",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
-  "module": "src/index.js",
+  "main": "dist/cjs/index.js",
+  "module": "dist/es/index.js",
   "scripts": {
-    "build": "rollup -c rollup.config.lib.js",
-    "dev": "rollup -c rollup.config.dev.js -w"
+    "build": "rollup -c rollup.config.js",
+    "watch": "rollup -c rollup.config.js -w",
+    "example": "rollup -c example/rollup.js -w"
   },
   "author": "Franz Heinzmann",
   "license": "GPL-3.0",
-  "dependencies": {
+  "peerDependencies": {
     "react": "^16.8.1",
-    "react-dom": "^16.8.1",
+    "react-dom": "^16.8.1"
+  },
+  "dependencies": {
     "react-icons": "^3.2.2",
     "react-json-tree": "^0.11.0",
     "scroll-into-view-if-needed": "^2.2.20",
