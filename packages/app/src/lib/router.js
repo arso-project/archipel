@@ -4,6 +4,21 @@ import wayfarer from 'wayfarer'
 const routes = {}
 const elements = {}
 
+export const RouterContext = React.createContext()
+
+export default {
+  registerRoute,
+  registerElement,
+  getRoutes,
+  getRoute,
+  getElements,
+  getWrappers,
+  isInPath,
+  initRouter,
+  RouterContext,
+  useRouter
+}
+
 /**
  * Register a route.
  * Call with:
@@ -163,7 +178,6 @@ function mergeRoutes (lists) {
   return routes
 }
 
-export const RouterContext = React.createContext()
 
 export function Router (props) {
   const { children, attach, fallback, routes, global, Wrapper, applyWrappers } = props
