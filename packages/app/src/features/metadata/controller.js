@@ -3,11 +3,11 @@ import { getApi } from '../../lib/api'
 import { _initialSetMetadata, _setMetadataToBeValue, getMetadata } from './store'
 import getSchema, { getCategoryFromMimeType, validCategory } from './schemas'
 
-// TODO: getMetadata should return fileType specific metadata.
-// TODO: adjust such that the Controller can watch react hooks using store
+// TODO: rename toBe to draft
 const CATEGORY = 'ofCategory'
 
 export function FileMetadataController (props) {
+  console.log('New FMC', props)
   this._ready = false
   this.controllerName = props.name
   this.constants = {
@@ -110,11 +110,16 @@ FileMetadataController.prototype.getSchema = async function () {
 FileMetadataController.prototype._newSchema = async function () {
   if (!this.state.category) await this.getCategory()
   this.schema = getSchema(this.state.category)
+  console.log('new Schema', this.schema)
   let metadata = this.schema
   let oldMetadata = getMetadata(this.constants.fileID)
   for (let entryKey of Object.keys(oldMetadata)) {
+    console.log('new Schema', oldMetadata[entryKey])
+    let actualValue = oldMetadata[entryKey].actualValue
+    if (actualValue.lenght === 0 || actualValue[0] === '') continue
+    console.log('transfering')
     if (!metadata[entryKey]) metadata[entryKey] = {}
-    metadata[entryKey].actualValue = oldMetadata[entryKey].actualValue
+    metadata[entryKey].actualValue = actualValue
   }
   this.setState({ metadata })
 }
@@ -133,6 +138,7 @@ FileMetadataController.prototype._getActualMetadata = async function (clearToBeV
 FileMetadataController.prototype.setToBeValue = async function (entryKey, toBeValue) {
   if (!entryKey || !toBeValue) return
   let { fileID } = this.constants
+  console.log('setToBeValue', toBeValue)
   // TODO check Schema for entryKey and if not present use some so far not existing general preset
   if (!Array.isArray(toBeValue) &&
     (typeof toBeValue === 'string' || typeof toBeValue === 'number')) {
@@ -178,6 +184,7 @@ function triplesToMetadata (triples, metadata, valueTempState) {
 }
 
 function metadataToTriples (subject, metadata, valueTempState, schema) {
+  console.log('to Triples, metadata fresh from store', metadata)
   if (!valueTempState) valueTempState = 'toBeValue'
   let writeTriples = []
   let deleteTriples = []

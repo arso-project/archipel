@@ -1,10 +1,10 @@
 import SimplSchema from 'simpl-schema'
 
 const CategoryIDs = [
-  'resource', 'file', 'image', 'person', 'address'
+  'resource', 'file', 'image', 'person', 'address', 'text', 'article'
 ]
 const CategoryLabels = [
-  'Resource', 'File', 'Image', 'Person', 'Address'
+  'Resource', 'File', 'Image', 'Person', 'Address', 'Text', 'Article'
 ]
 export const Categories = [CategoryIDs, CategoryLabels]
 
@@ -19,13 +19,22 @@ Categories.getLabel = function (id) {
 }
 
 export default function getSchema (category) {
+  console.log('getSchema for', category)
   console.log('SimplSchema', SimplSchema)
   console.log('resourceSchema', resourceSchema)
   switch (category) {
-    case 'image':
-      return shallowObjectClone(imageSchema.schema())
+    case 'adress':
+      return shallowObjectClone(adressSchema.schema())
+    case 'article':
+      return shallowObjectClone(articleSchema.schema())
     case 'file':
       return shallowObjectClone(fileSchema.schema())
+    case 'image':
+      return shallowObjectClone(imageSchema.schema())
+    case 'person':
+      return shallowObjectClone(personSchema.schema())
+    case 'text':
+      return shallowObjectClone(textSchema.schema())
     default:
       return shallowObjectClone(resourceSchema.schema())
   }
@@ -75,7 +84,8 @@ const adressSchema = new SimplSchema({
 const personSchema = new SimplSchema({
   hasFirstName: {
     type: String,
-    label: 'First name'
+    label: 'First name',
+    singleType: true
   },
   hasMiddleNames: {
     type: String,
@@ -92,6 +102,32 @@ const personSchema = new SimplSchema({
   }
 })
 personSchema.extend(resourceSchema)
+
+const textSchema = new SimplSchema({
+  hasAbstract: {
+    type: String,
+    label: 'Abstract'
+  },
+  hasLanguage: {
+    type: String,
+    label: 'Language'
+  }
+})
+
+const articleSchema = new SimplSchema({
+  hasAuthor: {
+    type: personSchema,
+    label: 'Author'
+  },
+  hasDateOfCreation: {
+    type: Date,
+    label: 'Release Date'
+  },
+  hasPlaceOfCreation: {
+    type: adressSchema,
+    label: 'Place of Publishing'
+  }
+}).extend(textSchema)
 
 const imageSchema = new SimplSchema({
   hasTitle: {
@@ -130,6 +166,8 @@ fileSchema.extend(resourceSchema)
 
 export function getCategoryFromMimeType (mime) {
   switch (mime) {
+    case 'text/plain':
+      return 'text'
     case 'image/jpeg':
       return 'image'
     default:

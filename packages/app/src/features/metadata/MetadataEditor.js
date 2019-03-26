@@ -5,7 +5,7 @@ Indendet to be used in a Sidebar next
   - to a folder, to allow mass editing of childs metadata by directory structure.
 */
 import React, { useEffect, useState } from 'react'
-import { MdExpandMore, MdExpandLess } from 'react-icons/md'
+import { MdExpandMore, MdExpandLess, MdLibraryAdd } from 'react-icons/md'
 import { Button } from '@archipel/ui'
 import MetadataLink from './MetadataLink'
 import { FileMetadataController } from './controller'
@@ -74,34 +74,42 @@ function MetadataListEntry (props) {
   return <li className='flex flex-col mb-1 mt-1'>
     <span className='font-bold'>{`${metadataEntry.label}:`}</span>
     <ul className='list-reset mx-2'>{metadataEntry.actualValue.map((item) => <li key={`actualValue${item}`}>{item}</li>)}</ul>
-    <div className='pl-2'>
-      <Input entryKey={entryKey}
-        toBeValue={metadataEntry.toBeValue}
-        valueType={metadataEntry.type}
-        setToBeValue={setToBeValue} />
-    </div>
+    {/* <div className='pl-2'> */}
+    <Input className='pl-2 self-stretch'
+      entryKey={entryKey}
+      metadataEntry={metadataEntry}
+      // valueType={metadataEntry.type}
+      setToBeValue={setToBeValue} />
+    {/* </div> */}
   </li>
 }
 
 function Input (props) {
-  console.log('Input for', props.entryKey, props)
   // let { entryKey, valueType, toBeValue, setToBeValue } = props
-  let { entryKey, valueType } = props
-
+  let { entryKey, metadataEntry } = props
+  let { singleType, type: valueType } = metadataEntry
+  console.log('Input for', props.entryKey, props.metadataEntry)
   // TODO: valueType.definitions can point to a schema by itself. Implement support!
-  valueType = valueType.definitions[0].type.name ? valueType.definitions[0].type.name.toLowerCase() : 'string'
+  if (valueType) {
+    valueType = valueType.definitions[0].type.name ? valueType.definitions[0].type.name.toLowerCase() : 'string'
+  } else {
+    valueType = 'string'
+  }
 
-  let [toBeValue, setToBeValue] = useState(props.toBeValue)
+  let [toBeValue, setToBeValue] = useState(metadataEntry.toBeValue)
   useEffect(() => {
     setToBeValue(props.toBeValue)
   }, [props])
 
   return (
-    <div className='inline-flex'>
-      <input className='p-1 border border-solid border-grey rounded'
+    <div className='inline-flex items-center w-auto'>
+      { !singleType &&
+        <MdLibraryAdd size='20' />
+      }
+      <input className='flex-1 ml-1 p-1 border border-solid border-grey rounded'
         type={valueType}
         onChange={(e) => setToBeValue(e.target.value)}
-        onBlur={() => props.setToBeValue(entryKey, toBeValue)}
+        onBlur={() => metadataEntry.setToBeValue(entryKey, toBeValue)}
         value={toBeValue || ''} />
       {/* <button onClick={() => setToBeValue(entryKey, toBeValue)}>1</button> */}
     </div>
