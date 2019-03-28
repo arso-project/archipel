@@ -5,7 +5,7 @@ Indendet to be used in a Sidebar next
   - to a folder, to allow mass editing of childs metadata by directory structure.
 */
 import React, { useEffect, useState } from 'react'
-import { MdExpandMore, MdExpandLess, MdLibraryAdd } from 'react-icons/md'
+import { MdExpandMore, MdExpandLess, MdAdd, MdClear, MdKeyboardReturn } from 'react-icons/md'
 import { Button } from '@archipel/ui'
 import MetadataLink from './MetadataLink'
 import { FileMetadataController } from './controller'
@@ -54,41 +54,87 @@ function ShowAndSetCategory (props) {
 }
 
 function ListAndEditMetadata (props) {
-  const { metadata, setToBeValue } = props
+  const { metadata, setDraftValue, setDeleteValue } = props
+  console.log('List and Edit:', setDeleteValue)
   let keyIndex = 0
   if (typeof metadata !== 'object') return metadata
   return <ul className='list-reset'>
-    { Object.keys(metadata).map(
+    {Object.keys(metadata).map(
       (entryKey) => <MetadataListEntry
         key={`${entryKey}+${keyIndex++}`}
         entryKey={entryKey}
         metadataEntry={metadata[entryKey]}
-        setToBeValue={setToBeValue} />
+        setDraftValue={setDraftValue}
+        setDeleteValue={setDeleteValue} />
     )}
   </ul>
 }
 
+// function MetadataListEntry (props) {
+//   const { entryKey, metadataEntry, setDraftValue } = props
+//   if (!metadataEntry.actualValue) metadataEntry.actualValue = ['']
+//   return <li className='flex flex-col mb-1 mt-1'>
+//     <span className='font-bold'>{`${metadataEntry.label}:`}</span>
+//     <ul className='list-reset mx-2'>{metadataEntry.actualValue.map((item) => <li key={`actualValue${item}`}>{item}</li>)}</ul>
+//     {/* <div className='pl-2'> */}
+//     <Input className='pl-2 self-stretch'
+//       entryKey={entryKey}
+//       metadataEntry={metadataEntry}
+//       // valueType={metadataEntry.type}
+//       setDraftValue={setDraftValue} />
+//     {/* </div> */}
+//   </li>
+// }
 function MetadataListEntry (props) {
-  const { entryKey, metadataEntry, setToBeValue } = props
-  if (!metadataEntry.actualValue) metadataEntry.actualValue = ['']
+  const { entryKey, metadataEntry, setDraftValue, setDeleteValue } = props
+  let { values } = metadataEntry
+  console.log('MD-ListEntry', values)
+  if (!values) return null
   return <li className='flex flex-col mb-1 mt-1'>
     <span className='font-bold'>{`${metadataEntry.label}:`}</span>
-    <ul className='list-reset mx-2'>{metadataEntry.actualValue.map((item) => <li key={`actualValue${item}`}>{item}</li>)}</ul>
+    <ul className='list-reset mx-2'>
+      {Object.keys(values).map((itemKey) =>
+        <MetadataListEntryItem
+          key={`value${values[itemKey].value}state${values[itemKey].state}`}
+          entryKey={entryKey}
+          value={values[itemKey]}
+          setDeleteValue={setDeleteValue} />
+      )}
+    </ul>
     {/* <div className='pl-2'> */}
     <Input className='pl-2 self-stretch'
       entryKey={entryKey}
       metadataEntry={metadataEntry}
       // valueType={metadataEntry.type}
-      setToBeValue={setToBeValue} />
+      setDraftValue={setDraftValue} />
     {/* </div> */}
   </li>
 }
 
+function MetadataListEntryItem (props) {
+  let { value, setDeleteValue, entryKey } = props
+
+  if (value.state === 'actual') {
+    return <li>{value.value} <DeleteButton /></li>
+  }
+  if (value.state === 'delete') {
+    return <li className='line-through'>{value.value}</li>
+  }
+  if (value.state === 'draft') {
+    return <li className='bg-green-light'>{value.value}</li>
+  }
+  return null
+
+  function DeleteButton (props) {
+    return <button onClick={() => setDeleteValue(entryKey, value.value)}>{<MdClear />}</button>
+  }
+}
+
 function Input (props) {
-  // let { entryKey, valueType, toBeValue, setToBeValue } = props
+  // let { entryKey, valueType, draftValue, setDraftValue } = props
   let { entryKey, metadataEntry } = props
   let { singleType, type: valueType } = metadataEntry
-  console.log('Input for', props.entryKey, props.metadataEntry)
+  console.log('Input for', props.entryKey, props)
   // TODO: valueType.definitions can point to a schema by itself. Implement support!
   if (valueType) {
     valueType = valueType.definitions[0].type.name ? valueType.definitions[0].type.name.toLowerCase() : 'string'
@@ -96,22 +142,24 @@ function Input (props) {
     valueType = 'string'
   }
 
-  let [toBeValue, setToBeValue] = useState(metadataEntry.toBeValue)
+  let [draftValue, setDraftValue] = useState(metadataEntry.toBeValue)
   useEffect(() => {
-    setToBeValue(props.toBeValue)
+    setDraftValue(props.draftValue)
   }, [props])
 
   return (
     <div className='inline-flex items-center w-auto'>
-      { !singleType &&
-        <MdLibraryAdd size='20' />
-      }
       <input className='flex-1 ml-1 p-1 border border-solid border-grey rounded'
         type={valueType}
-        onChange={(e) => setToBeValue(e.target.value)}
-        onBlur={() => metadataEntry.setToBeValue(entryKey, toBeValue)}
-        value={toBeValue || ''} />
-      {/* <button onClick={() => setToBeValue(entryKey, toBeValue)}>1</button> */}
+        onChange={(e) => setDraftValue(e.target.value)}
+        // onBlur={() => props.setDraftValue(entryKey, draftValue)}
+        value={draftValue || ''} />
+      <button onClick={() => props.setDraftValue(entryKey, draftValue)}>
+        {singleType
+          ? <MdKeyboardReturn size={20} />
+          : <MdAdd size={20} />
+        }
+      </button>
     </div>
   )
 }
@@ -132,6 +180,7 @@ export function MetadataEditor (props) {
   }, [])
 
   const metadata = useMetadata(fileID)
+  console.log('ME metadata', metadata)
 
   if (isObjectEmpty(metadata)) return <span>loading...</span>
   return (
@@ -140,13 +189,15 @@ export function MetadataEditor (props) {
         <ShowAndSetCategory controller={controller} />
       </div>
       <div className='pl-2 mb-2'>
-        { <ListAndEditMetadata
+        {<ListAndEditMetadata
           metadata={metadata}
-          setToBeValue={controller.setToBeValue.bind(controller)} /> }
+          setDraftValue={controller.setDraftValue.bind(controller)}
+          setDeleteValue={controller.setDeleteValue.bind(controller)} />}
       </div>
       { // Ad-hoc solution to allow the onBlur()
       }
-      <Button onClick={() => setTimeout(() => controller.writeChanges(), 100)}>Save</Button>
+      {/* <Button onClick={() => setTimeout(() => controller.writeChanges(), 100)}>Save</Button> */}
+      <Button onClick={() => controller.writeChanges()}>Save</Button>
     </div>
   )
 }
