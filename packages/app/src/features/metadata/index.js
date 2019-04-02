@@ -1,8 +1,8 @@
-import { MetadataEditor } from './MetadataEditor'
+import { FileMetadataEditor } from './MetadataEditor'
 
 import registry from '../../lib/component-registry'
 
 export default function start () {
-  console.log('at Mount:', MetadataEditor)
-  registry.add('fileSidebar', MetadataEditor, { title: 'MetadataEditor' })
+  console.log('at Mount:', FileMetadataEditor)
+  registry.add('fileSidebar', FileMetadataEditor, { title: 'MetadataEditor' })
 }

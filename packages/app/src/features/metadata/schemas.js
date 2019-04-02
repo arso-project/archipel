@@ -74,6 +74,7 @@ const resourceSchema = new SimplSchema({
     label: 'Tags'
   }
 })
+resourceSchema.name = 'resource'
 
 const adressSchema = new SimplSchema({
   hasCountry: {
@@ -92,7 +93,8 @@ const adressSchema = new SimplSchema({
     type: String,
     label: 'Street and number'
   }
-})
+}).extend(resourceSchema)
+adressSchema.name = 'adress'
 
 const personSchema = new SimplSchema({
   hasFirstName: {
@@ -115,6 +117,7 @@ const personSchema = new SimplSchema({
   }
 })
 personSchema.extend(resourceSchema)
+personSchema.name = 'person'
 
 const textSchema = new SimplSchema({
   hasAbstract: {
@@ -125,7 +128,8 @@ const textSchema = new SimplSchema({
     type: String,
     label: 'Language'
   }
-})
+}).extend(resourceSchema)
+textSchema.name = 'text'
 
 const articleSchema = new SimplSchema({
   hasAuthor: {
@@ -141,6 +145,7 @@ const articleSchema = new SimplSchema({
     label: 'Place of Publishing'
   }
 }).extend(textSchema)
+articleSchema.name = 'article'
 
 const imageSchema = new SimplSchema({
   hasTitle: {
@@ -159,6 +164,7 @@ const imageSchema = new SimplSchema({
     label: 'Creator' }
 })
 imageSchema.extend(resourceSchema)
+imageSchema.name = 'image'
 
 const fileSchema = new SimplSchema({
   hasFileName: {
@@ -176,6 +182,7 @@ const fileSchema = new SimplSchema({
   }
 })
 fileSchema.extend(resourceSchema)
+fileSchema.name = 'file'
 
 export function validCategory (category) {
   return CategoryIDs.includes(category)

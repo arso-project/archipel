@@ -6,13 +6,14 @@ Indendet to be used in a Sidebar next
 */
 import React, { useEffect, useState } from 'react'
 import { MdExpandMore, MdExpandLess, MdAdd, MdClear, MdKeyboardReturn } from 'react-icons/md'
-import { Button } from '@archipel/ui'
+import { Button, Modal } from '@archipel/ui'
 import MetadataLink from './MetadataLink'
-import { FileMetadataController } from './controller'
+import { MetadataController } from './controller'
 import { makeLink } from '@archipel/common/util/triples'
 import { useMetadata } from './store'
 import { getArchive } from '../archive/archive'
 import { Categories } from './schemas'
+import { EditMetadataOverlay } from './EditSubmetadataOverlay'
 
 /*
 Category
@@ -63,7 +64,7 @@ Metadata List
 
 function ListAndEditMetadata (props) {
   const { metadata, setDraftValue, setDeleteValue } = props
-  console.log('List and Edit:', setDeleteValue)
+  // console.log('List and Edit:', setDeleteValue)
   let keyIndex = 0
   if (typeof metadata !== 'object') return metadata
   return <ul className='list-reset'>
@@ -71,17 +72,19 @@ function ListAndEditMetadata (props) {
       (entryKey) => <MetadataListEntry
         key={`${entryKey}+${keyIndex++}`}
         entryKey={entryKey}
+        {...props}
         metadataEntry={metadata[entryKey]}
-        setDraftValue={setDraftValue}
-        setDeleteValue={setDeleteValue} />
+        // setDraftValue={setDraftValue}
+        // setDeleteValue={setDeleteValue}
+      />
     )}
   </ul>
 }
 
 function MetadataListEntry (props) {
-  const { entryKey, metadataEntry, setDraftValue, setDeleteValue } = props
+  const { metadataEntry, entryKey, setDraftValue, setDeleteValue } = props
   let { values } = metadataEntry
-  console.log('MD-ListEntry', values)
+  console.log('MD-ListEntry', props)
   // if (!values) return null
   return <li className='flex flex-col mb-1 mt-1'>
     <span className='font-bold'>{`${metadataEntry.label}:`}</span>
@@ -90,27 +93,47 @@ function MetadataListEntry (props) {
       {Object.keys(values).map((itemKey) =>
         <MetadataListEntryItem
           key={`value${values[itemKey].value}state${values[itemKey].state}`}
-          entryKey={entryKey}
+          archive={props.archive}
+          entryKey={props.entryKey}
+          metadataEntry={metadataEntry}
           value={values[itemKey]}
-          setDeleteValue={setDeleteValue} />
+          setDeleteValue={props.setDeleteValue} />
       )}
     </ul>
     }
     {/* <div className='pl-2'> */}
     <Input className='pl-2 self-stretch'
-      entryKey={entryKey}
+      entryKey={props.entryKey}
       metadataEntry={metadataEntry}
       // valueType={metadataEntry.type}
-      setDraftValue={setDraftValue} />
+      setDraftValue={props.setDraftValue} />
     {/* </div> */}
   </li>
 }
 
 function MetadataListEntryItem (props) {
-  let { value, setDeleteValue, entryKey } = props
+  let { value, setDeleteValue, entryKey, metadataEntry } = props
+  let { type: valueType } = metadataEntry
+
+  let Submeta = null
+  // let submetaTypeIndex = null
+  console.log('MLEI type:', valueType)
+  if (valueType) {
+    // let index = valueType.definitions.findIndex(elem => !!elem.type.schema)
+    for (let key of Object.keys(valueType.definitions)) {
+      if (valueType.definitions[key].type._schema) {
+        console.log('MLEI type type', valueType.definitions[key].type.schema)
+        Submeta = <EditMetadataOverlay
+          archive={props.archive}
+          type={valueType.definitions[key].type.name}
+          literal={value.value} />
+      }
+    }
+  }
+  console.log('MLEI has Submeta', !!Submeta, Submeta)
 
   if (value.state === 'actual') {
-    return <li>{value.value} <DeleteButton /></li>
+    return <li>{Submeta || value.value} <DeleteButton /></li>
   }
   if (value.state === 'delete') {
     return <li className='line-through'>{value.value}</li>
@@ -159,38 +182,42 @@ function Input (props) {
   )
 }
 
-let controller = null
-
 /*
 Parent
 */
 
-export function MetadataEditor (props) {
-  if (props.stat.isDirectory) return null
-  let archive = getArchive(props.archive)
-  console.log('ME call for', props)
+let controller = null
 
-  if (!archive || !archive.structures) return null
-  let fileID = makeLink(archive.structures[0].discoveryKey, props.path)
+export function MetadataEditor (props) {
+  // if (props.stat.isDirectory) return null
+  // let archive = getArchive(props.archive)
+  // console.log('ME call for', props)
+
+  // if (!archive || !archive.structures) return null
+  // let ID = makeLink(archive.structures[0].discoveryKey, props.path)
+  let { ID } = props
+  console.log('ME called with', props)
 
   useEffect(() => {
-    controller = new FileMetadataController({ ...props.stat, fileID })
+    controller = new MetadataController({ ...props })
 
     // Feature or Anti-Feature?:
     return () => controller.writeChanges({ onUnmount: true })
   }, [])
 
-  const metadata = useMetadata(fileID)
+  const metadata = useMetadata(ID)
   if (isObjectEmpty(metadata)) return <span>loading...</span>
   console.log('ME cat', controller.category(), 'meta', metadata)
   return (
     <div className='flex flex-col'>
+      {/* {<Modal toggle='SubMet'><EditSubmetadataOverlay /></Modal>} */}
       <div className='mb-2'>
         <ShowAndSetCategory controller={controller} />
       </div>
       <div className='pl-2 mb-2'>
         {<ListAndEditMetadata
           metadata={metadata}
+          archive={props.archive}
           setDraftValue={controller.setDraftValue.bind(controller)}
           setDeleteValue={controller.setDeleteValue.bind(controller)} />}
       </div>
@@ -200,6 +227,18 @@ export function MetadataEditor (props) {
       <Button onClick={() => controller.writeChanges()}>Save</Button>
     </div>
   )
+}
+
+export function FileMetadataEditor (props) {
+  console.log('FME called with', props)
+  if (props.stat.isDirectory) return null
+  let archive = getArchive(props.archive)
+  console.log('ME call for', props)
+
+  if (!archive || !archive.structures) return null
+  let ID = makeLink(archive.structures[0].discoveryKey, props.path)
+
+  return <MetadataEditor {...props.stat} archive={props.archive} ID={ID} />
 }
 
 function isObjectEmpty (object) {
