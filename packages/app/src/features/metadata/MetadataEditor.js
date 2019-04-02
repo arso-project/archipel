@@ -9,10 +9,14 @@ import { MdExpandMore, MdExpandLess, MdAdd, MdClear, MdKeyboardReturn } from 're
 import { Button } from '@archipel/ui'
 import MetadataLink from './MetadataLink'
 import { FileMetadataController } from './controller'
-import { makeLink, parseLink } from '@archipel/common/util/triples'
+import { makeLink } from '@archipel/common/util/triples'
 import { useMetadata } from './store'
 import { getArchive } from '../archive/archive'
 import { Categories } from './schemas'
+
+/*
+Category
+*/
 
 function ShowAndSetCategory (props) {
   const { controller } = props
@@ -53,6 +57,10 @@ function ShowAndSetCategory (props) {
   }
 }
 
+/*
+Metadata List
+*/
+
 function ListAndEditMetadata (props) {
   const { metadata, setDraftValue, setDeleteValue } = props
   console.log('List and Edit:', setDeleteValue)
@@ -70,28 +78,14 @@ function ListAndEditMetadata (props) {
   </ul>
 }
 
-// function MetadataListEntry (props) {
-//   const { entryKey, metadataEntry, setDraftValue } = props
-//   if (!metadataEntry.actualValue) metadataEntry.actualValue = ['']
-//   return <li className='flex flex-col mb-1 mt-1'>
-//     <span className='font-bold'>{`${metadataEntry.label}:`}</span>
-//     <ul className='list-reset mx-2'>{metadataEntry.actualValue.map((item) => <li key={`actualValue${item}`}>{item}</li>)}</ul>
-//     {/* <div className='pl-2'> */}
-//     <Input className='pl-2 self-stretch'
-//       entryKey={entryKey}
-//       metadataEntry={metadataEntry}
-//       // valueType={metadataEntry.type}
-//       setDraftValue={setDraftValue} />
-//     {/* </div> */}
-//   </li>
-// }
 function MetadataListEntry (props) {
   const { entryKey, metadataEntry, setDraftValue, setDeleteValue } = props
   let { values } = metadataEntry
   console.log('MD-ListEntry', values)
-  if (!values) return null
+  // if (!values) return null
   return <li className='flex flex-col mb-1 mt-1'>
     <span className='font-bold'>{`${metadataEntry.label}:`}</span>
+    { values &&
     <ul className='list-reset mx-2'>
       {Object.keys(values).map((itemKey) =>
         <MetadataListEntryItem
@@ -101,6 +95,7 @@ function MetadataListEntry (props) {
           setDeleteValue={setDeleteValue} />
       )}
     </ul>
+    }
     {/* <div className='pl-2'> */}
     <Input className='pl-2 self-stretch'
       entryKey={entryKey}
@@ -121,7 +116,7 @@ function MetadataListEntryItem (props) {
     return <li className='line-through'>{value.value}</li>
   }
   if (value.state === 'draft') {
-    return <li className='bg-green-light'>{value.value}</li>
+    return <li className='bg-green-light'>{value.value} <DeleteButton /></li>
   }
   return null
 
@@ -166,9 +161,14 @@ function Input (props) {
 
 let controller = null
 
+/*
+Parent
+*/
+
 export function MetadataEditor (props) {
   if (props.stat.isDirectory) return null
   let archive = getArchive(props.archive)
+  console.log('ME call for', props)
 
   if (!archive || !archive.structures) return null
   let fileID = makeLink(archive.structures[0].discoveryKey, props.path)
@@ -176,13 +176,13 @@ export function MetadataEditor (props) {
   useEffect(() => {
     controller = new FileMetadataController({ ...props.stat, fileID })
 
+    // Feature or Anti-Feature?:
     return () => controller.writeChanges({ onUnmount: true })
   }, [])
 
   const metadata = useMetadata(fileID)
-  console.log('ME metadata', metadata)
-
   if (isObjectEmpty(metadata)) return <span>loading...</span>
+  console.log('ME cat', controller.category(), 'meta', metadata)
   return (
     <div className='flex flex-col'>
       <div className='mb-2'>

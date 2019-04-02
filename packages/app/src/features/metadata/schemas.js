@@ -40,6 +40,19 @@ export default function getSchema (category) {
   }
 }
 
+export function getCategoryFromMimeType (mime) {
+  switch (mime) {
+    case 'text/plain':
+      return 'text'
+    case 'application/pdf':
+      return 'text'
+    case 'image/jpeg':
+      return 'image'
+    default:
+      return 'file'
+  }
+}
+
 // function singleType () {
 //   this.key = 'singleType'
 //   // I'm just a placeholder to allow adding this as a custom property
@@ -163,17 +176,6 @@ const fileSchema = new SimplSchema({
   }
 })
 fileSchema.extend(resourceSchema)
-
-export function getCategoryFromMimeType (mime) {
-  switch (mime) {
-    case 'text/plain':
-      return 'text'
-    case 'image/jpeg':
-      return 'image'
-    default:
-      return 'file'
-  }
-}
 
 export function validCategory (category) {
   return CategoryIDs.includes(category)

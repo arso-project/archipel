@@ -152,6 +152,7 @@ FileMetadataController.prototype.setDraftValue = async function (entryKey, draft
   let { fileID } = this.constants
   let metadata = { ...getMetadata(fileID) }
   let metadataEntry = metadata[entryKey]
+  if (!metadataEntry.values) metadataEntry.values = {}
   if (metadataEntry.values[draftValue]) {
     if (metadataEntry.values[draftValue].state === 'actual') return
     if (metadataEntry.values[draftValue].state === 'draft') return
