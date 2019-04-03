@@ -19,9 +19,6 @@ Categories.getLabel = function (id) {
 }
 
 export default function getSchema (category) {
-  console.log('getSchema for', category)
-  console.log('SimplSchema', SimplSchema)
-  console.log('resourceSchema', resourceSchema)
   switch (category) {
     case 'adress':
       return shallowObjectClone(adressSchema.schema())
@@ -53,18 +50,13 @@ export function getCategoryFromMimeType (mime) {
   }
 }
 
-// function singleType () {
-//   this.key = 'singleType'
-//   // I'm just a placeholder to allow adding this as a custom property
-// }
-
 // SimplSchema.addValidator(singleType)
 SimplSchema.extendOptions({
   singleType: Boolean
 })
 
 const resourceSchema = new SimplSchema({
-  // hasLabel: String,
+  // hasLabel: String, // automatically by SimplSchema
   hasDescription: {
     type: String,
     label: 'Description'

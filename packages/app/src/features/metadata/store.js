@@ -25,6 +25,7 @@ export function _initialSetMetadata (fileID, metadata) {
 //   // console.log('in store set', metadata)
 //   metadataStore.set(fileID, metadata)
 // }
+
 export function _setMetadataValue (fileID, entryID, value) {
   console.log('setMetadataValue', entryID, value)
   let metadata = metadataStore.get(fileID)
@@ -43,22 +44,14 @@ export function watchMetadata (fileID, cb, init) {
 }
 
 export function useMetadata (fileID) {
-  // TODO:  on metadataStore.trigger()  the watcher will be called, but the function isn't executed.
-  //        Hence, useMetadata isn't returning
   const [state, setState] = useState(() => metadataStore.get(fileID))
-  console.log('useMetadata', state)
   useEffect(() => {
     metadataStore.watch(fileID, watcher, true)
 
     function watcher (metadata) {
-      console.log('watcher', metadata)
       setState(metadata)
     }
     return () => metadataStore.unwatch(fileID, watcher)
   }, [state])
   return state || {}
 }
-
-// export function filefileID (archive, path) {
-//   return `${archive}/${path}`
-// }

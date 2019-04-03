@@ -63,52 +63,44 @@ Metadata List
 */
 
 function ListAndEditMetadata (props) {
-  const { metadata, setDraftValue, setDeleteValue } = props
-  // console.log('List and Edit:', setDeleteValue)
+  const { metadata } = props
   let keyIndex = 0
   if (typeof metadata !== 'object') return metadata
-  return <ul className='list-reset'>
-    {Object.keys(metadata).map(
-      (entryKey) => <MetadataListEntry
-        key={`${entryKey}+${keyIndex++}`}
-        entryKey={entryKey}
-        {...props}
-        metadataEntry={metadata[entryKey]}
-        // setDraftValue={setDraftValue}
-        // setDeleteValue={setDeleteValue}
-      />
-    )}
-  </ul>
+
+  return (
+    <ul className='list-reset'>
+      {Object.keys(metadata).map(
+        (entryKey) => <MetadataListEntry
+          key={`${entryKey}+${keyIndex++}`}
+          entryKey={entryKey}
+          metadataEntry={metadata[entryKey]}
+          {...props}
+        />
+      )}
+    </ul>
+  )
 }
 
 function MetadataListEntry (props) {
-  const { metadataEntry, entryKey, setDraftValue, setDeleteValue } = props
+  const { metadataEntry } = props
   let { values } = metadataEntry
-  console.log('MD-ListEntry', props)
-  // if (!values) return null
-  return <li className='flex flex-col mb-1 mt-1'>
-    <span className='font-bold'>{`${metadataEntry.label}:`}</span>
-    { values &&
-    <ul className='list-reset mx-2'>
-      {Object.keys(values).map((itemKey) =>
-        <MetadataListEntryItem
-          key={`value${values[itemKey].value}state${values[itemKey].state}`}
-          archive={props.archive}
-          entryKey={props.entryKey}
-          metadataEntry={metadataEntry}
-          value={values[itemKey]}
-          setDeleteValue={props.setDeleteValue} />
-      )}
-    </ul>
-    }
-    {/* <div className='pl-2'> */}
-    <Input className='pl-2 self-stretch'
-      entryKey={props.entryKey}
-      metadataEntry={metadataEntry}
-      // valueType={metadataEntry.type}
-      setDraftValue={props.setDraftValue} />
-    {/* </div> */}
-  </li>
+
+  return (
+    <li className='flex flex-col mb-1 mt-1'>
+      <span className='font-bold'>{`${metadataEntry.label}:`}</span>
+      { values &&
+        <ul className='list-reset mx-2'>
+          {Object.keys(values).map((itemKey) =>
+            <MetadataListEntryItem
+              key={`value${values[itemKey].value}state${values[itemKey].state}`}
+              value={values[itemKey]}
+              {...props} />)}
+        </ul>
+      }
+      <InputMetadataEntry className='pl-2 self-stretch'
+        {...props} />
+    </li>
+  )
 }
 
 function MetadataListEntryItem (props) {
@@ -116,13 +108,9 @@ function MetadataListEntryItem (props) {
   let { type: valueType } = metadataEntry
 
   let Submeta = null
-  // let submetaTypeIndex = null
-  console.log('MLEI type:', valueType)
   if (valueType) {
-    // let index = valueType.definitions.findIndex(elem => !!elem.type.schema)
     for (let key of Object.keys(valueType.definitions)) {
       if (valueType.definitions[key].type._schema) {
-        console.log('MLEI type type', valueType.definitions[key].type.schema)
         Submeta = <EditMetadataOverlay
           archive={props.archive}
           type={valueType.definitions[key].type.name}
@@ -130,30 +118,35 @@ function MetadataListEntryItem (props) {
       }
     }
   }
-  console.log('MLEI has Submeta', !!Submeta, Submeta)
 
   if (value.state === 'actual') {
-    return <li>{Submeta || value.value} <DeleteButton /></li>
+    return <li className='inline-flex items-start p-1 m-1 bg-grey-lighter rounded'>
+      <span className='flex-1 mr-1'>{Submeta || value.value}</span>
+      <DeleteButton />
+    </li>
   }
   if (value.state === 'delete') {
-    return <li className='line-through'>{value.value}</li>
+    return <li className='inline-flex items-start p-1 m-1 bg-red-lighter rounded line-through'>
+      <span className='flex-1'>{value.value}</span>
+    </li>
   }
   if (value.state === 'draft') {
-    return <li className='bg-green-light'>{value.value} <DeleteButton /></li>
+    return <li className='inline-flex items-start p-1 m-1 bg-green-lighter rounded'>
+      <span className='flex-1 mr-1'>{value.value}</span>
+      <DeleteButton />
+    </li>
   }
-  return null
+  return <span className='flex-1 items-start truncate'>{JSON.stringify(value)}</span>
 
   function DeleteButton (props) {
-    return <button onClick={() => setDeleteValue(entryKey, value.value)}>{<MdClear />}</button>
+    return <button onClick={() => setDeleteValue(entryKey, value.value)}>{<MdClear size={14} className='text-red-light border border-red-light rounded-full' />}</button>
   }
 }
 
-function Input (props) {
-  // let { entryKey, valueType, draftValue, setDraftValue } = props
+function InputMetadataEntry (props) {
   let { entryKey, metadataEntry } = props
   let { singleType, type: valueType } = metadataEntry
-  console.log('Input for', props.entryKey, props)
-  // TODO: valueType.definitions can point to a schema by itself. Implement support!
+
   if (valueType) {
     valueType = valueType.definitions[0].type.name ? valueType.definitions[0].type.name.toLowerCase() : 'string'
   } else {
@@ -165,20 +158,28 @@ function Input (props) {
     setDraftValue(props.draftValue)
   }, [props])
 
+  const handleKeyPress = function (e) {
+    if (e.keyCode === 27) setDraftValue('')
+  }
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyPress.bind(this), false)
+    return document.removeEventListener('keydown', handleKeyPress.bind(this), false)
+  }, [])
+
   return (
-    <div className='inline-flex items-center w-auto'>
+    <form className='inline-flex items-center w-auto'>
       <input className='flex-1 ml-1 p-1 border border-solid border-grey rounded'
         type={valueType}
         onChange={(e) => setDraftValue(e.target.value)}
-        // onBlur={() => props.setDraftValue(entryKey, draftValue)}
         value={draftValue || ''} />
-      <button onClick={() => props.setDraftValue(entryKey, draftValue)}>
+      <button type='submit' onClick={() => props.setDraftValue(entryKey, draftValue)}>
         {singleType
-          ? <MdKeyboardReturn size={20} />
-          : <MdAdd size={20} />
+          ? <MdKeyboardReturn className='ml-1' size={20} />
+          : <MdAdd className='ml-1' size={20} />
         }
       </button>
-    </div>
+    </form>
   )
 }
 
@@ -189,14 +190,8 @@ Parent
 let controller = null
 
 export function MetadataEditor (props) {
-  // if (props.stat.isDirectory) return null
-  // let archive = getArchive(props.archive)
-  // console.log('ME call for', props)
-
-  // if (!archive || !archive.structures) return null
-  // let ID = makeLink(archive.structures[0].discoveryKey, props.path)
-  let { ID } = props
   console.log('ME called with', props)
+  let { ID } = props
 
   useEffect(() => {
     controller = new MetadataController({ ...props })
@@ -206,11 +201,11 @@ export function MetadataEditor (props) {
   }, [])
 
   const metadata = useMetadata(ID)
+
   if (isObjectEmpty(metadata)) return <span>loading...</span>
-  console.log('ME cat', controller.category(), 'meta', metadata)
+
   return (
     <div className='flex flex-col'>
-      {/* {<Modal toggle='SubMet'><EditSubmetadataOverlay /></Modal>} */}
       <div className='mb-2'>
         <ShowAndSetCategory controller={controller} />
       </div>
@@ -221,19 +216,14 @@ export function MetadataEditor (props) {
           setDraftValue={controller.setDraftValue.bind(controller)}
           setDeleteValue={controller.setDeleteValue.bind(controller)} />}
       </div>
-      { // Ad-hoc solution to allow the onBlur()
-      }
-      {/* <Button onClick={() => setTimeout(() => controller.writeChanges(), 100)}>Save</Button> */}
       <Button onClick={() => controller.writeChanges()}>Save</Button>
     </div>
   )
 }
 
 export function FileMetadataEditor (props) {
-  console.log('FME called with', props)
   if (props.stat.isDirectory) return null
   let archive = getArchive(props.archive)
-  console.log('ME call for', props)
 
   if (!archive || !archive.structures) return null
   let ID = makeLink(archive.structures[0].discoveryKey, props.path)

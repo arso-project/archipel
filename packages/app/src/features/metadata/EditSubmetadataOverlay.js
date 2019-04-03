@@ -10,7 +10,7 @@ export function EditMetadataOverlay (props) {
     TODO: find good UID for arbitrary resources
       include discovery key? maybe not since,
         Max Mustermann is Max Mustermann with respect
-        arbitrary archives.
+        to arbitrary archives.
       include literal name, such as 'Max Mustermann' or 'Kiel'
         yes, but there are several Max Mustermanns and Kiel's around
       include type? yes, at least provides more context,
@@ -21,7 +21,9 @@ export function EditMetadataOverlay (props) {
 
   return (
     <>
-      <Modal toggle={literal}><MetadataEditor ID={ID} {...props} /></Modal>
+      <Modal toggle={literal}>
+        <MetadataEditor ID={ID} {...props} />
+      </Modal>
     </>
   )
 }
