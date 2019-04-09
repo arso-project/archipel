@@ -6,11 +6,11 @@ Indendet to be used in a Sidebar next
 */
 import React, { useEffect, useState } from 'react'
 import { MdExpandMore, MdExpandLess, MdAdd, MdClear, MdKeyboardReturn } from 'react-icons/md'
-import { Button, Modal } from '@archipel/ui'
+import { Button, TightInputForm, DeleteIcon } from '@archipel/ui'
 import MetadataLink from './MetadataLink'
-import { MetadataController } from './controller'
+import { EditorController } from './editorController'
 import { makeLink } from '@archipel/common/util/triples'
-import { useMetadata } from './store'
+import { useMetadata } from './editorStore'
 import { getArchive } from '../archive/archive'
 import { Categories } from './schemas'
 import { EditMetadataOverlay } from './EditSubmetadataOverlay'
@@ -62,14 +62,16 @@ function ShowAndSetCategory (props) {
 Metadata List
 */
 
-function ListAndEditMetadata (props) {
+export function ListAndEditMetadata (props) {
   const { metadata } = props
+  const { ofCategory: category, ...rest } = metadata
+
   let keyIndex = 0
-  if (typeof metadata !== 'object') return metadata
+  if (typeof rest !== 'object') return rest
 
   return (
     <ul className='list-reset'>
-      {Object.keys(metadata).map(
+      {Object.keys(rest).map(
         (entryKey) => <MetadataListEntry
           key={`${entryKey}+${keyIndex++}`}
           entryKey={entryKey}
@@ -82,7 +84,7 @@ function ListAndEditMetadata (props) {
 }
 
 function MetadataListEntry (props) {
-  const { metadataEntry } = props
+  const { metadataEntry, setDraftValue } = props
   let { values } = metadataEntry
 
   return (
@@ -97,8 +99,9 @@ function MetadataListEntry (props) {
               {...props} />)}
         </ul>
       }
+      { setDraftValue &&
       <InputMetadataEntry className='pl-2 self-stretch'
-        {...props} />
+        {...props} /> }
     </li>
   )
 }
@@ -110,7 +113,7 @@ function MetadataListEntryItem (props) {
   let Submeta = null
   if (valueType) {
     for (let key of Object.keys(valueType.definitions)) {
-      if (valueType.definitions[key].type._schema) {
+      if (valueType.definitions[key].type && valueType.definitions[key].type._schema) {
         Submeta = <EditMetadataOverlay
           archive={props.archive}
           type={valueType.definitions[key].type.name}
@@ -139,7 +142,8 @@ function MetadataListEntryItem (props) {
   return <span className='flex-1 items-start truncate'>{JSON.stringify(value)}</span>
 
   function DeleteButton (props) {
-    return <button onClick={() => setDeleteValue(entryKey, value.value)}>{<MdClear size={14} className='text-red-light border border-red-light rounded-full' />}</button>
+    // return <button onClick={() => setDeleteValue(entryKey, value.value)}>{<MdClear size={14} className='text-red-light border border-red-light rounded-full' />}</button>
+    return <DeleteIcon size={14} onClick={() => setDeleteValue(entryKey, value.value)} />
   }
 }
 
@@ -168,18 +172,25 @@ function InputMetadataEntry (props) {
   }, [])
 
   return (
-    <form className='inline-flex items-center w-auto'>
-      <input className='flex-1 ml-1 p-1 border border-solid border-grey rounded'
-        type={valueType}
-        onChange={(e) => setDraftValue(e.target.value)}
-        value={draftValue || ''} />
-      <button type='submit' onClick={() => props.setDraftValue(entryKey, draftValue)}>
-        {singleType
-          ? <MdKeyboardReturn className='ml-1' size={20} />
-          : <MdAdd className='ml-1' size={20} />
-        }
-      </button>
-    </form>
+    <TightInputForm
+      type={valueType}
+      onChange={e => setDraftValue(e.target.value)}
+      value={draftValue || ''}
+      onSubmit={() => props.setDraftValue(entryKey, draftValue)}
+      buttonSize={20}
+      addForm={!singleType} />
+    // <form className='inline-flex items-center w-auto'>
+    //   <input className='flex-1 ml-1 p-1 border border-solid border-grey rounded'
+    //     type={valueType}
+    //     onChange={(e) => setDraftValue(e.target.value)}
+    //     value={draftValue || ''} />
+    //   <button type='submit' onClick={() => props.setDraftValue(entryKey, draftValue)}>
+    //     {singleType
+    //       ? <MdKeyboardReturn className='ml-1' size={20} />
+    //       : <MdAdd className='ml-1' size={20} />
+    //     }
+    //   </button>
+    // </form>
   )
 }
 
@@ -194,7 +205,7 @@ export function MetadataEditor (props) {
   let { ID } = props
 
   useEffect(() => {
-    controller = new MetadataController({ ...props })
+    controller = new EditorController({ ...props })
 
     // Feature or Anti-Feature?:
     return () => controller.writeChanges({ onUnmount: true })

@@ -1,11 +1,11 @@
+'use strict'
+
 import { getApi } from '../../lib/api'
-import { _initialSetMetadata, getMetadata } from './store'
+import { _initialSetMetadata, getMetadata } from './editorStore'
 import getSchema, { getCategoryFromMimeType, validCategory } from './schemas'
+import { CATEGORY, triplesToMetadata, metadataToTriples, cloneObject } from './util'
 
-// TODO: rename toBe to draft
-const CATEGORY = 'ofCategory'
-
-export function MetadataController (props) {
+export function EditorController (props) {
   console.log('New FMC', props)
   this._ready = false
   this.controllerName = props.name
@@ -21,7 +21,7 @@ export function MetadataController (props) {
   this.init()
 }
 
-MetadataController.prototype.init = async function () {
+EditorController.prototype.init = async function () {
   if (this._ready) return
   if (!this.constants.ID) throw new Error('No ID!')
   let tripleStore = await getApi().then((apis) => apis.hypergraph)
@@ -37,7 +37,7 @@ MetadataController.prototype.init = async function () {
 
 // Define setState function to allow for easy switch
 // to using react setState or similar state controllers
-MetadataController.prototype.setState = function (props) {
+EditorController.prototype.setState = function (props) {
   const { ID } = this.constants
   for (let i of Object.keys(props)) {
     if (i === 'metadata') {
@@ -51,11 +51,11 @@ MetadataController.prototype.setState = function (props) {
 /* ### set and get Category ### */
 
 // Needs to be sync
-MetadataController.prototype.category = function () {
+EditorController.prototype.category = function () {
   return this.state.category || null
 }
 
-MetadataController.prototype.getCategory = async function () {
+EditorController.prototype.getCategory = async function () {
   if (this.state.category) return this.state.category
   let { tripleStore, archiveKey, ID } = this.constants
 
@@ -78,12 +78,12 @@ MetadataController.prototype.getCategory = async function () {
   return this._setDefaultCategory()
 }
 
-MetadataController.prototype.setCategory = async function (category) {
+EditorController.prototype.setCategory = async function (category) {
   await this._setCategory(category)
   this._newSchema()
 }
 
-MetadataController.prototype._setCategory = async function (category) {
+EditorController.prototype._setCategory = async function (category) {
   if (!validCategory(category)) return this._setDefaultCategory()
   let { tripleStore, archiveKey, ID } = this.constants
   await tripleStore.put(archiveKey,
@@ -91,7 +91,7 @@ MetadataController.prototype._setCategory = async function (category) {
   this.setState({ category })
 }
 
-MetadataController.prototype._setDefaultCategory = async function () {
+EditorController.prototype._setDefaultCategory = async function () {
   let { type } = this.constants
   if (!type) {
     console.warn('No mimeType, setting metadata category to "resource"')
@@ -109,14 +109,14 @@ MetadataController.prototype._setDefaultCategory = async function () {
 
 /* Get Schema according to category */
 
-MetadataController.prototype.getSchema = async function () {
+EditorController.prototype.getSchema = async function () {
   if (this._schema) return cloneObject(this._schema)
   if (!this.state.category) await this.getCategory()
   this._schema = await getSchema(this.state.category)
   return cloneObject(this._schema)
 }
 
-MetadataController.prototype._newSchema = async function () {
+EditorController.prototype._newSchema = async function () {
   if (!this.state.category) await this.getCategory()
   this._schema = getSchema(this.state.category)
   let metadata = await this.getSchema()
@@ -131,7 +131,7 @@ MetadataController.prototype._newSchema = async function () {
 
 /* Work on the metadata-Object */
 
-MetadataController.prototype._getActualMetadata = async function () {
+EditorController.prototype._getActualMetadata = async function () {
   let { tripleStore, archiveKey, ID } = this.constants
 
   let fileTriples = await tripleStore.get(archiveKey, { subject: ID })
@@ -141,7 +141,7 @@ MetadataController.prototype._getActualMetadata = async function () {
   this.setState({ metadata })
 }
 
-MetadataController.prototype.setDraftValue = async function (entryKey, draftValue) {
+EditorController.prototype.setDraftValue = async function (entryKey, draftValue) {
   if (!entryKey || !draftValue) return null
   if (draftValue.value) draftValue = draftValue.value
   let { ID } = this.constants
@@ -166,7 +166,7 @@ MetadataController.prototype.setDraftValue = async function (entryKey, draftValu
   this.setState({ metadata })
 }
 
-MetadataController.prototype.setDeleteValue = async function (entryKey, value) {
+EditorController.prototype.setDeleteValue = async function (entryKey, value) {
   if (value.value) value = value.value
   let { ID } = this.constants
   let metadata = { ...getMetadata(ID) }
@@ -175,7 +175,7 @@ MetadataController.prototype.setDeleteValue = async function (entryKey, value) {
   this.setState({ metadata })
 }
 
-MetadataController.prototype.writeChanges = async function (props) {
+EditorController.prototype.writeChanges = async function (props) {
   // TODO: Verify Metadata
   if (!props) props = {}
   let { onUnmount } = props
@@ -184,53 +184,4 @@ MetadataController.prototype.writeChanges = async function (props) {
   await tripleStore.put(archiveKey, writeTriples)
   await tripleStore.del(archiveKey, deleteTriples)
   if (!onUnmount) this._getActualMetadata(true)
-}
-
-function triplesToMetadata (triples, metadata) {
-  for (let triple of triples) {
-    let { predicate, object } = triple
-    if (!metadata[predicate]) {
-      metadata[predicate] = {}
-    }
-
-    let dataEntry = metadata[predicate]
-    if (!dataEntry.label) dataEntry.label = predicate
-    if (!dataEntry.values) dataEntry.values = {}
-    if (!dataEntry.values[object]) dataEntry.values[object] = {}
-    dataEntry.values[object].state = 'actual'
-    dataEntry.values[object].value = object
-  }
-
-  if (metadata[CATEGORY]) delete metadata[CATEGORY]
-  return metadata
-}
-
-function metadataToTriples (subject, metadata) {
-  let writeTriples = []
-  let deleteTriples = []
-  for (let predicate of Object.keys(metadata)) {
-    let values = metadata[predicate].values
-    if (!values) continue
-    for (let value of Object.keys(values)) {
-      if (values[value].state === 'actual') continue
-      if (values[value].state === 'draft') {
-        writeTriples.push({ subject, predicate, object: values[value].value })
-        continue
-      }
-      if (values[value].state === 'delete') deleteTriples.push({ subject, predicate, object: values[value].value })
-    }
-  }
-  return { writeTriples, deleteTriples }
-}
-
-function cloneObject (obj) {
-  var clone = {}
-  for (var i in obj) {
-    if (obj[i] !== null && typeof obj[i] === 'object') {
-      clone[i] = cloneObject(obj[i])
-    } else {
-      clone[i] = obj[i]
-    }
-  }
-  return clone
 }

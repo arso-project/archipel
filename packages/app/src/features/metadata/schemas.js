@@ -1,4 +1,17 @@
 import SimplSchema from 'simpl-schema'
+import { cloneObject } from './util'
+
+const CArray = Array
+CArray.prototype.inArray = function (item) {
+  return this.some(elem => elem === item)
+}
+CArray.prototype.pushUnique = function (item) {
+  if (!this.inArray(item)) {
+    this.push(item)
+    return true
+  }
+  return false
+}
 
 const CategoryIDs = [
   'resource', 'file', 'image', 'person', 'address', 'text', 'article'
@@ -19,22 +32,60 @@ Categories.getLabel = function (id) {
 }
 
 export default function getSchema (category) {
+  return cloneObject(_getSchema(category).schema())
+}
+
+function _getSchema (category) {
   switch (category) {
     case 'adress':
-      return shallowObjectClone(adressSchema.schema())
+      return adressSchema
     case 'article':
-      return shallowObjectClone(articleSchema.schema())
+      return articleSchema
     case 'file':
-      return shallowObjectClone(fileSchema.schema())
+      return fileSchema
     case 'image':
-      return shallowObjectClone(imageSchema.schema())
+      return imageSchema
     case 'person':
-      return shallowObjectClone(personSchema.schema())
+      return personSchema
     case 'text':
-      return shallowObjectClone(textSchema.schema())
+      return textSchema
     default:
-      return shallowObjectClone(resourceSchema.schema())
+      return resourceSchema
   }
+}
+
+const allKeysAndLabels = { keys: [], labels: [] }
+allKeysAndLabels.init = false
+allKeysAndLabels.labelFromKey = function (key) {
+  return this.labels[this.keys.findIndex(elem => elem === key)]
+}
+allKeysAndLabels.keyFromLabel = function (label) {
+  console.log(label, this.keys, this.labels)
+  return this.keys[this.labels.findIndex(elem => elem === label)]
+}
+allKeysAndLabels.set = function (keysAndLabels) {
+  let { keys, labels } = keysAndLabels
+  if (keys.length !== labels.length) throw new Error('keys and labels should be in one-to-one order and hence of euqal length')
+  this.keys = keys
+  this.labels = labels
+  allKeysAndLabels.init = true
+}
+
+export function getAllKeysAndLabels () {
+  console.log('getAllKeysAndLabels', allKeysAndLabels)
+  if (allKeysAndLabels.init) return allKeysAndLabels
+  let keys = new CArray()
+  let labels = new CArray()
+  for (let id of Categories.getID(-1)) {
+    let schema = _getSchema(id)
+    console.log(schema)
+    schema._schemaKeys.forEach(key => {
+      let res = keys.pushUnique(key)
+      if (res) labels.push(schema.schema()[key].label)
+    })
+  }
+  allKeysAndLabels.set({ keys, labels })
+  return allKeysAndLabels
 }
 
 export function getCategoryFromMimeType (mime) {
@@ -61,9 +112,9 @@ const resourceSchema = new SimplSchema({
     type: String,
     label: 'Description'
   },
-  tag: {
+  hasTag: {
     type: String,
-    label: 'Tags'
+    label: 'Tag'
   }
 })
 resourceSchema.name = 'resource'

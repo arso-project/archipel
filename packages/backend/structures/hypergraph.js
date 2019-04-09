@@ -46,6 +46,24 @@ exports.rpc = (api, opts) => {
       //   if (err) console.warn('Error putting entries:', err)
       //   console.log('Put entries:', res)
       // })
+    },
+
+    async search (key, pattern, limit) {
+      const db = await getHypergraph(this.session, key)
+      let res = db.search(pattern, { limit: limit }, (err, res) => {
+        if (err) console.warn('Error at search', pattern, err)
+        console.log('searched for', pattern, 'and got', res)
+      })
+      return res
+    },
+
+    async query (key, query) {
+      const db = await getHypergraph(this.session, key)
+      let res = db.query(query, (err, res) => {
+        if (err) console.warn('Error at query', query, res)
+        console.log('queried for', query, 'and got', res)
+      })
+      return res
     }
   }
 

@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { MetadataEditor } from './MetadataEditor'
-import { MetadataController } from './controller'
 import { Modal } from '@archipel/ui'
 
 export function EditMetadataOverlay (props) {

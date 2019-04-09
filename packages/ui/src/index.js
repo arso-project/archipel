@@ -11,6 +11,8 @@ export { default as Button, FloatingButton } from './components/Button'
 // C
 export { default as Card } from './components/Card'
 export { default as Checkbox } from './components/Checkbox'
+// D
+export { default as DeleteIcon } from './components/DeleteIcon'
 // E
 export { default as ExpandButton } from './components/ExpandButton'
 // F
@@ -35,8 +37,8 @@ export { default as StructuresCheckList } from './components/StructuresCheckList
 
 // T
 export { default as Tabs } from './components/Tabs'
+export { default as TightInputForm } from './components/TightInputForm'
 export { default as Tree } from './components/Tree/index.js'
-
 
 // Other
 export { proplist, cls } from './util.js'
