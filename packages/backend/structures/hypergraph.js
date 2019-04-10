@@ -21,7 +21,9 @@ exports.rpc = (api, opts) => {
 
     async get (key, query) {
       const db = await getHypergraph(this.session, key)
+      console.log('get query:', query)
       const res = await db.get(query)
+      console.log('got:', res)
       return res
     },
 
@@ -50,6 +52,7 @@ exports.rpc = (api, opts) => {
 
     async search (key, pattern, limit) {
       const db = await getHypergraph(this.session, key)
+      console.log(db)
       let res = db.search(pattern, { limit: limit }, (err, res) => {
         if (err) console.warn('Error at search', pattern, err)
         console.log('searched for', pattern, 'and got', res)
@@ -120,6 +123,62 @@ exports.structure = (opts, api) => {
       return state
     },
 
+    // AdHoc Solution for bad search of hyper-graph-db
+    async search (triples, opts, cb) {
+      if (typeof opts === 'function') return this.search(triples, undefined, opts)
+      let { limit } = opts
+      let res = await new Promise((resolve, reject) => {
+        db.get(triples, (err, result) => {
+          if (err) cb(err) && reject(err)
+          cb(null, result)
+          resolve(result)
+        })
+      })
+      console.log('search', res)
+      let ret = []
+      // postfilter:
+      for (let triple of triples) {
+        // spo
+        if (triple.subject && triple.predicate && triple.object) {
+          for (let el of res) {
+            if (triple.subject === el.subject && triple.predicate === el.predicate && triple.object === el.object) ret.push(el)
+          }
+        // so
+        } else if (triple.subject && triple.object && !triple.predicate) {
+          for (let el of res) {
+            if (triple.subject === el.subject && triple.object === el.object) ret.push(el)
+          }
+        // sp
+        } else if (triple.subject && triple.predicate && !triple.object) {
+          for (let el of res) {
+            if (triple.subject === el.subject && triple.predicate === el.predicate) ret.push(el)
+          }
+        // po
+        } else if (triple.predicate && triple.object && !triple.subject) {
+          for (let el of res) {
+            if (triple.predicate === el.predicate && triple.object === el.object) ret.push(el)
+          }
+        // s
+        } else if (triple.subject && !triple.predicate && !triple.object) {
+          for (let el of res) {
+            if (triple.subject === el.subject) ret.push(el)
+          }
+        // p
+        } else if (!triple.subject && triple.predicate && !triple.object) {
+          for (let el of res) {
+            if (triple.predicate === el.predicate) ret.push(el)
+          }
+        // o
+        } else if (!triple.subject && !triple.predicate && triple.object) {
+          for (let el of res) {
+            if (triple.object === el.object) ret.push(el)
+          }
+        }
+      }
+      console.log('postfilter ret:', ret)
+      return ret
+    },
+
     authorized (key) {
       key = Buffer.from(key, 'hex')
       return new Promise((resolve, reject) => {
@@ -161,7 +220,7 @@ exports.structure = (opts, api) => {
       // }
     // },
 
-    api: {}
+    api: { }
   }
 
   // Expose methods from hypergraph as api.
@@ -170,6 +229,7 @@ exports.structure = (opts, api) => {
   asyncFuncs.forEach(func => {
     self.api[func] = pify(db[func].bind(db))
   })
+  self.api['search'] = self.search.bind(self)
 
   return self
 }
