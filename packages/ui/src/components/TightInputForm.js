@@ -11,7 +11,7 @@ const TightInputForm = (props) => {
   if (!value) value = ''
   return (
     <form {...props} className={cls(props, clss)}>
-      <input className={'ml-1 p-1 border border-solid border-grey rounded w-' + (Number(widthUnits) - 1) + '/' + widthUnits}
+      <input className={'p-1 border border-solid border-grey rounded w-' + (Number(widthUnits) - 1) + '/' + widthUnits}
         type={type}
         onChange={onChange}
         value={value} />

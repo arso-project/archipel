@@ -21,21 +21,12 @@ exports.rpc = (api, opts) => {
 
     async get (key, query) {
       const db = await getHypergraph(this.session, key)
-      // console.log('get query:', query)
-      const res = await db.get(query)
-      // console.log('got:', res)
-      return res
+      return db.get(query)
     },
 
     async put (key, triples) {
       const db = await getHypergraph(this.session, key)
-      // db.put(triples, (err, res) => {
-      //   if (err) console.warn('Error putting entries:', err)
-      //   console.log('Put entries:', res)
-      // })
-      let res = await db.put(triples)
-      console.log('PUTres:', res)
-      return res
+      return db.put(triples)
     },
 
     async del (key, triples) {
@@ -44,18 +35,11 @@ exports.rpc = (api, opts) => {
         if (err) return console.warn('Error deleting entries:', err)
         console.log('Deleted Entries:', res)
       })
-      // return db.put(newTriples, (err, res) => {
-      //   if (err) console.warn('Error putting entries:', err)
-      //   console.log('Put entries:', res)
-      // })
     },
 
-    async searchSubjects (key, pattern, limit) {
+    async searchSubjects (key, pattern, opts) {
       const db = await getHypergraph(this.session, key)
-      console.log(db)
-      // if (Array.isArray(pattern)) pattern = pattern[0]
-      let res = db.searchSubjects(pattern, { limit: limit })
-      return res
+      return db.searchSubjects(pattern, opts)
     },
 
     async query (key, query) {
@@ -137,15 +121,22 @@ exports.structure = (opts, api) => {
 
     async searchSubjects (triples, opts) {
       if (!triples || !Array.isArray(triples)) return null
+      let limit = opts
+      console.log(triples)
 
       // get results for all single criteria
       let res = []
       triples.forEach(t => res.push(self.get(t)))
       res = await Promise.all(res)
       res = res.flat()
+      console.log(res, limit)
 
       // scip the rest, in case of only one criterium
-      if (triples.length <= 1) return res.map(triple => { return { subject: triple.subject } })
+      if (triples.length <= 1) {
+        if (limit < res.length) res = res.slice(0, limit)
+        console.log(res, limit)
+        return res.map(triple => { return { subject: triple.subject } })
+      }
 
       // find those matching all criteriy
       let indices = new Array(res.length)
@@ -171,6 +162,7 @@ exports.structure = (opts, api) => {
         }
       })
 
+      if (limit < ret.length) ret = ret.slice(0, limit)
       return ret
     },
 

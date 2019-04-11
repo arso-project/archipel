@@ -60,7 +60,6 @@ allKeysAndLabels.labelFromKey = function (key) {
   return this.labels[this.keys.findIndex(elem => elem === key)]
 }
 allKeysAndLabels.keyFromLabel = function (label) {
-  console.log(label, this.keys, this.labels)
   return this.keys[this.labels.findIndex(elem => elem === label)]
 }
 allKeysAndLabels.set = function (keysAndLabels) {
@@ -72,13 +71,11 @@ allKeysAndLabels.set = function (keysAndLabels) {
 }
 
 export function getAllKeysAndLabels () {
-  console.log('getAllKeysAndLabels', allKeysAndLabels)
   if (allKeysAndLabels.init) return allKeysAndLabels
   let keys = new CArray()
   let labels = new CArray()
   for (let id of Categories.getID(-1)) {
     let schema = _getSchema(id)
-    console.log(schema)
     schema._schemaKeys.forEach(key => {
       let res = keys.pushUnique(key)
       if (res) labels.push(schema.schema()[key].label)
