@@ -21,9 +21,9 @@ exports.rpc = (api, opts) => {
 
     async get (key, query) {
       const db = await getHypergraph(this.session, key)
-      console.log('get query:', query)
+      // console.log('get query:', query)
       const res = await db.get(query)
-      console.log('got:', res)
+      // console.log('got:', res)
       return res
     },
 
@@ -50,13 +50,11 @@ exports.rpc = (api, opts) => {
       // })
     },
 
-    async search (key, pattern, limit) {
+    async searchSubjects (key, pattern, limit) {
       const db = await getHypergraph(this.session, key)
       console.log(db)
-      let res = db.search(pattern, { limit: limit }, (err, res) => {
-        if (err) console.warn('Error at search', pattern, err)
-        console.log('searched for', pattern, 'and got', res)
-      })
+      // if (Array.isArray(pattern)) pattern = pattern[0]
+      let res = db.searchSubjects(pattern, { limit: limit })
       return res
     },
 
@@ -123,59 +121,56 @@ exports.structure = (opts, api) => {
       return state
     },
 
-    // AdHoc Solution for bad search of hyper-graph-db
-    async search (triples, opts, cb) {
-      if (typeof opts === 'function') return this.search(triples, undefined, opts)
-      let { limit } = opts
-      let res = await new Promise((resolve, reject) => {
-        db.get(triples, (err, result) => {
-          if (err) cb(err) && reject(err)
-          cb(null, result)
-          resolve(result)
+    async get (triple, opts) {
+      return new Promise((resolve, reject) => {
+        db.get(triple, opts, (err, res) => {
+          if (err) reject(err)
+          resolve(res)
         })
       })
-      console.log('search', res)
-      let ret = []
-      // postfilter:
-      for (let triple of triples) {
-        // spo
-        if (triple.subject && triple.predicate && triple.object) {
-          for (let el of res) {
-            if (triple.subject === el.subject && triple.predicate === el.predicate && triple.object === el.object) ret.push(el)
-          }
-        // so
-        } else if (triple.subject && triple.object && !triple.predicate) {
-          for (let el of res) {
-            if (triple.subject === el.subject && triple.object === el.object) ret.push(el)
-          }
-        // sp
-        } else if (triple.subject && triple.predicate && !triple.object) {
-          for (let el of res) {
-            if (triple.subject === el.subject && triple.predicate === el.predicate) ret.push(el)
-          }
-        // po
-        } else if (triple.predicate && triple.object && !triple.subject) {
-          for (let el of res) {
-            if (triple.predicate === el.predicate && triple.object === el.object) ret.push(el)
-          }
-        // s
-        } else if (triple.subject && !triple.predicate && !triple.object) {
-          for (let el of res) {
-            if (triple.subject === el.subject) ret.push(el)
-          }
-        // p
-        } else if (!triple.subject && triple.predicate && !triple.object) {
-          for (let el of res) {
-            if (triple.predicate === el.predicate) ret.push(el)
-          }
-        // o
-        } else if (!triple.subject && !triple.predicate && triple.object) {
-          for (let el of res) {
-            if (triple.object === el.object) ret.push(el)
+    },
+
+    /*  AdHoc Solution for bad search of hyper-graph-db
+        Problem: Dies not work with multiple search criteria
+        TODO fork hyper-graph-db and implement working solution */
+    /*  returns an array of { subject: 'xyz' } object, of matching all criteria */
+
+    async searchSubjects (triples, opts) {
+      if (!triples || !Array.isArray(triples)) return null
+
+      // get results for all single criteria
+      let res = []
+      triples.forEach(t => res.push(self.get(t)))
+      res = await Promise.all(res)
+      res = res.flat()
+
+      // scip the rest, in case of only one criterium
+      if (triples.length <= 1) return res.map(triple => { return { subject: triple.subject } })
+
+      // find those matching all criteriy
+      let indices = new Array(res.length)
+      indices.fill(1, 0)
+      for (let i = 0; i < res.length; i++) {
+        for (let j = i + 1; j < res.length; j++) {
+          if (res[i].subject === res[j].subject) {
+            indices[i]++ // = indices[i] + 1
+            indices[j]++ // = indices[j] + 1
           }
         }
       }
-      console.log('postfilter ret:', ret)
+
+      // construct the returned array
+      let ret = []
+      indices.forEach((n, i) => {
+        if (n === triples.length) {
+          let append = true
+          ret.forEach(triple => {
+            if (res[i].subject === triple.subject) append = false
+          })
+          if (append) ret.push({ subject: res[i].subject })
+        }
+      })
+
       return ret
     },
 
@@ -225,11 +220,12 @@ exports.structure = (opts, api) => {
 
   // Expose methods from hypergraph as api.
   // Todo: Document available api.
-  const asyncFuncs = ['ready', 'put', 'get', 'del']
+  const asyncFuncs = ['ready', 'put', 'del']
   asyncFuncs.forEach(func => {
     self.api[func] = pify(db[func].bind(db))
   })
-  self.api['search'] = self.search.bind(self)
+  self.api['get'] = self.get.bind(self)
+  self.api['searchSubjects'] = self.searchSubjects.bind(self)
 
   return self
 }
