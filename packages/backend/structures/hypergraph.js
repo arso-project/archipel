@@ -31,10 +31,11 @@ exports.rpc = (api, opts) => {
 
     async del (key, triples) {
       const db = await getHypergraph(this.session, key)
-      db.del(triples, (err, res) => {
-        if (err) return console.warn('Error deleting entries:', err)
-        console.log('Deleted Entries:', res)
-      })
+      await db.del(triples)
+      // , (err, res) => {
+      //   if (err) return console.warn('Error deleting entries:', err)
+      //   console.log('Deleted Entries:', res)
+      // })
     },
 
     async searchSubjects (key, pattern, opts) {
@@ -44,11 +45,12 @@ exports.rpc = (api, opts) => {
 
     async query (key, query) {
       const db = await getHypergraph(this.session, key)
-      let res = db.query(query, (err, res) => {
-        if (err) console.warn('Error at query', query, res)
-        console.log('queried for', query, 'and got', res)
-      })
-      return res
+      return db.query(query)
+      // , (err, res) => {
+      //   if (err) console.warn('Error at query', query, res)
+      //   console.log('queried for', query, 'and got', res)
+      // })
+      // return res
     }
   }
 
@@ -122,19 +124,16 @@ exports.structure = (opts, api) => {
     async searchSubjects (triples, opts) {
       if (!triples || !Array.isArray(triples)) return null
       let limit = opts
-      console.log(triples)
 
       // get results for all single criteria
       let res = []
       triples.forEach(t => res.push(self.get(t)))
       res = await Promise.all(res)
       res = res.flat()
-      console.log(res, limit)
 
       // scip the rest, in case of only one criterium
       if (triples.length <= 1) {
         if (limit < res.length) res = res.slice(0, limit)
-        console.log(res, limit)
         return res.map(triple => { return { subject: triple.subject } })
       }
 
@@ -187,7 +186,6 @@ exports.structure = (opts, api) => {
             // Hack: Do a write after the auth is complete.
             // Without this, hyperdrive breaks when loading the stat
             // for the root folder (/). I think this is a bug in hyperdb.
-            console.log('authorized writer')
             resolve(true)
           }
         })

@@ -25,6 +25,10 @@ hubController.setArchive = function (archiveKey) {
   archive = archiveKey
 }
 
+hubController.getArchive = function () {
+  return archive
+}
+
 hubController.limit = function (newLimit) {
   if (newLimit) limit = newLimit
   return limit

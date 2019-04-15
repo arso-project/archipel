@@ -13,10 +13,18 @@ import { Button, DeleteIcon, TightInputForm } from '@archipel/ui'
 let keysAndLabels = null
 
 class Filter {
-  constructor (attribute, assign) {
+  constructor (props) {
+    let { id, name, attribute, assign } = props || {}
+    this.id = id || null
+    this.name = name || null
     this.active = true
     this.attributes = []
     if (attribute || assign) this.addAttribute(attribute, assign)
+  }
+
+  setIdentity (id, name) {
+    if (!this.id) this.id = id
+    if (!this.name) this.name = name
   }
 
   addAttribute (attribute, assign) {
@@ -40,9 +48,10 @@ class Filter {
 }
 
 function FilterEditor (props) {
-  let { addFilter } = props
+  let { addFilter, title } = props
   let [filter, setFilter] = useState(new Filter())
   let [rerender, forceRerender] = useReducer(x => x + 1, 0)
+  let [name, setName] = useState('')
   let [newAttribute, setNewAttribute] = useState(null)
   let [newAssign, setNewAssign] = useState(null)
 
@@ -53,6 +62,11 @@ function FilterEditor (props) {
   function delAttribute (attribute, assign) {
     filter.delAttribute(attribute, assign)
     forceRerender()
+  }
+
+  function setIdentity (id, name) {
+    filter.setIdentity(id, name)
+    setName('')
   }
 
   function onSubmit () {
@@ -67,15 +81,27 @@ function FilterEditor (props) {
 
   return (
     <div className='p-2 border border-grey flex flex-col'>
-      {filter.getAttributes().map(
-        (e, i) =>
-          <div key={`filter@FilterEditor:${i}`} className='m-1 flex'>
-            <span className='mr-1'>{keysAndLabels.labelFromKey(e.attribute)}: {e.assign}</span>
-            <DeleteIcon size={14} onClick={() => delAttribute(e.attribute, e.assign)} />
-          </div>
-      )}
+      <span className='font-bold mb-2'>{title || null}</span>
+      {filter.name
+        ? <span className='font-bold'>{filter.name}</span>
+        : <TightInputForm className='mb-1 w-auto'
+          placeholder='Name (optional)'
+          value={name}
+          onChange={e => setName(e.target.value)}
+          onSubmit={() => setIdentity(`${hubController.getArchive()}/metadataFilter/${name}`, name)} />
+      }
+      <div className='flex flex-col min-h-12'>
+        <div className='flex-1' />
+        {filter.getAttributes().map(
+          (e, i) =>
+            <div key={`filter@FilterEditor:${i}`} className='m-1 flex'>
+              <span className='mr-1'>{keysAndLabels.labelFromKey(e.attribute)}: {e.assign}</span>
+              <DeleteIcon size={14} onClick={() => delAttribute(e.attribute, e.assign)} />
+            </div>
+        )}
+      </div>
       <div className='flex flex-col'>
-        <select className='mb-1 block w-full bg-white border border-grey rounded text-black p-1 leading-tight focus:outline-none focus:bg-white focus:border-grey'
+        <select className='mb-1 block w-full bg-white border border-grey rounded text-black focus:outline-none focus:bg-white focus:border-grey'
           id='selectBox' selected={newAttribute}
           onChange={e => setNewAttribute(keysAndLabels.keyFromLabel(e.target.value))}>
           <option key='null-option' value={null}>--no attribute--</option>
@@ -106,13 +132,15 @@ function FilterDisplay (props) {
 
   let color = active ? 'green-light' : 'red-light'
   return (
-    <div className='flex flex-col border p-1 m-2'>
+    <div className='flex-1 flex flex-col border p-1 m-2'>
       <div className='inline-flex'>
-        <div className={'flex-1 mr-4 h-4 rounded-full bg-' + color} onClick={toggle} />
+        <div className={'flex-1 mr-2 h-5 pl-2  rounded-full bg-' + color} onClick={toggle}>
+          <span className='font-bold text-sm'>{ filter.name }</span>
+        </div>
         <DeleteIcon onClick={deleteFilter} />
       </div>
       {filter.getAttributes(true).map((e, i) =>
-        <span key={`filter@FilterDisplay:${i}`} className='p-1'>{e.attribute}: {e.assign}</span>)}
+        <span key={`filter@FilterDisplay:${i}`} className='p-1'>{keysAndLabels.labelFromKey(e.attribute)}: {e.assign}</span>)}
     </div>
   )
 }
@@ -182,32 +210,30 @@ export default function MetadataHub (props) {
   }
 
   return (
-    <div className='flex flex-col'>
-      {/* 1st row: topbar */}
-      <div className='flex-1 border border-pink flex-col'>
-        <span className='m-1'>Filter:</span>
-        <div className='flex'>
-          <div className='h-24' />
-          {filterList.map((e, i) => <div key={`filerList@MetadataHub:${i}`}>
-            <FilterDisplay filter={e} deleteFilter={() => deleteFilter(i)} toggleFilter={{ cb: toggleFilter, index: i }} />
-          </div>)}
-        </div>
+    <div className='flex flex-row'>
+
+      <div className='w-64 border-r border-grey-light flex flex-col p-2'>
+        {/* <span className='mb-1'>Define new filter:</span> */}
+        <FilterEditor addFilter={appendFilter} title='Define new filter:' />
+        <span className='m-1 font-bold'>Filter:</span>
+        {filterList.map((e, i) => <div key={`filerList@MetadataHub:${i}`}>
+          <FilterDisplay filter={e} deleteFilter={() => deleteFilter(i)} toggleFilter={{ cb: toggleFilter, index: i }} />
+        </div>)}
       </div>
-      {/* 2nd row */}
-      <div className='flex-1 flex flex-row border-pink'>
-        {/* 2nd row, 1st column: left sidebar */}
-        <div className='w-64 border border-pink flex flex-col p-2'>
-          <label className='mb-1' htmlFor='putInLimit'>Result limit:</label>
-          <input className='mb-1 p-1 border border-grey w-16' id='putInLimit' type='number' value={limit} min={1} onChange={adjustLimit} />
-          <span className='mb-1'>Define new filter:</span>
-          <div>
-            <FilterEditor addFilter={appendFilter} />
+
+      <div className='flex-1 flex flex-col'>
+
+        <div className='flex-1 flex flex-row-reverse'>
+          <div className='flex items-center p-1'>
+            <label htmlFor='putInLimit'>Result limit:</label>
+            <input className='appearance-none p-1 border border-grey w-16' id='putInLimit' type='number' value={limit} min={1} onChange={adjustLimit} />
           </div>
         </div>
-        {/* 2nd row, 2nd column: main-body */}
-        <div className='min-h-screen flex-1 border border-pink flex flex-wrap p-2'>
+
+        <div className='min-h-screen flex-1 flex flex-wrap items-start content-start p-2'>
           {metadata && metadata.map((e, i) => <MetadataRecordCard key={`metadata@MetadataRecordCard:${i}`} metadata={e} />)}
         </div>
+
       </div>
     </div>
   )
