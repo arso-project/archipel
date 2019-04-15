@@ -8,6 +8,7 @@ import Panels from './foo/panels'
 import archiveInit from './features/archive'
 import driveInit from './features/drive'
 import graphInit from './features/graph'
+import metadataInit from './features/metadata'
 
 import { ArchiveListWrapper, ArchiveTabsWrapper, NoArchive } from './features/archive/ArchiveScreen.js'
 import ArchiveInfo from './features/archive/ArchiveInfo'
@@ -43,7 +44,7 @@ function defaultInit () {
 }
 
 export default function init (extensions) {
-  let inits = [defaultInit, archiveInit, driveInit, graphInit]
+  let inits = [defaultInit, archiveInit, driveInit, metadataInit] // graphInit
   if (extensions) inits = inits.concat(extensions)
 
   inits.forEach(ext => {
