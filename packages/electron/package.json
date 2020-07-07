@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "devtron": "^1.4.0",
-    "electron": "^4.0.5",
+    "electron": "^9.1.0",
     "electron-builder": "^20.38.5",
     "electron-devtools-installer": "^2.2.4",
     "gaze": "^1.1.3",
